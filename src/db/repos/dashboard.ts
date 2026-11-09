@@ -3,6 +3,7 @@ import { inAccountGroup } from '@domain/ledger'
 import type { AccountDto, AccountGroup, DashboardSummary, Metric, MetricSource, MonthFlow } from '@shared/types'
 import { all, type Db } from '../connection'
 import { listAccounts } from './accounts'
+import { netWorthNow } from './insights'
 import { queryTransactions } from './transactions'
 
 /** The accounts behind each balance metric. The Accounts page filters with the same predicate. */
@@ -26,8 +27,13 @@ function sources(db: Db, accounts: readonly AccountDto[], today: string): Metric
          SELECT MAX(imported_at) FROM import_batches x WHERE x.account_id = b.account_id AND x.undone_at IS NULL)`,
     ).map((r) => [r.account_id, { at: r.at, fileName: r.file_name }]),
   )
+  // A recorded value (investments, loans) is data too: it brings the account up to that date.
+  const valued = new Map(
+    all<{ account_id: string; d: string }>(db, 'SELECT account_id, MAX(date) AS d FROM valuations GROUP BY account_id').map((r) => [r.account_id, r.d]),
+  )
   return accounts.map((a) => {
-    const latest = a.lastTxnDate && a.lastTxnDate > a.openingDate ? a.lastTxnDate : a.openingDate
+    const dates = [a.openingDate, a.lastTxnDate, valued.get(a.id)].filter((d): d is string => Boolean(d))
+    const latest = dates.reduce((m, d) => (d > m ? d : m))
     return {
       accountId: a.id,
       accountName: a.name,
@@ -70,8 +76,8 @@ export function dashboardSummary(db: Db, today: string): DashboardSummary {
   const previous = flow(db, prev.from, prev.to)
   const mtd = { page: 'transactions', from: monthStart, to: today, kind: 'standard' } as const
 
-  const assetsMinor = accounts.filter((a) => a.nature === 'asset').reduce((t, a) => t + a.balanceMinor, 0)
-  const owedMinor = sumGroup('owed')
+  // Net worth uses recorded valuations for investments, loans and other assets (FR-028), like the Net worth page.
+  const worth = netWorthNow(db, today)
   const savingsRatePercent =
     current.inMinor > 0 ? Math.round(((current.inMinor - current.outMinor) / current.inMinor) * 100) : null
 
@@ -98,9 +104,9 @@ export function dashboardSummary(db: Db, today: string): DashboardSummary {
       cardCount: accounts.filter(ACCOUNT_GROUPS.cards).length,
     },
     netWorth: {
-      ...metric(assetsMinor - owedMinor, allSources, { page: 'accounts', group: 'all' }),
-      assetsMinor,
-      owedMinor,
+      ...metric(worth.netMinor, allSources, { page: 'networth' }),
+      assetsMinor: worth.assetsMinor,
+      owedMinor: worth.liabilitiesMinor,
     },
     months,
   }

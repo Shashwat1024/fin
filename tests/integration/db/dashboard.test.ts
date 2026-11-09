@@ -3,6 +3,7 @@ import type { Db } from '@db/connection'
 import { createAccount, listAccounts, setAccountArchived } from '@db/repos/accounts'
 import { ACCOUNT_GROUPS, dashboardSummary, samePointLastMonth } from '@db/repos/dashboard'
 import { commitImport, undoImport } from '@db/repos/imports'
+import { netWorthHistoryFor } from '@db/repos/insights'
 import { createTransaction, createTransfer, queryTransactions } from '@db/repos/transactions'
 import type { DrillTarget, Metric } from '@shared/types'
 import { testDb } from './helpers'
@@ -47,6 +48,8 @@ function drillTotal(drill: DrillTarget): number {
       .filter(ACCOUNT_GROUPS[drill.group])
       .reduce((t, a) => t + (drill.group === 'all' && a.nature === 'liability' ? -a.balanceMinor : a.balanceMinor), 0)
   }
+  if (drill.page === 'networth') return netWorthHistoryFor(db, TODAY).current.netMinor
+  if (drill.page === 'forecast') throw new Error('No total on the forecast page')
   const { totals } = queryTransactions(db, { from: drill.from, to: drill.to, direction: drill.direction, kind: drill.kind })
   return drill.direction === 'out' ? -totals.outMinor : totals.inMinor
 }

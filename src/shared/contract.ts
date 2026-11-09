@@ -72,6 +72,11 @@ export const inputSchemas = {
   'rules.preview': s.rulePreviewInput,
   'rules.apply': s.ruleApplyInput,
   'suggestions.forTxns': s.suggestionsInput,
+  'forecast.run': s.forecastInput,
+  'networth.history': s.networthInput,
+  'valuations.list': s.valuationsListInput,
+  'valuations.upsert': s.valuationInput,
+  'valuations.delete': s.idInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -148,6 +153,11 @@ export interface Outputs {
   'rules.preview': t.RulePreview
   'rules.apply': t.Mutation<{ count: number; skipped: number }>
   'suggestions.forTxns': t.TxnSuggestion[]
+  'forecast.run': t.ForecastDto
+  'networth.history': t.NetWorthDto
+  'valuations.list': t.ValuationDto[]
+  'valuations.upsert': t.Mutation<{ valuation: t.ValuationDto }>
+  'valuations.delete': t.Mutation<object>
 }
 
 export type Output<C extends Channel> = Outputs[C]

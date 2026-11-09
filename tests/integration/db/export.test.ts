@@ -10,6 +10,7 @@ import { dashboardSummary } from '@db/repos/dashboard'
 import { budgetMonth, listGoals, listOccurrences } from '@db/repos/planning'
 import { createTransaction, createTransfer, deleteTransactions, queryTransactions } from '@db/repos/transactions'
 import { seedDemoData } from '@db/seed/demo'
+import { forecast, netWorthHistoryFor } from '@db/repos/insights'
 import { dispatch } from '../../../src/main/dispatch'
 import { categoryId, fakeEnv, testDb } from './helpers'
 
@@ -148,6 +149,7 @@ describe('demo data', () => {
       ['Netflix', 'paid'],
       ['Spotify', 'paid'],
       ['Index fund SIP', 'paid'],
+      ['Credit card bill', 'paid'],
     ])
     const budget = budgetMonth(demo, '2026-11')
     expect(budget.toAssignMinor).toBeGreaterThan(0)
@@ -156,6 +158,13 @@ describe('demo data', () => {
       ['Emergency fund', 'on_track'],
       ['Investments to ₹10 lakh', 'on_track'],
     ])
+    // Forecast and net worth (US7): a buffer to compare against, and month-end fund values.
+    const f = forecast(demo, 30, '2026-11-09')
+    expect(f).toMatchObject({ hasCashAccounts: true, bufferMinor: 5_000_000, confidence: 'high', belowBuffer: [] })
+    expect(f.events.map((e) => e.name)).toEqual(expect.arrayContaining(['Salary', 'Rent', 'Credit card bill']))
+    const nw = netWorthHistoryFor(demo, '2026-11-09')
+    expect(nw.points.map((p) => p.date)).toEqual(['2026-08-31', '2026-09-30', '2026-10-31', '2026-11-09'])
+    expect(nw.accounts.find((a) => a.name === 'Index Fund SIP')).toMatchObject({ source: 'valuation', valuationDate: '2026-10-31' })
     demo.close()
   })
 })

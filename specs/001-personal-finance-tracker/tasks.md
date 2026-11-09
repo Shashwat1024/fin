@@ -240,18 +240,18 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ### Tests for User Story 7
 
-- [ ] T096 [P] [US7] Unit tests for forecast (projection, low point, buffer ranges, confidence thresholds, assumptions list) in `tests/unit/domain/forecast.test.ts`
-- [ ] T097 [P] [US7] Unit tests for net worth with valuations overriding ledger for investment/other types in `tests/unit/domain/networth.test.ts`
+- [x] T096 [P] [US7] Unit tests for forecast (projection, low point, buffer ranges, confidence thresholds, assumptions list) in `tests/unit/domain/forecast.test.ts` (assumptions list covered in `tests/integration/db/insights.test.ts`)
+- [x] T097 [P] [US7] Unit tests for net worth with valuations overriding ledger for investment/other types in `tests/unit/domain/networth.test.ts`
 
 ### Implementation for User Story 7
 
-- [ ] T098 [US7] Add migration for valuations in `src/db/migrations/0005_valuations.sql`
-- [ ] T099 [P] [US7] Implement forecast domain in `src/domain/forecast.ts`
-- [ ] T100 [P] [US7] Implement net-worth domain in `src/domain/networth.ts`
-- [ ] T101 [US7] Implement services + IPC (`forecast.run`, `networth.history`, `valuations.upsert`) in `src/main/services/insights.ts`
-- [ ] T102 [P] [US7] Build forecast view (balance line, low point, buffer highlight, confidence, assumptions panel) in `src/renderer/features/forecast/`
-- [ ] T103 [P] [US7] Build net-worth view with valuation entry and monthly history in `src/renderer/features/networth/`
-- [ ] T104 [US7] Add forecast low-point card to dashboard in `src/renderer/features/dashboard/`
+- [x] T098 [US7] Add migration for valuations in `src/db/migrations/0005_valuations.ts` (as built: SQL in a TS module like 0001–0004)
+- [x] T099 [P] [US7] Implement forecast domain in `src/domain/forecast.ts`
+- [x] T100 [P] [US7] Implement net-worth domain in `src/domain/networth.ts`
+- [x] T101 [US7] Implement services + IPC (`forecast.run`, `networth.history`, `valuations.list/upsert/delete`) in `src/db/repos/insights.ts` (as built: no separate service)
+- [x] T102 [P] [US7] Build forecast view (balance line, low point, buffer highlight, confidence, assumptions panel) in `src/renderer/features/forecast/`
+- [x] T103 [P] [US7] Build net-worth view with valuation entry and monthly history in `src/renderer/features/networth/`
+- [x] T104 [US7] Add forecast low-point card to dashboard in `src/renderer/features/dashboard/ForecastCard.tsx` (the Net worth card now uses valuations and drills to the Net worth page)
 
 ---
 

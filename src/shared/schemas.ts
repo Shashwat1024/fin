@@ -277,3 +277,17 @@ export const ruleApplyInput = z.object({ ruleId: id, txnIds: z.array(id).min(1).
 export const suggestionsInput = z.object({ txnIds: z.array(id).max(1000) })
 
 export type RuleInput = z.output<typeof ruleInput>
+
+// ---- Forecast and net worth (US7) ---------------------------------------------------------------
+
+export const forecastInput = z.object({ days: z.union([z.literal(30), z.literal(60), z.literal(90)]) })
+export const networthInput = z.object({ from: calendarDate.optional(), to: calendarDate.optional() }).optional()
+export const valuationsListInput = z.object({ accountId: id })
+export const valuationInput = z.object({
+  accountId: id,
+  date: calendarDate,
+  /** The asset's worth, or the amount owed on a liability. */
+  valueMinor: minor.min(0, 'Enter the value as a positive amount'),
+  note: z.string().trim().max(500).nullable().optional(),
+})
+export type ValuationInput = z.output<typeof valuationInput>

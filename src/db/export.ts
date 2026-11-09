@@ -93,7 +93,10 @@ export function exportJson(db: Db, now = new Date()) {
       `SELECT c.id, c.goal_id AS goalId, c.date, c.amount_minor AS amountMinor, c.note
        FROM goal_contributions c JOIN goals g ON g.id = c.goal_id WHERE g.archived_at IS NULL ORDER BY c.date, c.id`,
     ),
-    valuations: [],
+    valuations: all<Record<string, unknown>>(
+      db,
+      'SELECT id, account_id AS accountId, date, value_minor AS valueMinor, note FROM valuations ORDER BY account_id, date',
+    ),
     importBatches: all<Record<string, unknown>>(
       db,
       `SELECT id, account_id AS accountId, file_name AS fileName, imported_at AS importedAt, rows_total AS rowsTotal,

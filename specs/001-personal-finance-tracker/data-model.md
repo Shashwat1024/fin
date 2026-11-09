@@ -140,6 +140,8 @@ log plus `UNIQUE (month, category_id)`; only needs/wants/goals/buffer categories
 `id, account_id (investment|other_asset|other_liability|loan), date, value_minor, note`. Net worth at
 date d = Σ asset balances/valuations − Σ liability balances/valuations (latest valuation ≤ d wins
 over ledger balance for investment/other types).
+As built: `value_minor` is the shown value (worth, or amount owed for liabilities), `UNIQUE(account_id,
+date)`, dates ≤ today; "now" counts future-dated transactions already entered, like account balances.
 
 ## ImportBatch / ImportRow / MappingPreset
 

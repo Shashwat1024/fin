@@ -7,11 +7,13 @@ import {
   FileUpIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
+  LineChartIcon,
   MoonIcon,
   PieChartIcon,
   PlusIcon,
   ReceiptTextIcon,
   RepeatIcon,
+  ScaleIcon,
   SettingsIcon,
   TagsIcon,
   TargetIcon,
@@ -109,6 +111,12 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/categories?tab=rules'))}>
             <WandSparklesIcon /> Rules
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/forecast'))}>
+            <LineChartIcon /> Forecast
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/net-worth'))}>
+            <ScaleIcon /> Net worth
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/settings'))}>
             <SettingsIcon /> Settings

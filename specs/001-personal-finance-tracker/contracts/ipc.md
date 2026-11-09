@@ -51,9 +51,11 @@ Mutations return an `auditGroupId` usable with `undo.apply`.
 | `goals.create` / `.update` / `.delete` | `GoalInput` / `{ id, input }` / `{ id }`; a linked asset account replaces contributions | `{ goal }` / `{}` + `auditGroupId` | FR-024 |
 | `goals.contribute` / `.deleteContribution` | `{ goalId, date, amountMinor ≠ 0, note? }` / `{ id }` | `{ goal }` / `{}` + `auditGroupId` | FR-024 |
 | `dashboard.summary` | `{ asOf? }` | `DashboardSummary` (`src/shared/types.ts`) — each metric `{ valueMinor, asOf, sources: { accountId, accountName, lastDataDate, lastImport }[], drill: DrillTarget }`; `drill` is a transactions date range (+ direction, transfers excluded) or an account group, and the page it opens shows a total equal to the metric. Also `savingsRate`, `cardDues.cardCount` and six `months` of money in/out. | FR-025/026 |
-| `forecast.run` | `{ days: 30\|60\|90 }` | `{ points: { date, balance }[], low: { date, balance }, belowBuffer: Range[], confidence: 'high'\|'medium'\|'low', assumptions: Assumption[] }` | FR-027 |
-| `networth.history` | `{ from, to, interval: 'month' }` | `{ date, assets, liabilities, net }[]` | FR-028 |
-| `valuations.upsert` | `{ accountId, date, value }` | `Valuation` | FR-028 |
+| `forecast.run` | `{ days: 30\|60\|90 }` | `ForecastDto`: `{ points: { date, balanceMinor, recurringMinor, baselineMinor }[], low: { date, balanceMinor }, endMinor, belowBuffer: { from, to, lowestMinor, lowestDate, causes: ForecastEvent[] }[], confidence: 'high'\|'medium'\|'low', confidenceReason, historyDays, baselineByWeekday, events, assumptions: { kind: 'start'\|'recurring'\|'baseline'\|'note', label, detail, amountMinor }[], hasCashAccounts }`. Cash + bank only; buffer from settings. | FR-027 |
+| `networth.history` | `{ from?, to? }` (default: last 12 months, clamped to the first opening date) | `NetWorthDto`: `{ today, current, points: { date, assetsMinor, liabilitiesMinor, netMinor }[] (month ends, last = today), accounts: { id, name, type, nature, valueMinor, source: 'ledger'\|'valuation', valuationDate, ledgerMinor, canValue }[] }` | FR-028 |
+| `valuations.list` | `{ accountId }` | `ValuationDto[]` newest first | FR-028 |
+| `valuations.upsert` | `{ accountId, date ≤ today, valueMinor ≥ 0, note? }` (investment, loan, other asset/liability only; one per account and day) | `{ valuation }` + `auditGroupId` | FR-028 |
+| `valuations.delete` | `{ id }` | `{}` + `auditGroupId` | FR-028 |
 | `export.csv` / `export.json` | — | `{ path } \| null` (main shows the save dialog; null if cancelled) | FR-030 |
 | `app.status` | — | `AppStatus` `{ demo, dataDir, backupDir, defaultBackupDir, counts }` | FR-031/034 |
 | `backup.create` | `{ passphrase? }` (≥ 8 chars) | `BackupInfo` `{ fileName, path, createdAt, kind, encrypted, sizeBytes }` | FR-031/033 |

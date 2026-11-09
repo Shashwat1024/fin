@@ -24,7 +24,8 @@
   "goals": [ { "id": "…", "name": "Emergency fund", "targetMinor": 30000000, "targetDate": "2027-11-30",
                "linkedAccountId": null } ],
   "goalContributions": [ { "id": "…", "goalId": "…", "date": "2026-10-05", "amountMinor": 2000000, "note": null } ],
-  "valuations": [], "importBatches": []
+  "valuations": [ { "id": "…", "accountId": "…", "date": "2026-10-31", "valueMinor": 45945000, "note": null } ],
+  "importBatches": []
 }
 ```
 

@@ -51,6 +51,12 @@ export const useBudgetMonth = (month: string) =>
   useQuery({ queryKey: ['budget', month], queryFn: () => call('budget.month', { month }), placeholderData: (prev) => prev })
 export const useGoals = () => useQuery({ queryKey: ['goals'], queryFn: () => call('goals.list', undefined) })
 
+export const useForecast = (days: 30 | 60 | 90) =>
+  useQuery({ queryKey: ['forecast', days], queryFn: () => call('forecast.run', { days }), placeholderData: (prev) => prev })
+export const useNetWorth = (from?: string) =>
+  useQuery({ queryKey: ['networth', from ?? null], queryFn: () => call('networth.history', { from }), placeholderData: (prev) => prev })
+export const useValuations = (accountId: string | null) =>
+  useQuery({ queryKey: ['valuations', accountId], queryFn: () => call('valuations.list', { accountId: accountId! }), enabled: Boolean(accountId) })
 export const useRules = () => useQuery({ queryKey: ['rules'], queryFn: () => call('rules.list', undefined) })
 export const useSuggestions = (txnIds: readonly string[]) =>
   useQuery({

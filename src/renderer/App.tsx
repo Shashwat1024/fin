@@ -10,7 +10,9 @@ import { ImportPage } from '@renderer/features/import/ImportPage'
 import { BudgetPage } from '@renderer/features/budget/BudgetPage'
 import { CategoriesPage } from '@renderer/features/categories/CategoriesPage'
 import { DashboardPage } from '@renderer/features/dashboard/DashboardPage'
+import { ForecastPage } from '@renderer/features/forecast/ForecastPage'
 import { GoalsPage } from '@renderer/features/goals/GoalsPage'
+import { NetWorthPage } from '@renderer/features/networth/NetWorthPage'
 import { Onboarding } from '@renderer/features/onboarding/Onboarding'
 import { RecurringPage } from '@renderer/features/recurring/RecurringPage'
 import { SettingsPage } from '@renderer/features/settings/SettingsPage'
@@ -32,6 +34,8 @@ function Routed() {
         <Route path="/budget" element={<BudgetPage />} />
         <Route path="/goals" element={<GoalsPage />} />
         <Route path="/categories" element={<CategoriesPage />} />
+        <Route path="/forecast" element={<ForecastPage />} />
+        <Route path="/net-worth" element={<NetWorthPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<DashboardPage />} />
       </Routes>

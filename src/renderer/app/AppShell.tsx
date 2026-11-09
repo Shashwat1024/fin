@@ -4,10 +4,12 @@ import {
   FileUpIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
+  LineChartIcon,
   PieChartIcon,
   PlusIcon,
   ReceiptTextIcon,
   RepeatIcon,
+  ScaleIcon,
   SearchIcon,
   SettingsIcon,
   TagsIcon,
@@ -30,6 +32,8 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo: string }[] = [
   { to: '/budget', label: 'Budget', icon: PieChartIcon, combo: 'mod+6' },
   { to: '/goals', label: 'Goals', icon: TargetIcon, combo: 'mod+7' },
   { to: '/categories', label: 'Categories', icon: TagsIcon, combo: 'mod+8' },
+  { to: '/forecast', label: 'Forecast', icon: LineChartIcon, combo: 'mod+9' },
+  { to: '/net-worth', label: 'Net worth', icon: ScaleIcon, combo: 'mod+0' },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' },
 ]
 
@@ -63,6 +67,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   useHotkey('mod+6', () => navigate('/budget'))
   useHotkey('mod+7', () => navigate('/goals'))
   useHotkey('mod+8', () => navigate('/categories'))
+  useHotkey('mod+9', () => navigate('/forecast'))
+  useHotkey('mod+0', () => navigate('/net-worth'))
   useHotkey('mod+,', () => navigate('/settings'))
   return (
     <div className="flex h-full">

@@ -1,8 +1,9 @@
-import { addDays, addMonths, startOfMonth } from '@domain/dates'
+import { addDays, addMonths, endOfMonth, startOfMonth } from '@domain/dates'
 import type { Db } from '../connection'
 import { createAccount } from '../repos/accounts'
 import { listCategories } from '../repos/categories'
 import { createRule } from '../repos/categorization'
+import { upsertValuation } from '../repos/insights'
 import { assignBudget, contribute, createGoal, createRecurring } from '../repos/planning'
 import { updateSettings } from '../repos/settings'
 import { createTransaction, createTransfer } from '../repos/transactions'
@@ -83,7 +84,15 @@ export function seedDemoData(db: Db, today: string): void {
   recent(1, -38_500, 'UPI/428812349876/Swiggy/swiggy@icici/Payment')
   recent(2, -27_400, 'UBER *TRIP HELP.UBER.COM', card)
   recent(3, -64_000, 'UPI-MEDPLUS PHARMACY-MEDPLUS@YBL-YESB0YBLUPI-428899991234-UPI')
-  updateSettings(db, { onboarded: true })
+
+  // The fund's market value at each month end (US7): what was paid in, plus or minus market moves.
+  ;[1.012, 0.994, 1.021].forEach((growth, m) => {
+    const date = endOfMonth(addMonths(start, m))
+    if (date > today) return
+    const paidIn = 42_000_000 + (m + 1) * 1_000_000
+    upsertValuation(db, { accountId: funds, date, valueMinor: Math.round((paidIn * growth) / 100) * 100, note: 'Statement value' }, today)
+  })
+  updateSettings(db, { onboarded: true, bufferMinor: 5_000_000 })
 }
 
 /** Recurring items, a budget for each month, and two goals (US5). */
@@ -104,6 +113,8 @@ function seedPlanning(
   recurring('Netflix', 'subscription', a.card, 64_900, day(7), { categoryId: c('Entertainment › Subscriptions') })
   recurring('Spotify', 'subscription', a.card, 11_900, day(12), { categoryId: c('Entertainment › Subscriptions') })
   recurring('Index fund SIP', 'savings', a.bank, 1_000_000, day(16), { toAccountId: a.funds })
+  // The card bill varies, so it matches within ±50%; card purchases reach cash on this date (forecast).
+  recurring('Credit card bill', 'transfer', a.bank, 1_500_000, day(25), { toAccountId: a.card, toleranceBp: 5000 })
 
   const plan: [string, number][] = [
     ['Housing › Rent', 2_200_000],

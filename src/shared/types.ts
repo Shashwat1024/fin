@@ -1,5 +1,7 @@
+import type { Forecast } from '@domain/forecast'
 import type { GoalStatus } from '@domain/goals'
 import type { AccountGroup, AccountNature, AccountType } from '@domain/ledger'
+import type { NetWorthPoint } from '@domain/networth'
 import type { Frequency, OccurrenceState } from '@domain/recurrence'
 import type { RuleCondition } from '@domain/rules'
 
@@ -177,6 +179,8 @@ export type ReconcileResult = { statementBalanceMinor: number; computedBalanceMi
 export type DrillTarget =
   | { page: 'transactions'; from: string; to: string; direction?: 'in' | 'out'; kind?: 'standard' }
   | { page: 'accounts'; group: AccountGroup }
+  | { page: 'networth' }
+  | { page: 'forecast' }
 
 export type MetricSource = {
   accountId: string
@@ -386,3 +390,42 @@ export type RuleMatch = {
 }
 
 export type RulePreview = { count: number; matches: RuleMatch[] }
+
+// ---- Forecast and net worth (US7) ---------------------------------------------------------------
+
+export type { BufferRange, Confidence, ForecastEvent, ForecastPoint } from '@domain/forecast'
+export type { NetWorthPoint }
+
+/** One input the forecast used, listed so every number on the line can be explained (FR-027). */
+export type ForecastAssumption = {
+  kind: 'start' | 'recurring' | 'baseline' | 'note'
+  label: string
+  detail: string | null
+  amountMinor: number | null
+}
+
+export type ForecastDto = Forecast & { assumptions: ForecastAssumption[]; hasCashAccounts: boolean }
+
+export type ValuationDto = { id: string; accountId: string; date: string; valueMinor: number; note: string | null }
+
+export type NetWorthAccountRow = {
+  id: string
+  name: string
+  type: AccountType
+  nature: 'asset' | 'liability'
+  /** Value used for net worth today: positive worth, or positive amount owed. */
+  valueMinor: number
+  source: 'ledger' | 'valuation'
+  valuationDate: string | null
+  /** Balance from transactions, for comparison when a valuation is used. */
+  ledgerMinor: number
+  canValue: boolean
+}
+
+export type NetWorthDto = {
+  today: string
+  current: NetWorthPoint
+  /** Month ends, oldest first; the last point is today. */
+  points: NetWorthPoint[]
+  accounts: NetWorthAccountRow[]
+}

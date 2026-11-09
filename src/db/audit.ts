@@ -20,6 +20,7 @@ const AUDITED = new Set([
   'goals',
   'goal_contributions',
   'rules',
+  'valuations',
 ])
 
 const columnCache = new WeakMap<Db, Map<string, Set<string>>>()

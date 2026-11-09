@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@rend
 import { SHORTCUTS } from '@renderer/lib/hotkeys'
 import { undoChange, useActivity, useFinMutation, useSettings } from '@renderer/lib/queries'
 import { DataSettings } from './DataSettings'
+import { BufferField } from '@renderer/features/forecast/BufferField'
 import { PreferenceFields } from './PreferenceFields'
 
 function relativeTime(iso: string): string {
@@ -38,6 +39,9 @@ export function SettingsPage() {
           </CardHeader>
           <CardContent>
             <PreferenceFields value={settings.data} onChange={(patch) => update.mutate(patch)} />
+            <div className="mt-4">
+              <BufferField />
+            </div>
           </CardContent>
         </Card>
 

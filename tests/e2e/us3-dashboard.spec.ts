@@ -71,8 +71,8 @@ test('US3: every dashboard card equals the total of its drill-down', async () =>
   }
   await page.keyboard.press('Control+1')
   await card('Net worth').click()
-  await expect(page.getByRole('heading', { name: 'Accounts' })).toBeVisible()
-  await expect(page.locator('[data-slot="card"]', { hasText: 'Net worth' })).toContainText(expected['Net worth'])
+  await expect(page.getByRole('heading', { name: 'Net worth' })).toBeVisible()
+  await expect(page.locator('[data-slot="card"]', { hasText: 'Net worth today' })).toContainText(expected['Net worth'])
 
   // Freshness: each card says how current its data is and where it came from
   await page.keyboard.press('Control+1')

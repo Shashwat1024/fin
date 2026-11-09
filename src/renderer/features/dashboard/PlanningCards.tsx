@@ -9,6 +9,7 @@ import { monthLabel } from '@renderer/features/budget/BudgetPage'
 import { GoalProgress } from '@renderer/features/goals/GoalsPage'
 import { pendingTotals } from '@renderer/features/recurring/OccurrenceList'
 import { COMMITMENT_DAYS } from '@renderer/features/recurring/RecurringPage'
+import { ForecastCard } from './ForecastCard'
 import { useBudgetMonth, useGoals, useOccurrences, useRecurring, useToday } from '@renderer/lib/queries'
 import { plural } from '@renderer/lib/text'
 
@@ -35,7 +36,8 @@ export function PlanningCards() {
   const overspent = b ? b.groups.flatMap((g) => g.rows).filter((r) => r.availableMinor < 0).length : 0
 
   return (
-    <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <ForecastCard />
       <StatCard
         icon={<CalendarClockIcon className="size-4" />}
         label={`Due in the next ${COMMITMENT_DAYS} days`}

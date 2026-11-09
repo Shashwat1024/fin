@@ -61,6 +61,9 @@ different folder, for example a throwaway one while testing.
   rules with a live match count, a preview of exactly what would change and one-step undo, merchants
   read from UPI/IMPS/NEFT/card narrations, and category suggestions (from rules and your past choices
   for the same merchant) in the ledger and import review — never applied until accepted.
-- ⏭️ Next: cash-flow forecast and net-worth history (US7).
+- ✅ User Story 7: 30/60/90-day cash-flow forecast (lowest point and date, days below your buffer
+  with the payments behind them, a High/Medium/Low confidence label and every assumption listed),
+  and net-worth history by month with values you record for investments and loans.
+- ⏭️ Next: release polish (keyboard and accessibility audit, 50k-transaction performance, installer).
   See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
 

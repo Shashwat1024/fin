@@ -19,6 +19,7 @@ import {
 } from '@db/repos/categorization'
 import { dashboardSummary } from '@db/repos/dashboard'
 import { listCategories, listTags } from '@db/repos/categories'
+import { deleteValuation, forecast, listValuations, netWorthHistoryFor, upsertValuation } from '@db/repos/insights'
 import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
 import {
   assignBudget,
@@ -137,6 +138,11 @@ export const handlers: Handlers = {
   },
   'rules.apply': ({ db }, input) => applyRule(db, input.ruleId, input.txnIds),
   'suggestions.forTxns': ({ db }, input) => suggestForTxns(db, input.txnIds),
+  'forecast.run': ({ db }, input) => forecast(db, input.days, today(db)),
+  'networth.history': ({ db }, input) => netWorthHistoryFor(db, today(db), input?.from, input?.to),
+  'valuations.list': ({ db }, input) => listValuations(db, input.accountId),
+  'valuations.upsert': ({ db }, input) => upsertValuation(db, input, today(db)),
+  'valuations.delete': ({ db }, input) => deleteValuation(db, input.id),
   'undo.apply': ({ db }, input) => {
     const r = undoGroup(db, input.auditGroupId)
     return { reverted: r.result.reverted, auditGroupId: r.auditGroupId }
