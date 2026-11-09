@@ -1,10 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { HistoryIcon, KeyboardIcon, LockIcon, Undo2Icon } from 'lucide-react'
-import { ErrorState, LoadingState, Page, PageHeader, ShortcutHint } from '@renderer/components/layout'
+import { ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@renderer/components/ui/card'
-import { SHORTCUTS } from '@renderer/lib/hotkeys'
+import { ShortcutGroups } from '@renderer/components/ShortcutsSheet'
 import { undoChange, useActivity, useFinMutation, useSettings } from '@renderer/lib/queries'
 import { DataSettings } from './DataSettings'
 import { BufferField } from '@renderer/features/forecast/BufferField'
@@ -87,16 +87,7 @@ export function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-              {SHORTCUTS.map((s) => (
-                <div key={s.combo} className="flex items-center justify-between gap-2">
-                  <dt className="text-muted-foreground">{s.label}</dt>
-                  <dd>
-                    <ShortcutHint combo={s.combo} />
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <ShortcutGroups />
           </CardContent>
         </Card>
 

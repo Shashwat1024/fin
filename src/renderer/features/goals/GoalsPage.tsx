@@ -92,7 +92,7 @@ export function GoalsPage() {
                   {g.linkedAccountName && (
                     <>
                       {' · follows '}
-                      <Link className="underline-offset-4 hover:underline" to={`/transactions?account=${g.linkedAccountId}`}>
+                      <Link className="underline underline-offset-4" to={`/transactions?account=${g.linkedAccountId}`}>
                         {g.linkedAccountName}
                       </Link>
                     </>

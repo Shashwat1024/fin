@@ -10,7 +10,9 @@ export const APP_ID = 0x46494e31
 export function openDatabase(path: string): Db {
   const db = new DatabaseSync(path, { enableForeignKeyConstraints: true })
   if (path !== ':memory:') db.exec('PRAGMA journal_mode = WAL')
-  db.exec('PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON;')
+  // A 64 MB page cache keeps a 50k-transaction ledger in memory, so balance and report queries
+  // stay well inside the NFR budgets (the 2 MB default re-reads pages on every aggregate).
+  db.exec('PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON; PRAGMA cache_size = -65536; PRAGMA temp_store = MEMORY;')
   return db
 }
 

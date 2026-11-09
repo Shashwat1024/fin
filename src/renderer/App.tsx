@@ -3,6 +3,7 @@ import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
 import { ErrorState, LoadingState } from '@renderer/components/layout'
 import { AppShell } from '@renderer/app/AppShell'
 import { CommandPalette } from '@renderer/app/CommandPalette'
+import { ShortcutsSheet } from '@renderer/components/ShortcutsSheet'
 import { AccountDialogProvider } from '@renderer/features/accounts/AccountDialog'
 import { AccountsPage } from '@renderer/features/accounts/AccountsPage'
 import { ReconcileDialogProvider } from '@renderer/features/accounts/ReconcileDialog'
@@ -66,6 +67,7 @@ export function App() {
               </AppShell>
               <ErrorBoundary>
                 <CommandPalette />
+                <ShortcutsSheet />
               </ErrorBoundary>
             </>
           ) : (

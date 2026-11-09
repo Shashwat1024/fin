@@ -102,7 +102,7 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
           <SelectItem value="this-fy">{fyLabel}</SelectItem>
         </SelectContent>
       </Select>
-      <AccountSelect allowAll className="w-48" value={value.accountId} onChange={(accountId) => onChange({ ...value, accountId })} />
+      <AccountSelect allowAll label="Account" className="w-48" value={value.accountId} onChange={(accountId) => onChange({ ...value, accountId })} />
       <CategoryPicker mode="filter" className="w-52" value={value.categoryId} onChange={(categoryId) => onChange({ ...value, categoryId })} />
       <Select value={value.direction} onValueChange={(v) => onChange({ ...value, direction: v as FilterState['direction'] })}>
         <SelectTrigger className="w-32" aria-label="Direction">

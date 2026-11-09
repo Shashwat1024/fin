@@ -1,7 +1,7 @@
 import { addDays, addMonths, compareDates, startOfMonth, type CalendarDate } from '@domain/dates'
 import { BASELINE_DAYS, OVERDUE_GRACE_DAYS, runForecast, type ForecastEvent } from '@domain/forecast'
 import { isLiquid, type AccountType } from '@domain/ledger'
-import { accountValueAt, canBeValued, netWorthAt, netWorthHistory, type NetWorthAccount } from '@domain/networth'
+import { canBeValued, netWorthHistory, type NetWorthAccount } from '@domain/networth'
 import { invariant, notFound } from '@shared/errors'
 import type { ValuationInput } from '@shared/schemas'
 import type { AccountDto, ForecastAssumption, ForecastDto, Mutation, NetWorthDto, ValuationDto } from '@shared/types'
@@ -29,10 +29,15 @@ export function forecast(db: Db, days: number, today: CalendarDate): ForecastDto
 
   // Recurring items still expected, as their effect on cash and bank (a card bill paid from the bank
   // is money out; a transfer between two bank accounts nets to nothing).
+  // One pass over the recurring schedule covers both the history window and the forecast.
+  const historyFrom = addDays(today, -BASELINE_DAYS)
+  const occurrences = listOccurrences(db, historyFrom, addDays(today, days), today)
+  const graceFrom = addDays(today, -OVERDUE_GRACE_DAYS)
   const events: ForecastEvent[] = []
   const notCounted = new Set<string>()
-  for (const o of listOccurrences(db, addDays(today, -OVERDUE_GRACE_DAYS), addDays(today, days), today)) {
+  for (const o of occurrences) {
     if (o.state !== 'expected' && o.state !== 'overdue') continue
+    if (compareDates(o.dueDate, graceFrom) < 0) continue
     const item = items.get(o.itemId)
     if (!item) continue
     const effect = (liquidIds.has(o.accountId) ? o.expectedMinor : 0) + (item.toAccountId && liquidIds.has(item.toAccountId) ? -o.expectedMinor : 0)
@@ -45,10 +50,7 @@ export function forecast(db: Db, days: number, today: CalendarDate): ForecastDto
   }
 
   // Everyday spending: money out of cash and bank that is neither a transfer nor a recurring payment.
-  const historyFrom = addDays(today, -BASELINE_DAYS)
-  const recurringTxns = new Set(
-    listOccurrences(db, historyFrom, today, today).flatMap((o) => (o.matchedTxn ? [o.matchedTxn.id] : [])),
-  )
+  const recurringTxns = new Set(occurrences.flatMap((o) => (o.matchedTxn ? [o.matchedTxn.id] : [])))
   const spending = new Map<CalendarDate, number>()
   if (liquid.length > 0) {
     const marks = liquid.map(() => '?').join(',')
@@ -149,14 +151,28 @@ function netWorthAccounts(db: Db, accounts: readonly AccountDto[]): NetWorthAcco
 }
 
 /**
- * "Now" counts every transaction already entered, including future-dated ones, exactly like account
- * balances do; valuations cannot be in the future, so the latest one is used.
+ * Net worth now, from account balances (which already count every transaction) and the latest
+ * valuation of each valued account. Cheap: no per-day history is read. The dashboard card and the
+ * Net worth page both use it, so they always agree.
  */
-const NOW = '9999-12-31'
-
-/** Net worth today, with valuations; the dashboard card uses this so it matches the Net worth page. */
-export function netWorthNow(db: Db, today: CalendarDate) {
-  return { ...netWorthAt(netWorthAccounts(db, listAccounts(db)), NOW), date: today }
+export function netWorthNow(db: Db, today: CalendarDate, accounts: readonly AccountDto[] = listAccounts(db)) {
+  const latest = new Map(
+    all<{ account_id: string; date: string; value_minor: number }>(
+      db,
+      `SELECT v.account_id, v.date, v.value_minor FROM valuations v
+       WHERE v.date = (SELECT MAX(date) FROM valuations x WHERE x.account_id = v.account_id)`,
+    ).map((r) => [r.account_id, r]),
+  )
+  let assets = 0
+  let liabilities = 0
+  const values = accounts.map((a) => {
+    const v = canBeValued(a.type) ? latest.get(a.id) : undefined
+    const value = { valueMinor: v ? v.value_minor : a.balanceMinor, source: v ? ('valuation' as const) : ('ledger' as const), valuationDate: v?.date ?? null }
+    if (a.nature === 'asset') assets += value.valueMinor
+    else liabilities += value.valueMinor
+    return { account: a, ...value }
+  })
+  return { date: today, assetsMinor: assets, liabilitiesMinor: liabilities, netMinor: assets - liabilities, values }
 }
 
 /** Month-end net worth from `from` (default: 11 months ago, or the first account's opening) to today. */
@@ -169,28 +185,24 @@ export function netWorthHistoryFor(db: Db, today: CalendarDate, from?: CalendarD
   if (compareDates(start, earliest) < 0) start = earliest
   const end = to && compareDates(to, today) < 0 ? to : today
   if (compareDates(start, end) > 0) start = end
-  const byId = new Map(nw.map((a) => [a.id, a]))
-  const current = { ...netWorthAt(nw, NOW), date: today }
+  const { values, ...current } = netWorthNow(db, today, accounts)
   const points = netWorthHistory(nw, start, end)
   if (end === today) points[points.length - 1] = current
   return {
     today,
     current,
     points,
-    accounts: accounts.map((a) => {
-      const v = accountValueAt(byId.get(a.id)!, NOW)
-      return {
-        id: a.id,
-        name: a.name,
-        type: a.type,
-        nature: a.nature,
-        valueMinor: v.valueMinor,
-        source: v.source,
-        valuationDate: v.valuationDate,
-        ledgerMinor: a.balanceMinor,
-        canValue: canBeValued(a.type),
-      }
-    }),
+    accounts: values.map(({ account: a, valueMinor, source, valuationDate }) => ({
+      id: a.id,
+      name: a.name,
+      type: a.type,
+      nature: a.nature,
+      valueMinor,
+      source,
+      valuationDate,
+      ledgerMinor: a.balanceMinor,
+      canValue: canBeValued(a.type),
+    })),
   }
 }
 

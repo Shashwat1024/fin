@@ -60,9 +60,18 @@ Load demo data → every card shows a value, "as of" date, and drill-down whose 
 
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the suite blocks all network via Electron session
-`webRequest` and asserts zero outbound requests across the core flows. Inspect the log file in the
-data dir: it must contain no amounts, payees, or account names.
+`webRequest`, asserts zero outbound requests across the core flows, and reads the log file to check
+it contains no amounts, payees, account names or file names.
 
 ### 7. Performance (SC-007)
-`npm run seed:perf` then `npm run dev` with that data dir; verify cold start < 2 s, ledger filter
-< 150 ms, dashboard < 300 ms (timings logged at debug level without financial data).
+Automated: `tests/integration/perf.test.ts` (query budgets on 50k transactions, part of `npm test`)
+and `tests/e2e/perf.spec.ts` (cold start < 2 s and list filtering < 150 ms in the real app).
+By hand: `npm run seed:perf -- <empty folder>`, then `$env:FIN_DATA_DIR='<folder>'; npm run dev`.
+
+### 8. Accessibility and keyboard
+`npx playwright test a11y` runs axe (WCAG 2.2 AA) on every screen in light and dark mode, checks
+focus is visible and returns after dialogs. Press `?` in the app for every shortcut.
+
+### 9. Packaged build
+`npm run package`, then `$env:FIN_E2E_EXE="$PWD\release\win-unpacked\Fin.exe"; npx playwright test`
+runs the whole suite against the packaged app. Results for 1.0: [checklists/release.md](./checklists/release.md).

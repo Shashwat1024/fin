@@ -1,43 +1,81 @@
-# Personal Finance Tracker
+# Fin
 
-Private, local-first desktop finance tracker for personal use.
+A private, offline personal finance tracker for Windows, in Indian rupees. Fin keeps your accounts,
+imported bank statements, budget, goals, forecast and net worth on your own computer. There is no
+account to create, no bank login and nothing in the cloud.
 
-## Project workflow
+## Install
 
-This repository uses [GitHub Spec Kit](https://github.com/github/spec-kit) for specification-driven development. The workflow is:
+1. Build the installer (see [Development](#development)) or use one you were given:
+   `release\Fin Setup 0.1.0.exe`.
+2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
+   can choose the folder.
+3. The installer is not code-signed yet, so Windows SmartScreen may warn about an unknown publisher.
+   Choose **More info › Run anyway** only for an installer you built yourself or trust.
 
-1. `/speckit.constitution`
-2. `/speckit.specify`
-3. `/speckit.plan`
-4. `/speckit.tasks`
-5. `/speckit.implement`
+On first launch Fin asks for your first account and its starting balance, or you can explore with
+demo data first (demo data is kept apart from yours and thrown away when you leave it).
 
-The product requirements are in [docs/PRD.md](docs/PRD.md). Project principles are recorded in [.specify/memory/constitution.md](.specify/memory/constitution.md). The initial product specification is in [specs/001-personal-finance-tracker/spec.md](specs/001-personal-finance-tracker/spec.md).
+Press `?` at any time to see every keyboard shortcut, or `Ctrl+K` for the command palette.
 
-## Privacy boundary
+## Your data
 
-The initial product is single-user and local-only. It does not require an account, hosted backend, or bank credentials.
+| What | Where |
+|---|---|
+| Your ledger | `%APPDATA%\Fin\fin.db` (a SQLite file) |
+| Automatic backups | `%APPDATA%\Fin\backups\`, or the folder you choose in Settings › Data |
+| Logs | `%APPDATA%\Fin\logs\fin.log`. These record what happened, never amounts, payees or account names. |
 
-- Your data lives in `%APPDATA%\Fin` (`fin.db`), with backups in `%APPDATA%\Fin\backups` unless you choose another
-  folder in Settings › Data. A cloud-synced backup folder sends copies of your data through that service.
-- The database itself is not encrypted. Turn on disk encryption (BitLocker) and use passphrase-protected backups
-  (`.finbackup`: scrypt + AES-256-GCM). A forgotten passphrase cannot be recovered.
-- The app blocks all network requests; `tests/e2e/offline.spec.ts` checks this across every core flow.
+**Privacy.** Fin makes no network requests at all and blocks any attempt to make one. The test
+suite checks this across every flow, and checks the log file for financial details. Uninstalling
+Fin leaves your data folder in place, so delete `%APPDATA%\Fin` yourself if you want it gone.
 
-## Running locally
+**Backups.**
+- Fin backs up once a day when it starts and keeps the last 14. It also backs up before any
+  upgrade or restore.
+- Use **Settings › Data › Back up now** before big changes, such as a large import or merging
+  categories.
+- Keep an occasional copy somewhere other than this computer, such as a USB drive. A backup on the
+  same disk does not survive the disk failing.
+- If you point the backup folder at a cloud-synced drive (OneDrive, Google Drive), copies of your
+  data go to that service. Use a passphrase-protected backup if you do.
+- **Restore** checks the file first, shows what it contains, and backs up your current data before
+  replacing it.
 
-Requires Node 24+ on Windows.
+**Encryption.**
+- `fin.db` itself is not encrypted. Anyone who can sign in to your Windows account, or read the
+  disk, can read it.
+- Turn on **BitLocker** (or Device Encryption on Windows Home) so the disk is encrypted at rest.
+- Backups can be protected with a passphrase (`.finbackup`: scrypt key derivation and AES-256-GCM).
+  A forgotten passphrase cannot be recovered, and Fin never stores it.
+
+**Export.** Settings › Data exports all transactions to CSV for spreadsheets, or everything to a
+documented JSON file ([format](specs/001-personal-finance-tracker/contracts/export-json.md)), so
+your data is never locked in.
+
+## Development
+
+This repository uses [GitHub Spec Kit](https://github.com/github/spec-kit) for specification-driven
+development (`/speckit.specify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`).
+The [PRD](docs/PRD.md), [constitution](.specify/memory/constitution.md) and
+[specification](specs/001-personal-finance-tracker/spec.md) describe what Fin does and why.
+
+Requires Node 24+ on Windows. No native build tools are needed, because storage uses Node's built-in
+`node:sqlite`.
 
 ```powershell
 npm install
-npm run dev          # launch the app
-npm test             # unit + integration tests
-npm run test:e2e     # end-to-end tests against the real Electron app
+npm run dev          # launch the app with hot reload
+npm test             # unit + integration tests (includes 50k-transaction query budgets)
+npm run test:e2e     # build, then end-to-end tests against the real Electron app
 npm run lint; npm run typecheck
+npm run package      # Windows installer in releasenpm run seed:perf    # a 50,000-transaction data folder for manual performance checks
 ```
 
-Data is stored in `%APPDATA%\Fin\` (`fin.db`, `backups\`, `logs\`). Set `FIN_DATA_DIR` to use a
-different folder, for example a throwaway one while testing.
+Set `FIN_DATA_DIR` to use a different data folder, for example a throwaway one while testing. Set
+`FIN_E2E_EXE=release\win-unpacked\Fin.exe` to run the end-to-end suite against the packaged app.
+How to validate each feature by hand is in
+[quickstart.md](specs/001-personal-finance-tracker/quickstart.md).
 
 ## Status
 
@@ -64,6 +102,9 @@ different folder, for example a throwaway one while testing.
 - ✅ User Story 7: 30/60/90-day cash-flow forecast (lowest point and date, days below your buffer
   with the payments behind them, a High/Medium/Low confidence label and every assumption listed),
   and net-worth history by month with values you record for investments and loans.
-- ⏭️ Next: release polish (keyboard and accessibility audit, 50k-transaction performance, installer).
+- ✅ Release polish: keyboard shortcuts sheet (`?`), WCAG 2.2 AA checks on every screen in both
+  themes, 50,000-transaction performance checks, and a Windows installer. Results:
+  [checklists/release.md](specs/001-personal-finance-tracker/checklists/release.md).
+- ⏭️ Next (v1.1): behaviour insights and a what-if simulator (User Story 8).
   See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
 

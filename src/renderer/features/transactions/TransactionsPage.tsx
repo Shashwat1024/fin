@@ -75,7 +75,7 @@ export function TransactionsPage() {
         }
         actions={
           <Button onClick={() => dialog.open({ mode: 'expense', accountId })}>
-            <PlusIcon /> Add transaction <ShortcutHint combo="mod+n" className="ml-1 opacity-70" />
+            <PlusIcon /> Add transaction <ShortcutHint combo="mod+n" className="ml-1 *:bg-transparent *:text-primary-foreground *:ring-1 *:ring-primary-foreground/50" />
           </Button>
         }
       />

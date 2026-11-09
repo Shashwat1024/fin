@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 import { externalRequests, fixture, launchFin, onboard, toast, type FinApp } from './app'
 
@@ -23,6 +25,9 @@ test('every core flow works with no network requests', async () => {
     ['Control+5', 'Recurring'],
     ['Control+6', 'Budget'],
     ['Control+7', 'Goals'],
+    ['Control+8', 'Categories'],
+    ['Control+9', 'Forecast'],
+    ['Control+0', 'Net worth'],
     ['Control+,', 'Settings'],
   ] as const) {
     await page.keyboard.press(key)
@@ -54,4 +59,13 @@ test('every core flow works with no network requests', async () => {
     ),
   )
   expect(result).toBe('blocked')
+})
+
+/** Constitution I: the log file records what happened, never amounts, payees or account names. */
+test('the log file holds no financial details', async () => {
+  const log = readFileSync(join(fin.dataDir, 'logs', 'fin.log'), 'utf8')
+  expect(log).toContain('app.ready')
+  for (const secret of ['HDFC Savings', 'Demo Savings Bank', '50000', '50,000', 'SWIGGY', 'Swiggy', 'Chai Point', 'hdfc_savings.csv']) {
+    expect(log, `log mentions ${secret}`).not.toContain(secret)
+  }
 })

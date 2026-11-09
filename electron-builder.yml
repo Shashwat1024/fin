@@ -15,3 +15,6 @@ nsis:
   allowToChangeInstallationDirectory: true
   perMachine: false
 publish: null
+# English UI only: drop Chromium's other ~50 locale packs.
+electronLanguages: [en-US, en-GB]
+compression: maximum

@@ -106,7 +106,9 @@ if (!app.requestSingleInstanceLock()) {
     })
     log.info('app.ready', { version: app.getVersion() })
     createWindow()
-    void system.dailyBackup()
+    // The daily backup copies the whole database on the main thread; start it once the first
+    // screen has had time to load so it never competes with startup queries (NFR cold start).
+    setTimeout(() => void system.dailyBackup(), 5_000)
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })

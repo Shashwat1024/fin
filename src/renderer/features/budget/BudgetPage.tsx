@@ -140,7 +140,7 @@ function BudgetMonthView({ budget: b }: { budget: BudgetMonthDto }) {
           <span>
             <MoneyText minor={b.uncategorizedMinor} className="font-medium text-foreground" /> of spending this month has no category, so it is not
             in any line.{' '}
-            <Link className="text-primary underline-offset-4 hover:underline" to={`/transactions?${new URLSearchParams({ from: b.from, to: b.to, category: 'uncategorized', kind: 'standard' })}`}>
+            <Link className="text-primary underline underline-offset-4" to={`/transactions?${new URLSearchParams({ from: b.from, to: b.to, category: 'uncategorized', kind: 'standard' })}`}>
               Categorise it
             </Link>
           </span>

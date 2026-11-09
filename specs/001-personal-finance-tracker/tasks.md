@@ -257,12 +257,12 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ## Phase 10: Polish & Cross-Cutting Concerns (Release 1.0)
 
-- [ ] T105 [P] Keyboard shortcuts sheet and full keyboard audit of every screen in `src/renderer/components/ShortcutsSheet.tsx`
-- [ ] T106 [P] Accessibility pass (AA contrast tokens, focus rings, ARIA labels) with axe checks in `tests/e2e/a11y.spec.ts`
-- [ ] T107 [P] 50k-transaction perf seed in `src/db/seed/perf.ts` and perf assertions in `tests/e2e/perf.spec.ts`
-- [ ] T108 Profile and optimise slow queries/rendering to meet plan.md performance goals
-- [ ] T109 [P] Update README with install, data location, privacy, backup guidance, and disk-encryption note in `README.md`
-- [ ] T110 Run full quickstart.md validation on the packaged NSIS build and record results in `specs/001-personal-finance-tracker/checklists/release.md`
+- [x] T105 [P] Keyboard shortcuts sheet and full keyboard audit of every screen in `src/renderer/components/ShortcutsSheet.tsx` (opens with ?, Ctrl+/, palette or sidebar; groups shared with Settings; focus-visible and dialog focus checks in `tests/e2e/a11y.spec.ts`)
+- [x] T106 [P] Accessibility pass (AA contrast tokens, focus rings, ARIA labels) with axe checks in `tests/e2e/a11y.spec.ts` (axe-core injected directly; @axe-core/playwright needs a second page Electron cannot open)
+- [x] T107 [P] 50k-transaction perf seed in `src/db/seed/perf.ts` and perf assertions in `tests/e2e/perf.spec.ts` (+ query budgets in `tests/integration/perf.test.ts`, `npm run seed:perf`)
+- [x] T108 Profile and optimise slow queries/rendering to meet plan.md performance goals (64 MB page cache, cheaper net worth, one occurrence pass in forecast, deferred daily backup; Overview 1,463 → 246 ms)
+- [x] T109 [P] Update README with install, data location, privacy, backup guidance, and disk-encryption note in `README.md`
+- [x] T110 Run full quickstart.md validation on the packaged NSIS build and record results in `specs/001-personal-finance-tracker/checklists/release.md` (automated suite on the packaged app; installer run, signing and icon left as manual items)
 
 ---
 

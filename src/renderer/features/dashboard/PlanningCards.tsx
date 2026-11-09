@@ -106,7 +106,7 @@ export function PlanningCards() {
           {(goals.data ?? []).length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No goals yet.{' '}
-              <Link to="/goals" className="text-primary underline-offset-4 hover:underline">
+              <Link to="/goals" className="text-primary underline underline-offset-4">
                 Set one up
               </Link>
             </p>

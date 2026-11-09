@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   FileUpIcon,
+  KeyboardIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
   LineChartIcon,
@@ -20,7 +21,7 @@ import { ShortcutHint } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
 import { DemoBanner } from '@renderer/features/demo/DemoBanner'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
-import { useHotkey } from '@renderer/lib/hotkeys'
+import { showShortcuts, useHotkey } from '@renderer/lib/hotkeys'
 import { cn } from '@renderer/lib/utils'
 
 const NAV: { to: string; label: string; icon: LucideIcon; combo: string }[] = [
@@ -90,10 +91,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem key={item.to} {...item} />
           ))}
         </nav>
-        <div className="mt-auto px-3 text-xs text-muted-foreground">
+        <div className="mt-auto flex flex-col gap-2 px-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <SearchIcon className="size-3.5" /> Command palette <ShortcutHint combo="mod+k" />
           </span>
+          <button
+            type="button"
+            onClick={showShortcuts}
+            className="flex items-center gap-2 rounded text-left outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-sidebar-ring/50"
+          >
+            <KeyboardIcon className="size-3.5" /> Keyboard shortcuts <ShortcutHint combo="shift+?" />
+          </button>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">

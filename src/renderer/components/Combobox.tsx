@@ -8,7 +8,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from '@renderer/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
 import { optionValue, scoreOption } from '@renderer/lib/search'
@@ -92,7 +91,6 @@ export function Combobox({
                     {clearLabel}
                   </CommandItem>
                 </CommandGroup>
-                <CommandSeparator />
               </>
             )}
             {groups.map(([group, items]) => (

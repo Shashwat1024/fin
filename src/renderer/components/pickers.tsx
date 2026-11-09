@@ -71,16 +71,18 @@ type AccountSelectProps = {
   invalid?: boolean
   className?: string
   placeholder?: string
+  /** Accessible name when there is no visible <label> (e.g. in a filter bar). */
+  label?: string
 }
 
 export const ALL_ACCOUNTS = 'all'
 
-export function AccountSelect({ value, onChange, allowAll, exclude, id, invalid, className, placeholder = 'Choose account' }: AccountSelectProps) {
+export function AccountSelect({ value, onChange, allowAll, exclude, id, invalid, className, placeholder = 'Choose account', label }: AccountSelectProps) {
   const { data = [] } = useAccounts()
   const accounts = data.filter((a) => a.id !== exclude)
   return (
     <Select value={value ?? undefined} onValueChange={onChange}>
-      <SelectTrigger id={id} aria-invalid={invalid || undefined} className={className ?? 'w-full'}>
+      <SelectTrigger id={id} aria-label={label} aria-invalid={invalid || undefined} className={className ?? 'w-full'}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

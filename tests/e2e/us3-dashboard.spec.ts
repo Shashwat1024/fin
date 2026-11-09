@@ -9,7 +9,8 @@ test.beforeAll(async () => {
 })
 test.afterAll(async () => fin?.close())
 
-const card = (label: string) => page.getByRole('link', { name: new RegExp(`^${label}`) })
+// Cards live in the main area; the sidebar has links with some of the same names.
+const card = (label: string) => page.getByRole('main').getByRole('link', { name: new RegExp(`^${label}`) })
 const cardValue = (label: string) => card(label).locator('[data-slot="card-title"]')
 
 async function addTxn(shortcut: string, amount: string, payee: string) {

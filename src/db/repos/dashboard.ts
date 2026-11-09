@@ -77,7 +77,7 @@ export function dashboardSummary(db: Db, today: string): DashboardSummary {
   const mtd = { page: 'transactions', from: monthStart, to: today, kind: 'standard' } as const
 
   // Net worth uses recorded valuations for investments, loans and other assets (FR-028), like the Net worth page.
-  const worth = netWorthNow(db, today)
+  const worth = netWorthNow(db, today, accounts)
   const savingsRatePercent =
     current.inMinor > 0 ? Math.round(((current.inMinor - current.outMinor) / current.inMinor) * 100) : null
 
