@@ -173,3 +173,7 @@ export const reconcileInput = z.object({ id, statementDate: calendarDate, statem
 
 export type ImportPreviewInput = z.output<typeof importPreviewInput>
 export type ImportCommitInput = z.output<typeof importCommitInput>
+
+// ---- Dashboard ----------------------------------------------------------------------------------
+
+export const dashboardInput = z.object({ asOf: calendarDate.optional() }).optional()

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SearchIcon, XIcon } from 'lucide-react'
-import { financialYear, presetRange, type RangePreset } from '@domain/dates'
+import { financialYear, formatDate, isCalendarDate, presetRange, type RangePreset } from '@domain/dates'
 import { AccountSelect, ALL_ACCOUNTS, CategoryPicker } from '@renderer/components/pickers'
 import { Button } from '@renderer/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@renderer/components/ui/input-group'
@@ -15,12 +15,25 @@ export type FilterState = {
   direction: 'all' | 'in' | 'out'
   /** Hidden filter set by links from import history. */
   importBatchId?: string | null
+  /** Exact dates from a dashboard drill-down; replaces the preset range until the range is changed. */
+  customRange?: { from: string; to: string } | null
+  /** 'standard' hides transfers between your own accounts (dashboard income and spending). */
+  kind?: 'standard' | null
+}
+
+const CUSTOM = 'custom'
+
+/** Exact from/to dates from URL parameters, when both are valid. */
+export function rangeFromParams(params: URLSearchParams): FilterState['customRange'] {
+  const from = params.get('from')
+  const to = params.get('to')
+  return from && to && isCalendarDate(from) && isCalendarDate(to) && from <= to ? { from, to } : null
 }
 
 export const DEFAULT_FILTERS: FilterState = { text: '', range: 'all', accountId: ALL_ACCOUNTS, categoryId: null, direction: 'all' }
 
 export function toTxnFilter(f: FilterState, today: string, fyStartMonth: number): TxnFilter {
-  const range = f.range === 'all' ? null : presetRange(f.range, today, fyStartMonth)
+  const range = f.customRange ?? (f.range === 'all' ? null : presetRange(f.range, today, fyStartMonth))
   return {
     text: f.text.trim() || undefined,
     from: range?.from,
@@ -29,11 +42,12 @@ export function toTxnFilter(f: FilterState, today: string, fyStartMonth: number)
     categoryIds: f.categoryId ? [f.categoryId] : undefined,
     direction: f.direction === 'all' ? undefined : f.direction,
     importBatchId: f.importBatchId ?? undefined,
+    kind: f.kind ?? undefined,
   }
 }
 
 export const isFiltered = (f: FilterState) =>
-  f.text.trim() !== '' || f.range !== 'all' || f.accountId !== ALL_ACCOUNTS || f.categoryId !== null || f.direction !== 'all' || Boolean(f.importBatchId)
+  f.text.trim() !== '' || f.range !== 'all' || f.accountId !== ALL_ACCOUNTS || f.categoryId !== null || f.direction !== 'all' || Boolean(f.importBatchId) || Boolean(f.customRange) || Boolean(f.kind)
 
 type Props = { value: FilterState; onChange: (f: FilterState) => void; today: string; fyStartMonth: number }
 
@@ -67,11 +81,19 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
           data-search-input
         />
       </InputGroup>
-      <Select value={value.range} onValueChange={(v) => onChange({ ...value, range: v as FilterState['range'] })}>
-        <SelectTrigger className="w-40" aria-label="Date range">
+      <Select
+        value={value.customRange ? CUSTOM : value.range}
+        onValueChange={(v) => v !== CUSTOM && onChange({ ...value, range: v as FilterState['range'], customRange: null })}
+      >
+        <SelectTrigger className="min-w-40" aria-label="Date range">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          {value.customRange && (
+            <SelectItem value={CUSTOM}>
+              {formatDate(value.customRange.from)} – {formatDate(value.customRange.to)}
+            </SelectItem>
+          )}
           <SelectItem value="all">All dates</SelectItem>
           <SelectItem value="this-month">This month</SelectItem>
           <SelectItem value="last-month">Last month</SelectItem>
@@ -95,6 +117,11 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
       {value.importBatchId && (
         <Button variant="secondary" size="sm" onClick={() => onChange({ ...value, importBatchId: null })} aria-label="Remove import filter">
           From one import <XIcon />
+        </Button>
+      )}
+      {value.kind === 'standard' && (
+        <Button variant="secondary" size="sm" onClick={() => onChange({ ...value, kind: null })} aria-label="Include transfers">
+          Excluding transfers <XIcon />
         </Button>
       )}
       {isFiltered(value) && (

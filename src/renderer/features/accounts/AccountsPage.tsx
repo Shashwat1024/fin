@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArchiveIcon, ArchiveRestoreIcon, FileUpIcon, ScaleIcon, LandmarkIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, ReceiptTextIcon, WalletIcon } from 'lucide-react'
 import { formatDate } from '@domain/dates'
-import { ACCOUNT_TYPE_LABELS } from '@domain/ledger'
+import { ACCOUNT_GROUP_LABELS, ACCOUNT_GROUPS, ACCOUNT_TYPE_LABELS, inAccountGroup, type AccountGroup } from '@domain/ledger'
 import { EmptyState, ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
 import { MoneyText } from '@renderer/components/MoneyText'
 import { StatCard } from '@renderer/components/StatCard'
@@ -36,6 +36,11 @@ export function AccountsPage() {
   const dialog = useAccountDialog()
   const active = (accounts.data ?? []).filter((a) => !a.archived)
   const summary = summarizeAccounts(active)
+  const [params] = useSearchParams()
+  const groupParam = params.get('group')
+  const group: AccountGroup = (ACCOUNT_GROUPS as readonly string[]).includes(groupParam ?? '') ? (groupParam as AccountGroup) : 'all'
+  const shown = (accounts.data ?? []).filter((a) => inAccountGroup(group, a.type))
+  const groupTotal = shown.filter((a) => !a.archived).reduce((t, a) => t + a.balanceMinor, 0)
 
   return (
     <Page>
@@ -74,8 +79,19 @@ export function AccountsPage() {
             <StatCard label="Owed" value={<MoneyText minor={summary.owedMinor} />} detail="Credit cards and loans" />
             <StatCard label="Net worth" value={<MoneyText minor={summary.netWorthMinor} />} detail="Everything you own minus what you owe" />
           </div>
+          {group !== 'all' && (
+            <div role="status" className="flex items-center justify-between gap-4 rounded-lg border bg-muted/40 px-4 py-3 text-sm">
+              <span>
+                Showing {ACCOUNT_GROUP_LABELS[group].toLowerCase()} · Total{' '}
+                <MoneyText minor={groupTotal} className="font-semibold" />
+              </span>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/accounts">Show all accounts</Link>
+              </Button>
+            </div>
+          )}
           {SECTIONS.map((section) => {
-            const list = (accounts.data ?? []).filter(section.match)
+            const list = shown.filter(section.match)
             if (list.length === 0) return null
             return (
               <section key={section.title} aria-label={section.title}>

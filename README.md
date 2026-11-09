@@ -40,6 +40,10 @@ different folder, for example a throwaway one while testing.
 - ✅ User Story 2: CSV statement import with built-in HDFC / ICICI / SBI / Axis / Kotak / card
   layouts, saved layouts, duplicate detection, balance check, import history with raw lines and
   one-step batch undo, and reconciliation against a statement balance.
-- ⏭️ Next: dashboard drill-downs (US3), backup/restore & export (US4).
+- ✅ User Story 3: overview with cash position, month-to-date spending vs the same point last
+  month, income, savings rate, card dues and net worth. Each card links to the records that add
+  up to it, shows how current its data is (per account, incl. latest import), and the six-month
+  money in/out chart has a table view.
+- ⏭️ Next: backup/restore & export (US4).
   See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
 

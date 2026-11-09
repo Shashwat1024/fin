@@ -1,6 +1,8 @@
 import { undoGroup } from '@db/audit'
 import { all, type Db } from '@db/connection'
+import { todayIn } from '@domain/dates'
 import { createAccount, listAccounts, setAccountArchived, updateAccount } from '@db/repos/accounts'
+import { dashboardSummary } from '@db/repos/dashboard'
 import { listCategories, listTags } from '@db/repos/categories'
 import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
 import { getSettings, updateSettings } from '@db/repos/settings'
@@ -64,6 +66,7 @@ export const handlers: Handlers = {
   'import.batches': (db) => listBatches(db),
   'import.batchRows': (db, input) => batchRows(db, input.id),
   'import.undo': (db, input) => undoImport(db, input.batchId, input.includeEdited),
+  'dashboard.summary': (db, input) => dashboardSummary(db, input?.asOf ?? todayIn(getSettings(db).timezone)),
   'undo.apply': (db, input) => {
     const r = undoGroup(db, input.auditGroupId)
     return { reverted: r.result.reverted, auditGroupId: r.auditGroupId }

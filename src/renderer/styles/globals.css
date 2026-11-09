@@ -34,6 +34,8 @@
     --color-primary-foreground: var(--primary-foreground);
     --color-primary: var(--primary);
     --color-positive: var(--positive);
+    --color-series-in: var(--series-in);
+    --color-series-out: var(--series-out);
     --color-warning: var(--warning);
     --color-popover-foreground: var(--popover-foreground);
     --color-popover: var(--popover);
@@ -60,6 +62,9 @@
     --primary: oklch(0.47 0.09 182);
     --primary-foreground: oklch(0.985 0.01 182);
     --positive: oklch(0.52 0.12 155);
+    /* Chart series (validated: categorical slots 1-2, light surface) */
+    --series-in: #2a78d6;
+    --series-out: #eb6834;
     --warning: oklch(0.62 0.14 70);
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
@@ -97,6 +102,8 @@
     --primary: oklch(0.78 0.11 180);
     --primary-foreground: oklch(0.2 0.03 185);
     --positive: oklch(0.78 0.13 155);
+    --series-in: #3987e5;
+    --series-out: #d95926;
     --warning: oklch(0.8 0.13 75);
     --secondary: oklch(0.269 0 0);
     --secondary-foreground: oklch(0.985 0 0);

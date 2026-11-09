@@ -42,7 +42,7 @@ Mutations return an `auditGroupId` usable with `undo.apply`.
 | `budget.month` | `{ month: 'YYYY-MM' }` | `{ toAssign, rows: { categoryId, carry, assigned, spent, available }[] }` | FR-023 |
 | `budget.assign` | `{ month, categoryId, assigned }` | `BudgetRow` | FR-023 |
 | `goals.list` / `.upsert` / `.contribute` | | `GoalWithProjection` | FR-024 |
-| `dashboard.summary` | `{ asOf? }` | `DashboardSummary` — each metric `{ value, asOf, sources: { accountId, lastImportAt? }[], drill: TxnFilter }` | FR-025/026 |
+| `dashboard.summary` | `{ asOf? }` | `DashboardSummary` (`src/shared/types.ts`) — each metric `{ valueMinor, asOf, sources: { accountId, accountName, lastDataDate, lastImport }[], drill: DrillTarget }`; `drill` is a transactions date range (+ direction, transfers excluded) or an account group, and the page it opens shows a total equal to the metric. Also `savingsRate`, `cardDues.cardCount` and six `months` of money in/out. | FR-025/026 |
 | `forecast.run` | `{ days: 30\|60\|90 }` | `{ points: { date, balance }[], low: { date, balance }, belowBuffer: Range[], confidence: 'high'\|'medium'\|'low', assumptions: Assumption[] }` | FR-027 |
 | `networth.history` | `{ from, to, interval: 'month' }` | `{ date, assets, liabilities, net }[]` | FR-028 |
 | `valuations.upsert` | `{ accountId, date, value }` | `Valuation` | FR-028 |

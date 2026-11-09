@@ -1,4 +1,6 @@
-import type { AccountNature, AccountType } from '@domain/ledger'
+import type { AccountGroup, AccountNature, AccountType } from '@domain/ledger'
+
+export type { AccountGroup }
 
 export type Theme = 'system' | 'light' | 'dark'
 
@@ -156,3 +158,41 @@ export type ImportBatchDto = {
 export type ImportRowDto = { rowNumber: number; raw: string[]; outcome: string; message: string | null; transactionId: string | null }
 
 export type ReconcileResult = { statementBalanceMinor: number; computedBalanceMinor: number; differenceMinor: number; asOf: string }
+
+// ---- Dashboard (US3) --------------------------------------------------------------------------
+
+/** Where a metric's records live. Each metric equals the total shown at its drill-down (SC-005). */
+export type DrillTarget =
+  | { page: 'transactions'; from: string; to: string; direction?: 'in' | 'out'; kind?: 'standard' }
+  | { page: 'accounts'; group: AccountGroup }
+
+export type MetricSource = {
+  accountId: string
+  accountName: string
+  /** Latest date this account's data covers: its last transaction, or its start date. */
+  lastDataDate: string
+  lastImport: { at: string; fileName: string } | null
+}
+
+export type Metric = {
+  valueMinor: number
+  /** The oldest "data covers up to" date among the sources: everything is known at least up to here. */
+  asOf: string | null
+  sources: MetricSource[]
+  drill: DrillTarget
+}
+
+export type MonthFlow = { month: string; from: string; to: string; inMinor: number; outMinor: number }
+
+export type DashboardSummary = {
+  today: string
+  cash: Metric
+  spent: Metric & { previousMinor: number; previousFrom: string; previousTo: string }
+  income: Metric
+  /** Whole percent of this month's income not spent (null without income); drills to this month's transactions. */
+  savingsRate: { percent: number | null; drill: DrillTarget }
+  cardDues: Metric & { cardCount: number }
+  netWorth: Metric & { assetsMinor: number; owedMinor: number }
+  /** Money in and out for the last six months, oldest first (spending as positive numbers). */
+  months: MonthFlow[]
+}

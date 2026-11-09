@@ -79,3 +79,27 @@ export function transferLegs(amountMinor: number): { fromMinor: number; toMinor:
   }
   return { fromMinor: -amountMinor, toMinor: amountMinor }
 }
+
+/** Account groups used by dashboard balance metrics and the Accounts page filter (they must agree, SC-005). */
+export const ACCOUNT_GROUPS = ['cash', 'cards', 'owed', 'all'] as const
+export type AccountGroup = (typeof ACCOUNT_GROUPS)[number]
+
+export const ACCOUNT_GROUP_LABELS: Record<AccountGroup, string> = {
+  cash: 'Cash and bank accounts',
+  cards: 'Credit cards',
+  owed: 'Credit cards and loans',
+  all: 'All accounts',
+}
+
+export function inAccountGroup(group: AccountGroup, type: AccountType): boolean {
+  switch (group) {
+    case 'cash':
+      return isLiquid(type)
+    case 'cards':
+      return type === 'credit_card'
+    case 'owed':
+      return accountNature(type) === 'liability'
+    case 'all':
+      return true
+  }
+}

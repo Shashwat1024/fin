@@ -138,17 +138,17 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ### Tests for User Story 3
 
-- [ ] T058 [P] [US3] Integration tests for dashboard summary (cash position = cash+bank only, MTD vs same point last month, savings rate, card dues, net worth, asOf/sources) in `tests/integration/db/dashboard.test.ts`
-- [ ] T059 [P] [US3] E2E: each card drill-down total equals card value in `tests/e2e/us3-dashboard.spec.ts`
+- [x] T058 [P] [US3] Integration tests for dashboard summary (cash position = cash+bank only, MTD vs same point last month, savings rate, card dues, net worth, asOf/sources) in `tests/integration/db/dashboard.test.ts`
+- [x] T059 [P] [US3] E2E: each card drill-down total equals card value in `tests/e2e/us3-dashboard.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T060 [US3] Implement dashboard aggregation queries (single round trip) in `src/db/repos/dashboard.ts` and service/IPC `dashboard.summary` in `src/main/services/dashboard.ts`
-- [ ] T061 [P] [US3] Build dashboard cards with sparklines, `asOf`/source badges, and DrillDownLink in `src/renderer/features/dashboard/`
-- [ ] T062 [P] [US3] Build dashboard empty state with add-account/import/demo actions in `src/renderer/features/dashboard/DashboardEmpty.tsx`
-- [ ] T063 [US3] Provide accessible table fallbacks for every chart in `src/renderer/components/ChartTable.tsx`
+- [x] T060 [US3] Implement dashboard aggregation queries (single round trip) in `src/db/repos/dashboard.ts` and IPC `dashboard.summary` (as built: handler in `src/main/handlers.ts`, no separate service)
+- [x] T061 [P] [US3] Build dashboard cards with sparklines, `asOf`/source badges, and DrillDownLink in `src/renderer/features/dashboard/`
+- [x] T062 [P] [US3] Build dashboard empty state with add-account/import/demo actions in `src/renderer/features/dashboard/DashboardEmpty.tsx`
+- [x] T063 [US3] Provide accessible table fallbacks for every chart in `src/renderer/components/ChartTable.tsx`
 
-**Checkpoint**: US1–US3 functional
+**Checkpoint**: US1–US3 functional ✅ (2026-11-09: `tests/e2e/us3-dashboard.spec.ts` passes; the demo-data action on the empty dashboard arrives with demo mode in US4)
 
 ---
 

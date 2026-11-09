@@ -33,6 +33,7 @@ export const inputSchemas = {
   'import.batches': s.empty,
   'import.batchRows': s.idInput,
   'import.undo': s.importUndoInput,
+  'dashboard.summary': s.dashboardInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -69,6 +70,7 @@ export interface Outputs {
   'import.batches': t.ImportBatchDto[]
   'import.batchRows': t.ImportRowDto[]
   'import.undo': t.Mutation<{ removed: number; kept: number }>
+  'dashboard.summary': t.DashboardSummary
 }
 
 export type Output<C extends Channel> = Outputs[C]

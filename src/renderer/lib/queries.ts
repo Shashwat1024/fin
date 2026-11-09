@@ -32,6 +32,8 @@ export const usePayeeSuggestions = (prefix: string) =>
 export const useTxnSummary = (filter: TxnFilter, key: string) =>
   useQuery({ queryKey: ['txns', 'summary', key, filter], queryFn: () => call('txns.query', { ...filter, limit: 10 }) })
 
+export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: () => call('dashboard.summary', undefined) })
+
 export const PAGE_SIZE = 200
 
 export const useTxnPages = (filter: TxnFilter) =>

@@ -9,7 +9,7 @@ import { Button } from '@renderer/components/ui/button'
 import { useFinMutation, useSettings, useTxnPages } from '@renderer/lib/queries'
 import { BulkActionBar } from './BulkActionBar'
 import { useTransactionDialog } from './TransactionDialog'
-import { DEFAULT_FILTERS, isFiltered, toTxnFilter, TransactionFilters, type FilterState } from './TransactionFilters'
+import { DEFAULT_FILTERS, isFiltered, rangeFromParams, toTxnFilter, TransactionFilters, type FilterState } from './TransactionFilters'
 import { TransactionList } from './TransactionList'
 
 const RANGES = ['this-month', 'last-month', 'last-30-days', 'last-90-days', 'this-fy'] as const
@@ -23,6 +23,8 @@ export function TransactionsPage() {
     accountId: params.get('account') ?? ALL_ACCOUNTS,
     categoryId: params.get('category'),
     importBatchId: params.get('batch'),
+    customRange: rangeFromParams(params),
+    kind: params.get('kind') === 'standard' ? 'standard' : null,
     range: (RANGES as readonly string[]).includes(params.get('range') ?? '') ? (params.get('range') as FilterState['range']) : 'all',
     direction: params.get('direction') === 'in' || params.get('direction') === 'out' ? (params.get('direction') as 'in' | 'out') : 'all',
   }))
