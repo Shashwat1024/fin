@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `release\Fin Setup 0.1.0.exe`.
+   `release\Fin Setup 1.1.0.exe`.
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. The installer is not code-signed yet, so Windows SmartScreen may warn about an unknown publisher.

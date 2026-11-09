@@ -54,6 +54,15 @@ what opened them. A visible focus indicator was found on every element reached b
 - the command palette's list structure (separators removed);
 - focus returned after dialogs opened without a trigger.
 
+## Release 1.1.0 (User Story 8)
+
+**Build**: `release\Fin Setup 1.1.0.exe` (113.9 MB, unsigned) · SHA-256
+`072549637fd27a0792d57981e460229c5e1047509cdfa2ae25b745a3c2989b91`. The full suite ran against the
+packaged app: **25 passed, 1 skipped** (screenshots), including `us8-insights.spec.ts` and the axe audit
+of the Insights and What if screens. Unit and integration: 270 passed. With 50,000 transactions:
+insights about 370 ms, looks-recurring suggestions about 350 ms, a 90-day what-if about 85 ms;
+the Overview stays about 250 ms.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
