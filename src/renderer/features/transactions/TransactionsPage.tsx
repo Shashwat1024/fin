@@ -20,6 +20,7 @@ export function TransactionsPage() {
   const dialog = useTransactionDialog()
   const [filters, setFilters] = useState<FilterState>(() => ({
     ...DEFAULT_FILTERS,
+    text: params.get('q') ?? '',
     accountId: params.get('account') ?? ALL_ACCOUNTS,
     categoryId: params.get('category'),
     importBatchId: params.get('batch'),

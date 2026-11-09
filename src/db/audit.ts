@@ -21,6 +21,7 @@ const AUDITED = new Set([
   'goal_contributions',
   'rules',
   'valuations',
+  'dismissed_insights',
 ])
 
 const columnCache = new WeakMap<Db, Map<string, Set<string>>>()

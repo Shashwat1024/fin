@@ -58,6 +58,15 @@ Load demo data → every card shows a value, "as of" date, and drill-down whose 
 - Rule "SWIGGY → Food › Delivery": preview count, apply, undo in one step.
 - Forecast 30 days on demo data: low point and confidence shown; assumptions list starting balance, recurring items, baseline.
 
+### 5b. Insights and what-if (US8, v1.1)
+- Demo data → **Insights**: "Spotify now costs ₹139", a Shopping › Clothing change against the Aug–Sept
+  average, and a weekend pattern, each with the transactions behind it and a link to all of them.
+- Dismiss one → it disappears with an Undo; "Show dismissed" brings it back.
+- **What if** tab: add a ₹1,50,000 purchase and ₹10,000 a month for Emergency fund → the lowest balance
+  and the goal date move; the Forecast and Goals pages are unchanged afterwards.
+- **Recurring** → "Looks recurring" lists Domestic help; **Set up…** opens the dialog filled in.
+- Late-night spending is not detected: statements carry dates, not times of day.
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the suite blocks all network via Electron session
 `webRequest`, asserts zero outbound requests across the core flows, and reads the log file to check

@@ -23,7 +23,7 @@ test.beforeAll(async () => {
 })
 test.afterAll(async () => fin?.close())
 
-const SCREENS: { name: string; key: string; ready: (p: Page) => ReturnType<Page['getByRole']> }[] = [
+const SCREENS: { name: string; key?: string; hash?: string; ready: (p: Page) => ReturnType<Page['getByRole']> }[] = [
   { name: 'Overview', key: 'Control+1', ready: (p) => p.getByRole('heading', { name: 'Overview' }) },
   { name: 'Transactions', key: 'Control+2', ready: (p) => p.getByRole('row').nth(2) },
   { name: 'Accounts', key: 'Control+3', ready: (p) => p.getByRole('heading', { name: 'Accounts' }) },
@@ -35,6 +35,8 @@ const SCREENS: { name: string; key: string; ready: (p: Page) => ReturnType<Page[
   { name: 'Forecast', key: 'Control+9', ready: (p) => p.getByRole('region', { name: 'Assumptions' }) },
   { name: 'Net worth', key: 'Control+0', ready: (p) => p.getByRole('region', { name: 'Assets' }) },
   { name: 'Settings', key: 'Control+,', ready: (p) => p.getByRole('heading', { name: 'Settings' }) },
+  { name: 'Insights', hash: '/insights', ready: (p) => p.getByRole('article').first() },
+  { name: 'What if', hash: '/insights?tab=what-if', ready: (p) => p.getByRole('region', { name: 'Scenario result' }) },
 ]
 
 async function audit(label: string) {
@@ -59,7 +61,8 @@ for (const theme of ['light', 'dark'] as const) {
   test(`every screen passes axe (WCAG 2.2 AA) in ${theme} mode`, async () => {
     await page.evaluate(`document.documentElement.classList.toggle('dark', ${theme === 'dark'})`)
     for (const s of SCREENS) {
-      await page.keyboard.press(s.key)
+      if (s.key) await page.keyboard.press(s.key)
+      else await page.evaluate(`location.hash = ${JSON.stringify(s.hash)}`)
       await expect(s.ready(page)).toBeVisible()
       await audit(`${s.name} (${theme})`)
     }

@@ -51,38 +51,52 @@ type Values = {
   active: boolean
 }
 
-function initial(item: RecurringItemDto | undefined, today: string): Values {
+/** Starting values for a new item, e.g. from a "looks recurring" suggestion. */
+export type RecurringDraft = Partial<Pick<RecurringItemDto, 'name' | 'kind' | 'amountMinor' | 'accountId' | 'categoryId' | 'frequency' | 'anchorDate' | 'toleranceBp'>>
+
+function initial(item: RecurringItemDto | undefined, today: string, draft: RecurringDraft = {}): Values {
+  const from = item ?? draft
   return {
-    name: item?.name ?? '',
-    kind: item?.kind ?? 'bill',
-    amount: item ? amountToText(item.amountMinor) : '',
-    accountId: item?.accountId ?? null,
+    name: from.name ?? '',
+    kind: from.kind ?? 'bill',
+    amount: from.amountMinor ? amountToText(from.amountMinor) : '',
+    accountId: from.accountId ?? null,
     toAccountId: item?.toAccountId ?? null,
-    categoryId: item?.categoryId ?? null,
-    frequency: item?.frequency ?? 'monthly',
+    categoryId: from.categoryId ?? null,
+    frequency: from.frequency ?? 'monthly',
     interval: String(item?.interval ?? 1),
-    anchorDate: item?.anchorDate ?? today,
+    anchorDate: from.anchorDate ?? today,
     ends: item?.endDate ? 'date' : item?.count ? 'count' : 'never',
     endDate: item?.endDate ?? '',
     count: item?.count ? String(item.count) : '',
-    toleranceBp: item?.toleranceBp ?? 1000,
+    toleranceBp: from.toleranceBp ?? 1000,
     active: item?.active ?? true,
   }
 }
 
-/** Create or edit a recurring item. `item` undefined = new. */
-export function RecurringDialog({ open, item, onOpenChange }: { open: boolean; item?: RecurringItemDto; onOpenChange: (o: boolean) => void }) {
+/** Create or edit a recurring item. `item` undefined = new, optionally starting from `draft`. */
+export function RecurringDialog({
+  open,
+  item,
+  draft,
+  onOpenChange,
+}: {
+  open: boolean
+  item?: RecurringItemDto
+  draft?: RecurringDraft
+  onOpenChange: (o: boolean) => void
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {open && <RecurringForm key={item?.id ?? 'new'} item={item} onDone={() => onOpenChange(false)} />}
+      {open && <RecurringForm key={item?.id ?? 'new'} item={item} draft={draft} onDone={() => onOpenChange(false)} />}
     </Dialog>
   )
 }
 
-function RecurringForm({ item, onDone }: { item?: RecurringItemDto; onDone: () => void }) {
+function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft?: RecurringDraft; onDone: () => void }) {
   const id = useId()
   const { data: settings } = useSettings()
-  const [v, setValues] = useState(() => initial(item, todayIn(settings?.timezone ?? 'Asia/Kolkata')))
+  const [v, setValues] = useState(() => initial(item, todayIn(settings?.timezone ?? 'Asia/Kolkata'), draft))
   const set = <K extends keyof Values>(k: K, value: Values[K]) => setValues((s) => ({ ...s, [k]: value }))
   const [submitted, setSubmitted] = useState(false)
   const [server, setServer] = useState<Record<string, string>>({})

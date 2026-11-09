@@ -7,7 +7,8 @@ import { migrate } from '@db/migrate'
 import { suggestForTxns } from '@db/repos/categorization'
 import { dashboardSummary } from '@db/repos/dashboard'
 import { previewImport } from '@db/repos/imports'
-import { forecast, netWorthHistoryFor } from '@db/repos/insights'
+import { forecast, netWorthHistoryFor, whatIf } from '@db/repos/insights'
+import { listInsights, recurringSuggestions } from '@db/repos/patterns'
 import { budgetMonth, listGoals, listOccurrences, listRecurring } from '@db/repos/planning'
 import { listAccounts } from '@db/repos/accounts'
 import { listCategories } from '@db/repos/categories'
@@ -91,6 +92,13 @@ describe('performance with 50,000 transactions', () => {
     expect(measure('net worth (all)', () => netWorthHistoryFor(db, TODAY, '1900-01-01'))).toBeLessThan(300)
     const ids = queryTransactions(db, { categoryIds: ['uncategorized'], limit: 100 }).rows.map((t) => t.id)
     expect(measure('suggestions (100 rows)', () => suggestForTxns(db, ids))).toBeLessThan(150)
+  })
+
+  it('computes insights, recurring suggestions and a what-if quickly (US8)', () => {
+    expect(measure('insights', () => listInsights(db, TODAY), 3)).toBeLessThan(500)
+    expect(measure('looks recurring', () => recurringSuggestions(db, TODAY), 3)).toBeLessThan(500)
+    const changes = [{ kind: 'large_purchase' as const, name: 'Laptop', amountMinor: 15_000_000, date: TODAY }]
+    expect(measure('what-if 90', () => whatIf(db, 90, changes, TODAY))).toBeLessThan(300)
   })
 
   it('previews a 1,000-row CSV in under 1 s', () => {

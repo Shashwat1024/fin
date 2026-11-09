@@ -19,7 +19,8 @@ import {
 } from '@db/repos/categorization'
 import { dashboardSummary } from '@db/repos/dashboard'
 import { listCategories, listTags } from '@db/repos/categories'
-import { deleteValuation, forecast, listValuations, netWorthHistoryFor, upsertValuation } from '@db/repos/insights'
+import { deleteValuation, forecast, listValuations, netWorthHistoryFor, upsertValuation, whatIf } from '@db/repos/insights'
+import { dismissInsight, listInsights, recurringSuggestions, restoreInsight } from '@db/repos/patterns'
 import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
 import {
   assignBudget,
@@ -143,6 +144,11 @@ export const handlers: Handlers = {
   'valuations.list': ({ db }, input) => listValuations(db, input.accountId),
   'valuations.upsert': ({ db }, input) => upsertValuation(db, input, today(db)),
   'valuations.delete': ({ db }, input) => deleteValuation(db, input.id),
+  'insights.list': ({ db }, input) => listInsights(db, today(db), input?.includeDismissed ?? false),
+  'insights.dismiss': ({ db }, input) => dismissInsight(db, input.key),
+  'insights.restore': ({ db }, input) => restoreInsight(db, input.key),
+  'recurring.detectCandidates': ({ db }) => recurringSuggestions(db, today(db)),
+  'scenarios.run': ({ db }, input) => whatIf(db, input.days, input.changes, today(db)),
   'undo.apply': ({ db }, input) => {
     const r = undoGroup(db, input.auditGroupId)
     return { reverted: r.result.reverted, auditGroupId: r.auditGroupId }

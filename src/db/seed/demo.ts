@@ -1,4 +1,4 @@
-import { addDays, addMonths, endOfMonth, startOfMonth } from '@domain/dates'
+import { addDays, addMonths, endOfMonth, startOfMonth, weekday } from '@domain/dates'
 import type { Db } from '../connection'
 import { createAccount } from '../repos/accounts'
 import { listCategories } from '../repos/categories'
@@ -51,7 +51,8 @@ export function seedDemoData(db: Db, today: string): void {
     add(bank, day(5), -between(140_000, 260_000), 'BESCOM electricity', c('Housing › Electricity'))
     add(bank, day(6), -99_900, 'Airtel fibre', c('Housing › Internet'))
     add(card, day(7), -64_900, 'Netflix', c('Entertainment › Subscriptions'))
-    add(card, day(12), -11_900, 'Spotify', c('Entertainment › Subscriptions'))
+    // Spotify's price went up in the third month (a behaviour insight, US8).
+    add(card, day(12), m >= 2 ? -13_900 : -11_900, 'Spotify', c('Entertainment › Subscriptions'))
     add(bank, day(10), -350_000, 'Domestic help', c('Bills › Domestic help'))
     for (let w = 0; w < 4; w++) {
       add(card, day(2 + w * 7), -between(180_000, 420_000), 'DMart', c('Food › Groceries'))
@@ -61,12 +62,18 @@ export function seedDemoData(db: Db, today: string): void {
       add(card, day(5 + w * 7), -between(30_000, 90_000), 'Uber', c('Transport › Cab & auto'))
     }
     add(card, day(18), -between(100_000, 600_000), 'Amazon', c('Shopping › Household'))
+    // Clothes: a little most months, a lot in the third (a category change, US8).
+    add(card, day(22), m === 2 ? -750_000 : -between(150_000, 230_000), 'Myntra', c('Shopping › Clothing'))
     add(bank, day(20), -between(80_000, 250_000), 'Apollo Pharmacy', c('Health › Medicines'))
     // Card bill paid from the bank: a transfer, so not counted as spending twice.
     const bill = day(25)
     if (bill <= today) createTransfer(db, { fromAccountId: bank, toAccountId: card, postedDate: bill, amountMinor: between(1_200_000, 1_800_000) })
     if (day(16) <= today) createTransfer(db, { fromAccountId: bank, toAccountId: funds, postedDate: day(16), amountMinor: 1_000_000 })
     if (day(9) <= today) createTransfer(db, { fromAccountId: bank, toAccountId: wallet, postedDate: day(9), amountMinor: 200_000 })
+  }
+  // Eating out on Saturdays, on the card (a weekend pattern, US8).
+  for (let d = start; d < today; d = addDays(d, 1)) {
+    if (weekday(d) === 6) add(card, d, -between(120_000, 240_000), 'Toit Brewpub', c('Food › Dining out'))
   }
   seedPlanning(db, today, start, { bank, card, funds }, c)
 
@@ -111,7 +118,7 @@ function seedPlanning(
   recurring('Electricity', 'bill', a.bank, 200_000, day(5), { categoryId: c('Housing › Electricity'), toleranceBp: 4000 })
   recurring('Airtel fibre', 'bill', a.bank, 99_900, day(6), { categoryId: c('Housing › Internet') })
   recurring('Netflix', 'subscription', a.card, 64_900, day(7), { categoryId: c('Entertainment › Subscriptions') })
-  recurring('Spotify', 'subscription', a.card, 11_900, day(12), { categoryId: c('Entertainment › Subscriptions') })
+  recurring('Spotify', 'subscription', a.card, 13_900, day(12), { categoryId: c('Entertainment › Subscriptions'), toleranceBp: 2500 })
   recurring('Index fund SIP', 'savings', a.bank, 1_000_000, day(16), { toAccountId: a.funds })
   // The card bill varies, so it matches within ±50%; card purchases reach cash on this date (forecast).
   recurring('Credit card bill', 'transfer', a.bank, 1_500_000, day(25), { toAccountId: a.card, toleranceBp: 5000 })
@@ -127,12 +134,12 @@ function seedPlanning(
     ['Entertainment › Subscriptions', 80_000],
     ['Shopping › Household', 300_000],
     ['Health › Medicines', 200_000],
-    ['Food › Dining out', 200_000],
+    ['Food › Dining out', 1_000_000],
     ['Bills › Mobile', 70_000],
-    ['Shopping › Clothing', 300_000],
+    ['Shopping › Clothing', 800_000],
     ['Entertainment › Movies & events', 150_000],
     ['Savings & investments › Mutual funds & SIP', 1_000_000],
-    ['Savings & investments › Emergency fund', 2_250_000],
+    ['Savings & investments › Emergency fund', 950_000],
   ]
   for (let m = 0; m <= 3; m++) {
     const month = addMonths(start, m).slice(0, 7)

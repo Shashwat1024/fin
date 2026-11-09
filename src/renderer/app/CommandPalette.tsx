@@ -5,9 +5,11 @@ import {
   ArrowLeftRightIcon,
   ArrowUpRightIcon,
   FileUpIcon,
+  FlaskConicalIcon,
   LandmarkIcon,
   KeyboardIcon,
   LayoutDashboardIcon,
+  LightbulbIcon,
   LineChartIcon,
   MoonIcon,
   PieChartIcon,
@@ -116,6 +118,12 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/net-worth'))}>
             <ScaleIcon /> Net worth
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/insights'))}>
+            <LightbulbIcon /> Insights
+          </CommandItem>
+          <CommandItem value="what if simulator scenario" onSelect={run(() => navigate('/insights?tab=what-if'))}>
+            <FlaskConicalIcon /> What if… (simulator)
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/settings'))}>
             <SettingsIcon /> Settings

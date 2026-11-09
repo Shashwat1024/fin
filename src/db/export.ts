@@ -97,6 +97,7 @@ export function exportJson(db: Db, now = new Date()) {
       db,
       'SELECT id, account_id AS accountId, date, value_minor AS valueMinor, note FROM valuations ORDER BY account_id, date',
     ),
+    dismissedInsights: all<Record<string, unknown>>(db, 'SELECT key, dismissed_at AS dismissedAt FROM dismissed_insights ORDER BY dismissed_at, key'),
     importBatches: all<Record<string, unknown>>(
       db,
       `SELECT id, account_id AS accountId, file_name AS fileName, imported_at AS importedAt, rows_total AS rowsTotal,

@@ -14,6 +14,8 @@ type Props = {
   ranges?: readonly { from: string; to: string }[]
   /** One point to mark and label (e.g. the lowest balance). */
   marker?: { date: string; label: string } | null
+  /** A second line on the same dates, drawn dashed and muted (e.g. the forecast before a what-if change). */
+  compare?: readonly LinePoint[] | null
   /** Tooltip body for the hovered point. */
   tooltip: (index: number) => ReactNode
   height?: number
@@ -60,11 +62,11 @@ function useWidth<T extends HTMLElement>() {
  * A single-series line over dates, drawn as SVG. Hover or use ←/→ for the value on each day;
  * gridlines and axes stay quiet so the line, the reference and any shaded range carry the meaning.
  */
-export function LineChart({ points, label, reference, ranges = [], marker, tooltip, height = 240, className }: Props) {
+export function LineChart({ points, label, reference, ranges = [], marker, compare, tooltip, height = 240, className }: Props) {
   const [box, width] = useWidth<HTMLDivElement>()
   const [active, setActive] = useState<number | null>(null)
   const n = points.length
-  const values = points.map((p) => p.valueMinor)
+  const values = [...points, ...(compare ?? [])].map((p) => p.valueMinor)
   const ticks = niceTicks(Math.min(...values, reference?.valueMinor ?? Infinity), Math.max(...values, reference?.valueMinor ?? -Infinity))
   const lo = ticks[0]!
   const hi = ticks.at(-1)!
@@ -73,7 +75,8 @@ export function LineChart({ points, label, reference, ranges = [], marker, toolt
   const x = (i: number) => PAD.left + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW)
   const y = (v: number) => PAD.top + (1 - (v - lo) / (hi - lo || 1)) * plotH
   const index = new Map(points.map((p, i) => [p.date, i]))
-  const path = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.valueMinor).toFixed(1)}`).join('')
+  const line = (list: readonly LinePoint[]) => list.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.valueMinor).toFixed(1)}`).join('')
+  const path = line(points)
   const spanMonths = n > 1 ? (asDate(points[n - 1]!.date).getTime() - asDate(points[0]!.date).getTime()) / 86_400_000 > 120 : false
   const fmt = (d: string) => (spanMonths ? MONTH_YEAR : DAY_MONTH).format(asDate(d))
   const xTicks = n <= 1 ? [0] : Array.from(new Set(Array.from({ length: Math.min(6, n) }, (_, k) => Math.round((k * (n - 1)) / Math.min(5, n - 1)))))
@@ -146,6 +149,9 @@ export function LineChart({ points, label, reference, ranges = [], marker, toolt
                 {reference.label}
               </text>
             </g>
+          )}
+          {compare && compare.length > 0 && (
+            <path d={line(compare)} fill="none" strokeWidth={2} strokeDasharray="5 4" strokeLinejoin="round" className="stroke-muted-foreground/70" />
           )}
           <path d={path} fill="none" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" className="stroke-series-in" />
           {m !== undefined && marker && (

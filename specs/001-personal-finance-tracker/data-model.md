@@ -143,6 +143,14 @@ over ledger balance for investment/other types).
 As built: `value_minor` is the shown value (worth, or amount owed for liabilities), `UNIQUE(account_id,
 date)`, dates ≤ today; "now" counts future-dated transactions already entered, like account balances.
 
+## DismissedInsight (v1.1)
+
+`id, key UNIQUE, dismissed_at` (migration 6). Insights and "looks recurring" suggestions are computed
+from the ledger on every request and never stored; only the stable key of one the user dismissed is
+kept (audited, so dismissing can be undone). Keys change when the facts do (for example
+`category:<id>:<YYYY-MM>` or `sub_price:<itemId>:<latestTxnId>`), so a new month or a new price
+shows a fresh insight. What-if scenarios are not stored at all.
+
 ## ImportBatch / ImportRow / MappingPreset
 
 - **ImportBatch**: `id, account_id, file_name, file_sha256, preset_id?, mapping JSON, imported_at,

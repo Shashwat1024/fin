@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
+import { addDays } from '@domain/dates'
 import {
   bestMatch,
+  detectRecurring,
   describeSchedule,
   nextOccurrence,
   occurrenceState,
   occurrencesBetween,
   withinTolerance,
+  type PastPayment,
   type Schedule,
 } from '@domain/recurrence'
 
@@ -98,5 +101,58 @@ describe('matching', () => {
     expect(occurrenceState('2026-11-08', '2026-11-09', false, false)).toBe('overdue')
     expect(occurrenceState('2026-11-08', '2026-11-09', true, false)).toBe('paid')
     expect(occurrenceState('2026-11-08', '2026-11-09', true, true)).toBe('skipped')
+  })
+})
+
+describe('detecting likely recurring payments', () => {
+  const TODAY = '2026-11-09'
+  let k = 0
+  const pay = (date: string, amountMinor: number, over: Partial<PastPayment> = {}): PastPayment => ({
+    txnId: `p${++k}`,
+    date,
+    amountMinor,
+    accountId: 'bank',
+    groupKey: 'airtel',
+    name: 'Airtel',
+    categoryId: 'bills',
+    ...over,
+  })
+
+  it('finds a steady monthly payment and suggests a schedule anchored on the latest one', () => {
+    const list = [pay('2026-07-12', -79_900), pay('2026-08-11', -79_900), pay('2026-09-12', -82_000), pay('2026-10-12', -79_900)]
+    const [s] = detectRecurring(list, TODAY)
+    expect(s).toMatchObject({
+      key: 'bank:airtel:out',
+      name: 'Airtel',
+      direction: 'out',
+      amountMinor: 79_900,
+      frequency: 'monthly',
+      lastDate: '2026-10-12',
+      nextDate: '2026-11-12',
+      toleranceBp: 500,
+      categoryId: 'bills',
+    })
+    expect(s!.payments.map((p) => p.date)).toEqual(['2026-10-12', '2026-09-12', '2026-08-11', '2026-07-12'])
+  })
+
+  it('finds weekly income too', () => {
+    const list = [0, 7, 14, 21].map((d) => pay(addDays('2026-10-12', d), 500_000, { groupKey: 'client', name: 'Client' }))
+    expect(detectRecurring(list, TODAY)).toMatchObject([{ frequency: 'weekly', direction: 'in', nextDate: '2026-11-09' }])
+  })
+
+  it('needs three payments, a steady rhythm, a steady amount, and a series that has not stopped', () => {
+    expect(detectRecurring([pay('2026-09-12', -79_900), pay('2026-10-12', -79_900)], TODAY)).toEqual([])
+    expect(detectRecurring([pay('2026-07-12', -79_900), pay('2026-09-12', -79_900), pay('2026-10-12', -79_900)], TODAY)).toEqual([])
+    expect(detectRecurring([pay('2026-08-12', -79_900), pay('2026-09-12', -200_000), pay('2026-10-12', -79_900)], TODAY)).toEqual([])
+    expect(detectRecurring([pay('2026-05-12', -79_900), pay('2026-06-12', -79_900), pay('2026-07-12', -79_900)], TODAY)).toEqual([])
+  })
+
+  it('keeps accounts and counterparties apart', () => {
+    const list = [
+      pay('2026-08-12', -79_900),
+      pay('2026-09-12', -79_900, { accountId: 'card' }),
+      pay('2026-10-12', -79_900, { groupKey: 'jio' }),
+    ]
+    expect(detectRecurring(list, TODAY)).toEqual([])
   })
 })

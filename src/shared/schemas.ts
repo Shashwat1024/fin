@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { isCalendarDate } from '@domain/dates'
 import { ACCOUNT_TYPES } from '@domain/ledger'
+import { FREQUENCIES } from '@domain/recurrence'
 
 /** Integer minor units within the safe-integer range. */
 export const minor = z.number().int().min(-Number.MAX_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER)
@@ -291,3 +292,22 @@ export const valuationInput = z.object({
   note: z.string().trim().max(500).nullable().optional(),
 })
 export type ValuationInput = z.output<typeof valuationInput>
+
+// ---- Insights and what-if (US8) ------------------------------------------------------------------
+
+export const insightsListInput = z.object({ includeDismissed: z.boolean().optional() }).optional()
+export const insightKeyInput = z.object({ key: z.string().min(1).max(300) })
+
+const positiveAmount = minor.min(1, 'Enter an amount')
+const nonZeroAmount = minor.refine((v) => v !== 0, 'Enter an amount')
+export const scenarioChange = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('new_bill'), name, amountMinor: positiveAmount, frequency: z.enum(FREQUENCIES), startDate: calendarDate }),
+  z.object({ kind: z.literal('income_change'), amountMinor: nonZeroAmount, fromDate: calendarDate }),
+  z.object({ kind: z.literal('large_purchase'), name, amountMinor: positiveAmount, date: calendarDate }),
+  z.object({ kind: z.literal('loan_prepayment'), loanId: id, amountMinor: positiveAmount, date: calendarDate }),
+  z.object({ kind: z.literal('savings_change'), goalId: id.nullable(), amountMinor: nonZeroAmount, fromDate: calendarDate }),
+])
+export const scenarioInput = z.object({
+  days: z.union([z.literal(30), z.literal(60), z.literal(90)]),
+  changes: z.array(scenarioChange).max(20),
+})

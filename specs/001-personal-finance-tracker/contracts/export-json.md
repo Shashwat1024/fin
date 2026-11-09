@@ -25,6 +25,7 @@
                "linkedAccountId": null } ],
   "goalContributions": [ { "id": "…", "goalId": "…", "date": "2026-10-05", "amountMinor": 2000000, "note": null } ],
   "valuations": [ { "id": "…", "accountId": "…", "date": "2026-10-31", "valueMinor": 45945000, "note": null } ],
+  "dismissedInsights": [ { "key": "category:cat_…:2026-10", "dismissedAt": "2026-11-09T10:00:00.000Z" } ],
   "importBatches": []
 }
 ```

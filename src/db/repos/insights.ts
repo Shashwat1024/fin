@@ -1,15 +1,16 @@
 import { addDays, addMonths, compareDates, startOfMonth, type CalendarDate } from '@domain/dates'
-import { BASELINE_DAYS, OVERDUE_GRACE_DAYS, runForecast, type ForecastEvent } from '@domain/forecast'
+import { BASELINE_DAYS, OVERDUE_GRACE_DAYS, runForecast, type ForecastEvent, type ForecastInput } from '@domain/forecast'
+import { runScenario, type ScenarioChange } from '@domain/scenarios'
 import { isLiquid, type AccountType } from '@domain/ledger'
 import { canBeValued, netWorthHistory, type NetWorthAccount } from '@domain/networth'
 import { invariant, notFound } from '@shared/errors'
 import type { ValuationInput } from '@shared/schemas'
-import type { AccountDto, ForecastAssumption, ForecastDto, Mutation, NetWorthDto, ValuationDto } from '@shared/types'
+import type { AccountDto, ForecastAssumption, ForecastDto, Mutation, NetWorthDto, ScenarioDto, ValuationDto } from '@shared/types'
 import { withAudit } from '../audit'
 import { all, get, newId, nowIso, type Db } from '../connection'
 import { getSettings } from './settings'
 import { listAccounts } from './accounts'
-import { listOccurrences, listRecurring } from './planning'
+import { goalBases, listOccurrences, listRecurring } from './planning'
 
 // ---- Forecast (FR-027) ---------------------------------------------------------------------------
 
@@ -21,7 +22,13 @@ const shortDate = (d: CalendarDate) => DAY_MONTH.format(new Date(`${d}T00:00:00Z
  * Recurring page, so an item shown as paid there is never counted again here.
  */
 export function forecast(db: Db, days: number, today: CalendarDate): ForecastDto {
-  const accounts = listAccounts(db)
+  const { input, liquid, notCounted } = forecastBase(db, days, today)
+  const f = runForecast(input)
+  return { ...f, assumptions: assumptions(f, liquid, notCounted), hasCashAccounts: liquid.length > 0 }
+}
+
+/** Everything the projection is computed from, shared by the forecast and what-if scenarios. */
+function forecastBase(db: Db, days: number, today: CalendarDate, accounts: readonly AccountDto[] = listAccounts(db)) {
   const liquid = accounts.filter((a) => a.isLiquid)
   const liquidIds = new Set(liquid.map((a) => a.id))
   const startMinor = liquid.reduce((t, a) => t + a.balanceMinor, 0)
@@ -78,8 +85,32 @@ export function forecast(db: Db, days: number, today: CalendarDate): ForecastDto
         )?.d ?? null)
 
   const bufferMinor = getSettings(db).bufferMinor
-  const f = runForecast({ today, days, startMinor, bufferMinor, events, dailySpending: spending, historyStart })
-  return { ...f, assumptions: assumptions(f, liquid, notCounted), hasCashAccounts: liquid.length > 0 }
+  const input: ForecastInput = { today, days, startMinor, bufferMinor, events, dailySpending: spending, historyStart }
+  return { input, liquid, notCounted, items }
+}
+
+// ---- What-if scenarios (FR-029) ------------------------------------------------------------------
+
+/**
+ * A scenario on top of the real forecast and goals. Reads only: nothing is written, so the real
+ * data is exactly as it was afterwards (US8 scenario 2).
+ */
+export function whatIf(db: Db, days: number, changes: readonly ScenarioChange[], today: CalendarDate): ScenarioDto {
+  const accounts = listAccounts(db)
+  const { input, items } = forecastBase(db, days, today, accounts)
+  const liquidIds = new Set(accounts.filter((a) => a.isLiquid).map((a) => a.id))
+  const loans = netWorthNow(db, today, accounts)
+    .values.filter((v) => v.account.type === 'loan')
+    .map((v) => ({ id: v.account.id, name: v.account.name, owedMinor: v.valueMinor }))
+  for (const c of changes) {
+    if (c.kind === 'loan_prepayment' && !loans.some((l) => l.id === c.loanId)) throw invariant('Choose one of your loan accounts')
+  }
+  const goals = goalBases(db, today).map((g) => ({ ...g, liquid: g.linkedAccountId !== null && liquidIds.has(g.linkedAccountId) }))
+  for (const c of changes) {
+    if (c.kind === 'savings_change' && c.goalId && !goals.some((g) => g.id === c.goalId)) throw notFound('Goal')
+  }
+  const incomeItemIds = [...items.values()].filter((i) => i.kind === 'income').map((i) => i.id)
+  return runScenario({ forecast: input, incomeItemIds, goals, loans }, changes)
 }
 
 function assumptions(f: ReturnType<typeof runForecast>, liquid: readonly AccountDto[], notCounted: ReadonlySet<string>): ForecastAssumption[] {

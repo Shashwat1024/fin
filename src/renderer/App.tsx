@@ -8,6 +8,7 @@ import { AccountDialogProvider } from '@renderer/features/accounts/AccountDialog
 import { AccountsPage } from '@renderer/features/accounts/AccountsPage'
 import { ReconcileDialogProvider } from '@renderer/features/accounts/ReconcileDialog'
 import { ImportPage } from '@renderer/features/import/ImportPage'
+import { InsightsPage } from '@renderer/features/insights/InsightsPage'
 import { BudgetPage } from '@renderer/features/budget/BudgetPage'
 import { CategoriesPage } from '@renderer/features/categories/CategoriesPage'
 import { DashboardPage } from '@renderer/features/dashboard/DashboardPage'
@@ -37,6 +38,7 @@ function Routed() {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/forecast" element={<ForecastPage />} />
         <Route path="/net-worth" element={<NetWorthPage />} />
+        <Route path="/insights" element={<InsightsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<DashboardPage />} />
       </Routes>

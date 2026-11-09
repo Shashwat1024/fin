@@ -268,11 +268,11 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ## Phase 11: User Story 8 - Behavior insights & what-if (Priority: P3, v1.1)
 
-- [ ] T111 [P] [US8] Unit tests for insight detectors (subscription creep, weekend/late-night, category drift, unusual purchase) in `tests/unit/domain/insights.test.ts`
-- [ ] T112 [P] [US8] Unit tests asserting what-if scenarios never mutate inputs in `tests/unit/domain/scenarios.test.ts`
-- [ ] T113 [US8] Implement insight detectors with cited sources in `src/domain/insights.ts`
-- [ ] T114 [US8] Implement what-if scenarios layered on forecast/goals in `src/domain/scenarios.ts`
-- [ ] T115 [US8] Build insights feed (dismissible, neutral language) and scenario simulator in `src/renderer/features/insights/`
+- [x] T111 [P] [US8] Unit tests for insight detectors (subscription creep, weekend/late-night, category drift, unusual purchase) in `tests/unit/domain/insights.test.ts` (late-night not possible: statements have no time of day; merchant changes and subscription price rises added)
+- [x] T112 [P] [US8] Unit tests asserting what-if scenarios never mutate inputs in `tests/unit/domain/scenarios.test.ts` (+ every-table snapshot before/after in `tests/integration/db/patterns.test.ts`)
+- [x] T113 [US8] Implement insight detectors with cited sources in `src/domain/insights.ts` (repo `src/db/repos/patterns.ts`; dismissals in migration 6)
+- [x] T114 [US8] Implement what-if scenarios layered on forecast/goals in `src/domain/scenarios.ts` (`scenarios.run`, read-only)
+- [x] T115 [US8] Build insights feed (dismissible, neutral language) and scenario simulator in `src/renderer/features/insights/` (+ "Looks recurring" suggestions on the Recurring page, FR-022 P1: `recurring.detectCandidates`; e2e `tests/e2e/us8-insights.spec.ts`)
 
 ---
 

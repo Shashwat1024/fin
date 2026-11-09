@@ -15,7 +15,8 @@ import { useFinMutation, useOccurrences, useRecurring, useToday } from '@rendere
 import { plural } from '@renderer/lib/text'
 import type { OccurrenceDto, RecurringItemDto } from '@shared/types'
 import { OccurrenceList, pendingTotals } from './OccurrenceList'
-import { KIND_LABELS, RecurringDialog } from './RecurringDialog'
+import { KIND_LABELS, RecurringDialog, type RecurringDraft } from './RecurringDialog'
+import { RecurringSuggestions } from './RecurringSuggestions'
 
 /** Days of upcoming commitments shown on the Overview; the "Next 14 days" tab adds up to the same total. */
 export const COMMITMENT_DAYS = 14
@@ -43,7 +44,7 @@ export function RecurringPage() {
   const view: View = (VIEWS as readonly string[]).includes(params.get('view') ?? '') ? (params.get('view') as View) : 'next14'
   const items = useRecurring()
   const occurrences = useOccurrences(addDays(today, -60), addDays(today, 59))
-  const [editing, setEditing] = useState<{ item?: RecurringItemDto } | null>(null)
+  const [editing, setEditing] = useState<{ item?: RecurringItemDto; draft?: RecurringDraft } | null>(null)
   const [deleting, setDeleting] = useState<RecurringItemDto | null>(null)
   const remove = useFinMutation('recurring.delete', { success: 'Recurring item deleted', onSuccess: () => setDeleting(null) })
 
@@ -66,6 +67,9 @@ export function RecurringPage() {
   return (
     <Page>
       <PageHeader title="Recurring" description="Income, bills, subscriptions and EMIs that repeat. Payments are matched automatically." actions={newButton} />
+      <div className="mb-6 empty:hidden">
+        <RecurringSuggestions onSetUp={(draft) => setEditing({ draft })} />
+      </div>
       {items.data.length === 0 ? (
         <EmptyState
           icon={<RepeatIcon />}
@@ -192,7 +196,7 @@ export function RecurringPage() {
           </Card>
         </div>
       )}
-      <RecurringDialog open={editing !== null} item={editing?.item} onOpenChange={(o) => !o && setEditing(null)} />
+      <RecurringDialog open={editing !== null} item={editing?.item} draft={editing?.draft} onOpenChange={(o) => !o && setEditing(null)} />
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(o) => !o && setDeleting(null)}

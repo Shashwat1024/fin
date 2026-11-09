@@ -5,6 +5,7 @@ import {
   KeyboardIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
+  LightbulbIcon,
   LineChartIcon,
   PieChartIcon,
   PlusIcon,
@@ -24,7 +25,7 @@ import { useTransactionDialog } from '@renderer/features/transactions/Transactio
 import { showShortcuts, useHotkey } from '@renderer/lib/hotkeys'
 import { cn } from '@renderer/lib/utils'
 
-const NAV: { to: string; label: string; icon: LucideIcon; combo: string }[] = [
+const NAV: { to: string; label: string; icon: LucideIcon; combo?: string }[] = [
   { to: '/', label: 'Overview', icon: LayoutDashboardIcon, combo: 'mod+1' },
   { to: '/transactions', label: 'Transactions', icon: ReceiptTextIcon, combo: 'mod+2' },
   { to: '/accounts', label: 'Accounts', icon: LandmarkIcon, combo: 'mod+3' },
@@ -35,6 +36,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo: string }[] = [
   { to: '/categories', label: 'Categories', icon: TagsIcon, combo: 'mod+8' },
   { to: '/forecast', label: 'Forecast', icon: LineChartIcon, combo: 'mod+9' },
   { to: '/net-worth', label: 'Net worth', icon: ScaleIcon, combo: 'mod+0' },
+  { to: '/insights', label: 'Insights', icon: LightbulbIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' },
 ]
 
@@ -52,7 +54,7 @@ function NavItem({ to, label, icon: Icon, combo }: (typeof NAV)[number]) {
     >
       <Icon className="size-4" aria-hidden />
       <span className="flex-1">{label}</span>
-      <ShortcutHint combo={combo} className="opacity-0 transition-opacity group-hover:opacity-60" />
+      {combo && <ShortcutHint combo={combo} className="opacity-0 transition-opacity group-hover:opacity-60" />}
     </NavLink>
   )
 }

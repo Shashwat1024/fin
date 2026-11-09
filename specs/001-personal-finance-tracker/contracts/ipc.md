@@ -44,7 +44,7 @@ Mutations return an `auditGroupId` usable with `undo.apply`.
 | `recurring.occurrences` | `{ from, to }` | `OccurrenceDto[]`: state `expected\|paid\|overdue\|skipped`, `matchedTxn`, `manual`. Matching is derived (same account, tolerance, ±3 days; earlier dues claim first) | FR-021/022 |
 | `recurring.candidates` | `{ itemId, dueDate }` | Transactions within 10 days in the same direction, not hand-linked elsewhere | FR-022 |
 | `recurring.setOccurrence` | `{ itemId, dueDate, action: 'skip'\|'match'\|'reset', txnId? }` | `{ auditGroupId }` | FR-022 |
-| `recurring.detectCandidates` | — | `Candidate[]` | (P1, not built yet) |
+| `recurring.detectCandidates` | — | `RecurringSuggestionDto[]`: series of ≥ 3 payments to the same counterparty from one account, every gap 26–35 days (monthly) or 6–8 (weekly), amounts within ±25% of the median, latest one not more than half a period overdue; payments already matched to an item, item names already set up, and dismissed series are left out. Each has `{ key, dismissKey, name, accountId, accountName, categoryId, categoryPath, direction, amountMinor (median), frequency, lastDate, nextDate, toleranceBp, suggestedKind, payments }`. Suggestions only. | FR-022 (P1) |
 | `budget.month` | `{ month: 'YYYY-MM' }` | `BudgetMonthDto`: `toAssign`, income, leftover, overspent, and parent-category groups of `{ carry, assigned, spent, available }` rows; `uncategorizedMinor` | FR-023 |
 | `budget.assign` | `{ month, categoryId, assignedMinor ≥ 0 }` (needs/wants/goals/buffer categories only; 0 removes) | `{ month: BudgetMonthDto, auditGroupId }` | FR-023 |
 | `goals.list` | — | `GoalDto[]` (progress, `requiredMonthlyMinor`, pace, `projectedDate`, `status`, latest 20 entries) | FR-024 |
@@ -56,6 +56,9 @@ Mutations return an `auditGroupId` usable with `undo.apply`.
 | `valuations.list` | `{ accountId }` | `ValuationDto[]` newest first | FR-028 |
 | `valuations.upsert` | `{ accountId, date ≤ today, valueMinor ≥ 0, note? }` (investment, loan, other asset/liability only; one per account and day) | `{ valuation }` + `auditGroupId` | FR-028 |
 | `valuations.delete` | `{ id }` | `{}` + `auditGroupId` | FR-028 |
+| `insights.list` | `{ includeDismissed? }` | `InsightsDto` `{ today, asOf, historyStart, dismissedCount, insights: InsightDto[] }`; each insight `{ key, kind: 'category_change'\|'merchant_change'\|'subscription_price'\|'subscription_creep'\|'weekend_spending'\|'unusual_purchase', title, detail, direction, period, comparison, currentMinor, comparisonMinor, sources (≤ 5 transactions), sourceCount, filter (transactions drill), dismissed }` | FR-029 (v1.1) |
+| `insights.dismiss` / `insights.restore` | `{ key }` (an insight key, or a suggestion's `dismissKey`) | `{}` + `auditGroupId` (undoable) | FR-029 |
+| `scenarios.run` | `{ days: 30\|60\|90, changes: ScenarioChange[] (≤ 20) }`; a change is `new_bill { name, amountMinor, frequency, startDate }`, `income_change { amountMinor ≠ 0 (monthly), fromDate }`, `large_purchase { name, amountMinor, date }`, `loan_prepayment { loanId, amountMinor, date }` or `savings_change { goalId \| null, amountMinor ≠ 0 (monthly), fromDate }` | `ScenarioDto` `{ before: Forecast, after: Forecast, added: ForecastEvent[], goals: { id, name, before, after, extraMonthlyMinor }[], loans: { id, name, beforeMinor, afterMinor }[], notes }`. Read-only: nothing is written. | FR-029 (v1.1) |
 | `export.csv` / `export.json` | — | `{ path } \| null` (main shows the save dialog; null if cancelled) | FR-030 |
 | `app.status` | — | `AppStatus` `{ demo, dataDir, backupDir, defaultBackupDir, counts }` | FR-031/034 |
 | `backup.create` | `{ passphrase? }` (≥ 8 chars) | `BackupInfo` `{ fileName, path, createdAt, kind, encrypted, sizeBytes }` | FR-031/033 |

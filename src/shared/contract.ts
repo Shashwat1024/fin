@@ -77,6 +77,11 @@ export const inputSchemas = {
   'valuations.list': s.valuationsListInput,
   'valuations.upsert': s.valuationInput,
   'valuations.delete': s.idInput,
+  'insights.list': s.insightsListInput,
+  'insights.dismiss': s.insightKeyInput,
+  'insights.restore': s.insightKeyInput,
+  'recurring.detectCandidates': s.empty,
+  'scenarios.run': s.scenarioInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -158,6 +163,11 @@ export interface Outputs {
   'valuations.list': t.ValuationDto[]
   'valuations.upsert': t.Mutation<{ valuation: t.ValuationDto }>
   'valuations.delete': t.Mutation<object>
+  'insights.list': t.InsightsDto
+  'insights.dismiss': t.Mutation<object>
+  'insights.restore': t.Mutation<object>
+  'recurring.detectCandidates': t.RecurringSuggestionDto[]
+  'scenarios.run': t.ScenarioDto
 }
 
 export type Output<C extends Channel> = Outputs[C]

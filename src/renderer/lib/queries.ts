@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { todayIn } from '@domain/dates'
 import type { Channel, Input, Output } from '@shared/contract'
 import type { TxnFilter } from '@shared/schemas'
+import type { ScenarioChange } from '@shared/types'
 import { call } from './ipc'
 
 export const useSettings = () => useQuery({ queryKey: ['settings'], queryFn: () => call('settings.get', undefined) })
@@ -57,6 +58,13 @@ export const useNetWorth = (from?: string) =>
   useQuery({ queryKey: ['networth', from ?? null], queryFn: () => call('networth.history', { from }), placeholderData: (prev) => prev })
 export const useValuations = (accountId: string | null) =>
   useQuery({ queryKey: ['valuations', accountId], queryFn: () => call('valuations.list', { accountId: accountId! }), enabled: Boolean(accountId) })
+export const useInsights = (includeDismissed: boolean) =>
+  useQuery({ queryKey: ['insights', includeDismissed], queryFn: () => call('insights.list', { includeDismissed }), placeholderData: (prev) => prev })
+export const useRecurringSuggestions = () =>
+  useQuery({ queryKey: ['recurring', 'suggestions'], queryFn: () => call('recurring.detectCandidates', undefined) })
+/** A what-if run. Read-only on the main side, so it is a query, not a mutation. */
+export const useScenario = (days: 30 | 60 | 90, changes: readonly ScenarioChange[]) =>
+  useQuery({ queryKey: ['scenario', days, changes], queryFn: () => call('scenarios.run', { days, changes: [...changes] }), placeholderData: (prev) => prev })
 export const useRules = () => useQuery({ queryKey: ['rules'], queryFn: () => call('rules.list', undefined) })
 export const useSuggestions = (txnIds: readonly string[]) =>
   useQuery({

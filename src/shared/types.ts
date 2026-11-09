@@ -1,11 +1,13 @@
 import type { Forecast } from '@domain/forecast'
+import type { Insight } from '@domain/insights'
+import type { ScenarioChange, ScenarioResult } from '@domain/scenarios'
 import type { GoalStatus } from '@domain/goals'
 import type { AccountGroup, AccountNature, AccountType } from '@domain/ledger'
 import type { NetWorthPoint } from '@domain/networth'
-import type { Frequency, OccurrenceState } from '@domain/recurrence'
+import type { Frequency, OccurrenceState, RecurringSuggestion } from '@domain/recurrence'
 import type { RuleCondition } from '@domain/rules'
 
-export type { AccountGroup, Frequency, GoalStatus, OccurrenceState, RuleCondition }
+export type { AccountGroup, Frequency, GoalStatus, OccurrenceState, RuleCondition, ScenarioChange }
 
 export type Theme = 'system' | 'light' | 'dark'
 
@@ -429,3 +431,26 @@ export type NetWorthDto = {
   points: NetWorthPoint[]
   accounts: NetWorthAccountRow[]
 }
+
+// ---- Behaviour insights and what-if (US8, v1.1) -----------------------------------------------
+
+export type InsightDto = Insight & { dismissed: boolean }
+
+export type InsightsDto = {
+  today: string
+  /** Latest transaction date: insights cover data up to here (FR-026). */
+  asOf: string | null
+  historyStart: string | null
+  insights: InsightDto[]
+  dismissedCount: number
+}
+
+export type RecurringSuggestionDto = RecurringSuggestion & {
+  /** Pass to insights.dismiss to stop suggesting this series. */
+  dismissKey: string
+  accountName: string
+  categoryPath: string | null
+  suggestedKind: RecurringKind
+}
+
+export type ScenarioDto = ScenarioResult

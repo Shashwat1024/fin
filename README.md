@@ -69,7 +69,8 @@ npm run dev          # launch the app with hot reload
 npm test             # unit + integration tests (includes 50k-transaction query budgets)
 npm run test:e2e     # build, then end-to-end tests against the real Electron app
 npm run lint; npm run typecheck
-npm run package      # Windows installer in releasenpm run seed:perf    # a 50,000-transaction data folder for manual performance checks
+npm run package      # Windows installer in release\
+npm run seed:perf    # a 50,000-transaction data folder for manual performance checks
 ```
 
 Set `FIN_DATA_DIR` to use a different data folder, for example a throwaway one while testing. Set
@@ -105,6 +106,11 @@ How to validate each feature by hand is in
 - ✅ Release polish: keyboard shortcuts sheet (`?`), WCAG 2.2 AA checks on every screen in both
   themes, 50,000-transaction performance checks, and a Windows installer. Results:
   [checklists/release.md](specs/001-personal-finance-tracker/checklists/release.md).
-- ⏭️ Next (v1.1): behaviour insights and a what-if simulator (User Story 8).
-  See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
+- ✅ User Story 8 (v1.1): **Insights** — category and merchant spending against your usual months,
+  subscription price rises and more subscriptions than six months ago, a weekend pattern, and
+  one-off purchases far above your usual — each citing its comparison and the transactions behind
+  it, and dismissible with undo. **What if** — a new bill, a pay change, a large purchase, a loan
+  prepayment or saving more, shown against your real forecast and goals without saving anything.
+  The Recurring page also suggests payments that **look recurring** and sets them up in one step.
+  (Late-night spending is not detected: statements give dates, not times.)
 

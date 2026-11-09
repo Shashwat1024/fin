@@ -450,7 +450,8 @@ const GOAL_SELECT = `
   SELECT g.*, a.name AS linked_account_name, a.type AS linked_account_type
   FROM goals g LEFT JOIN accounts a ON a.id = g.linked_account_id`
 
-function goalDto(db: Db, g: GoalRow, today: CalendarDate): GoalDto {
+/** Saved so far and added over the last PACE_MONTHS months: the inputs to a goal's projection. */
+function goalAmounts(db: Db, g: GoalRow, today: CalendarDate): { savedMinor: number; recentMinor: number } {
   const paceFrom = addMonths(today, -PACE_MONTHS)
   let savedMinor: number
   let recentMinor: number
@@ -480,6 +481,11 @@ function goalDto(db: Db, g: GoalRow, today: CalendarDate): GoalDto {
     savedMinor = s.total ?? 0
     recentMinor = s.recent ?? 0
   }
+  return { savedMinor, recentMinor }
+}
+
+function goalDto(db: Db, g: GoalRow, today: CalendarDate): GoalDto {
+  const { savedMinor, recentMinor } = goalAmounts(db, g, today)
   const contributions = all<{ id: string; date: string; amount_minor: number; note: string | null }>(
     db,
     'SELECT id, date, amount_minor, note FROM goal_contributions WHERE goal_id = ? ORDER BY date DESC, id DESC LIMIT 20',
@@ -502,6 +508,18 @@ function goalRow(db: Db, id: string): GoalRow {
   const g = get<GoalRow>(db, `${GOAL_SELECT} WHERE g.id = ? AND g.archived_at IS NULL`, id)
   if (!g) throw notFound('Goal')
   return g
+}
+
+/** Each active goal as a what-if scenario needs it (FR-029). */
+export function goalBases(db: Db, today: CalendarDate) {
+  return all<GoalRow>(db, `${GOAL_SELECT} WHERE g.archived_at IS NULL ORDER BY g.sort_order, g.created_at`).map((g) => ({
+    id: g.id,
+    name: g.name,
+    targetMinor: g.target_minor,
+    targetDate: g.target_date,
+    linkedAccountId: g.linked_account_id,
+    ...goalAmounts(db, g, today),
+  }))
 }
 
 export function listGoals(db: Db, today: CalendarDate): GoalDto[] {

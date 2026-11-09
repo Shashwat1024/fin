@@ -137,3 +137,101 @@ export function occurrenceState(dueDate: CalendarDate, today: CalendarDate, matc
   if (matched) return 'paid'
   return compareDates(dueDate, today) < 0 ? 'overdue' : 'expected'
 }
+
+// ---- Detecting likely recurring payments (FR-022, P1) ---------------------------------------------
+
+/** One past payment or receipt that might belong to a repeating series. */
+export type PastPayment = {
+  txnId: string
+  date: CalendarDate
+  /** Signed from the account's side. */
+  amountMinor: number
+  accountId: string
+  /** Groups payments to the same counterparty: the merchant key, or the normalised payee. */
+  groupKey: string
+  name: string
+  categoryId: string | null
+}
+
+export type RecurringSuggestion = {
+  /** Stable for the series: `${accountId}:${groupKey}:${direction}`. */
+  key: string
+  name: string
+  accountId: string
+  categoryId: string | null
+  direction: 'in' | 'out'
+  /** Typical amount (median), positive. */
+  amountMinor: number
+  frequency: 'weekly' | 'monthly'
+  /** The most recent payment: a schedule anchored here matches it and continues from it. */
+  lastDate: CalendarDate
+  nextDate: CalendarDate
+  /** Smallest standard tolerance that covers every payment seen. */
+  toleranceBp: number
+  /** Payments in the series, newest first. */
+  payments: { txnId: string; date: CalendarDate; amountMinor: number }[]
+}
+
+export const DETECT_MIN_PAYMENTS = 3
+/** Only the last year of payments is looked at. */
+export const DETECT_LOOKBACK_DAYS = 400
+const PATTERNS = [
+  { frequency: 'monthly', min: 26, max: 35 },
+  { frequency: 'weekly', min: 6, max: 8 },
+] as const
+const TOLERANCES = [500, 1000, 2500] as const
+
+function middle(values: readonly number[]): number {
+  const s = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(s.length / 2)
+  return s.length % 2 ? s[mid]! : Math.round((s[mid - 1]! + s[mid]!) / 2)
+}
+
+/**
+ * Series of payments to the same counterparty from the same account, at a steady weekly or monthly
+ * rhythm and a steady amount (within ±25%), that are still going (the last one is no more than one
+ * and a half periods ago). Suggestions only: nothing is created until the user confirms (FR-020).
+ */
+export function detectRecurring(payments: readonly PastPayment[], today: CalendarDate): RecurringSuggestion[] {
+  const from = addDays(today, -DETECT_LOOKBACK_DAYS)
+  const groups = new Map<string, PastPayment[]>()
+  for (const p of payments) {
+    if (compareDates(p.date, from) < 0 || compareDates(p.date, today) > 0 || !p.groupKey) continue
+    const key = `${p.accountId}:${p.groupKey}:${p.amountMinor < 0 ? 'out' : 'in'}`
+    const list = groups.get(key) ?? []
+    list.push(p)
+    groups.set(key, list)
+  }
+  const out: RecurringSuggestion[] = []
+  for (const list of groups.values()) {
+    if (list.length < DETECT_MIN_PAYMENTS) continue
+    const sorted = [...list].sort((a, b) => compareDates(a.date, b.date) || a.txnId.localeCompare(b.txnId))
+    const gaps = sorted.slice(1).map((p, i) => diffDays(p.date, sorted[i]!.date))
+    const pattern = PATTERNS.find((pt) => gaps.every((g) => g >= pt.min && g <= pt.max))
+    if (!pattern) continue
+    const amounts = sorted.map((p) => Math.abs(p.amountMinor))
+    const typical = middle(amounts)
+    const worstBp = Math.max(...amounts.map((a) => Math.ceil((Math.abs(a - typical) * 10_000) / typical)))
+    const toleranceBp = TOLERANCES.find((t) => worstBp <= t)
+    if (toleranceBp === undefined) continue
+    const last = sorted.at(-1)!
+    const nextDate = pattern.frequency === 'monthly' ? addMonths(last.date, 1) : addDays(last.date, 7)
+    // Stopped: the next one is more than half a period overdue.
+    if (diffDays(today, nextDate) > (pattern.frequency === 'monthly' ? 15 : 3)) continue
+    const categories = sorted.map((p) => p.categoryId).filter((c): c is string => c !== null)
+    out.push({
+      key: `${last.accountId}:${last.groupKey}:${last.amountMinor < 0 ? 'out' : 'in'}`,
+      name: last.name,
+      accountId: last.accountId,
+      categoryId: categories.at(-1) ?? null,
+      direction: last.amountMinor < 0 ? 'out' : 'in',
+      amountMinor: typical,
+      frequency: pattern.frequency,
+      lastDate: last.date,
+      nextDate,
+      toleranceBp,
+      payments: [...sorted].reverse().map((p) => ({ txnId: p.txnId, date: p.date, amountMinor: p.amountMinor })),
+    })
+  }
+  return out.sort((a, b) => compareDates(a.nextDate, b.nextDate) || a.name.localeCompare(b.name))
+}
