@@ -214,19 +214,21 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ### Tests for User Story 6
 
-- [ ] T086 [P] [US6] Unit tests for rule condition evaluation and priority in `tests/unit/domain/rules.test.ts`
-- [ ] T087 [P] [US6] Unit tests for UPI/IMPS/NEFT narration extraction across fixture formats in `tests/unit/domain/import/narration.test.ts`
-- [ ] T088 [P] [US6] Integration tests for category delete-with-replacement, rule apply-to-history + undo, merchant-learned suggestions in `tests/integration/db/categorization.test.ts`
+- [x] T086 [P] [US6] Unit tests for rule condition evaluation and priority in `tests/unit/domain/rules.test.ts`
+- [x] T087 [P] [US6] Unit tests for UPI/IMPS/NEFT narration extraction across fixture formats in `tests/unit/domain/import/narration.test.ts`
+- [x] T088 [P] [US6] Integration tests for category delete-with-replacement, rule apply-to-history + undo, merchant-learned suggestions in `tests/integration/db/categorization.test.ts`
 
 ### Implementation for User Story 6
 
-- [ ] T089 [US6] Add migration for rules and merchant default category in `src/db/migrations/0004_rules.sql`
-- [ ] T090 [P] [US6] Implement rules engine in `src/domain/rules.ts`
-- [ ] T091 [P] [US6] Implement narration parser in `src/domain/import/narration.ts` and wire into import preview
-- [ ] T092 [US6] Implement repos + IPC (`categories.*`, `rules.*`, `suggestions.forTxns`) in `src/main/services/categorization.ts`
-- [ ] T093 [P] [US6] Build category manager (two-level tree, merge, delete with replacement) in `src/renderer/features/categories/`
-- [ ] T094 [P] [US6] Build rules editor with history preview and confirm in `src/renderer/features/rules/`
-- [ ] T095 [US6] Show suggestions in import preview and transaction table with accept/reject in `src/renderer/features/import/` and `src/renderer/features/transactions/`
+- [x] T089 [US6] Add migration for rules and merchant default category in `src/db/migrations/0004_rules.ts` (merchants table already existed; adds a merchant index; older rows get merchants on startup via `backfillMerchants`)
+- [x] T090 [P] [US6] Implement rules engine in `src/domain/rules.ts`
+- [x] T091 [P] [US6] Implement narration parser in `src/domain/import/narration.ts` and wire into import preview (merchant per line, stored on the transaction)
+- [x] T092 [US6] Implement repos + IPC (`categories.*`, `rules.*`, `suggestions.forTxns`) in `src/db/repos/categorization.ts` (as built: no separate service)
+- [x] T093 [P] [US6] Build category manager (two-level tree, merge, delete with replacement) in `src/renderer/features/categories/`
+- [x] T094 [P] [US6] Build rules editor with history preview and confirm in `src/renderer/features/categories/RuleDialogs.tsx` (Categories page, Rules tab)
+- [x] T095 [US6] Show suggestions in import preview and transaction table with accept/reject in `src/renderer/features/import/` and `src/renderer/features/transactions/`
+
+**Checkpoint**: US6 complete ✅ (2026-11-09: `tests/e2e/us6-categorization.spec.ts` passes)
 
 ---
 

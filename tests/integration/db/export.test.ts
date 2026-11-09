@@ -88,11 +88,11 @@ describe('transactions CSV', () => {
     const lines = parse(exportTransactionsCsv(db))
     expect(lines[0]).toBe(CSV_COLUMNS.join(','))
     expect(lines[1]).toBe(
-      '2026-10-02,"HDFC, Savings",-450.00,INR,"Swiggy ""Instamart""",,Food,Food delivery,treat; weekend,"line one\nline two",standard,',
+      '2026-10-02,"HDFC, Savings",-450.00,INR,"Swiggy ""Instamart""","Swiggy ""Instamart""",Food,Food delivery,treat; weekend,"line one\nline two",standard,',
     )
     expect(lines.filter((l) => l.includes('DMart'))).toEqual([
-      '2026-10-03,Card,-1500.00,INR,DMart,,Food,Groceries,,,standard,',
-      '2026-10-03,Card,-900.00,INR,DMart,,Shopping,Household,,,standard,',
+      '2026-10-03,Card,-1500.00,INR,DMart,DMart,Food,Groceries,,,standard,',
+      '2026-10-03,Card,-900.00,INR,DMart,DMart,Shopping,Household,,,standard,',
     ])
     expect(lines.filter((l) => l.includes(',transfer,'))).toHaveLength(2)
     expect(lines.some((l) => l.includes('Deleted'))).toBe(false)

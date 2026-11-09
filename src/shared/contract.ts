@@ -61,6 +61,17 @@ export const inputSchemas = {
   'goals.delete': s.idInput,
   'goals.contribute': s.contributeInput,
   'goals.deleteContribution': s.idInput,
+  'categories.create': s.categoryCreateInput,
+  'categories.update': s.categoryUpdateInput,
+  'categories.usage': s.idInput,
+  'categories.delete': s.categoryDeleteInput,
+  'rules.list': s.empty,
+  'rules.create': s.ruleInput,
+  'rules.update': s.ruleUpdate,
+  'rules.delete': s.idInput,
+  'rules.preview': s.rulePreviewInput,
+  'rules.apply': s.ruleApplyInput,
+  'suggestions.forTxns': s.suggestionsInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -126,6 +137,17 @@ export interface Outputs {
   'goals.delete': t.Mutation<object>
   'goals.contribute': t.Mutation<{ goal: t.GoalDto }>
   'goals.deleteContribution': t.Mutation<object>
+  'categories.create': t.Mutation<{ category: t.CategoryDto }>
+  'categories.update': t.Mutation<{ category: t.CategoryDto }>
+  'categories.usage': t.CategoryUsage
+  'categories.delete': t.Mutation<{ moved: number }>
+  'rules.list': t.RuleDto[]
+  'rules.create': t.Mutation<{ rule: t.RuleDto }>
+  'rules.update': t.Mutation<{ rule: t.RuleDto }>
+  'rules.delete': t.Mutation<object>
+  'rules.preview': t.RulePreview
+  'rules.apply': t.Mutation<{ count: number; skipped: number }>
+  'suggestions.forTxns': t.TxnSuggestion[]
 }
 
 export type Output<C extends Channel> = Outputs[C]

@@ -19,6 +19,7 @@ const AUDITED = new Set([
   'monthly_budgets',
   'goals',
   'goal_contributions',
+  'rules',
 ])
 
 const columnCache = new WeakMap<Db, Map<string, Set<string>>>()
@@ -121,6 +122,18 @@ export function withAudit<T>(db: Db, label: string, fn: (a: AuditWriter) => T, u
   })
 }
 
+/** Lookup rows (tags, merchants) another record now uses are left in place by an undo. */
+const SHARED = new Set(['tags', 'merchants'])
+
+function removeUnlessShared(db: Db, a: AuditWriter, entity: string, id: string): void {
+  if (!SHARED.has(entity)) return a.remove(entity, id)
+  const used =
+    entity === 'tags'
+      ? get(db, 'SELECT 1 AS x FROM transaction_tags WHERE tag_id = ? LIMIT 1', id)
+      : get(db, 'SELECT 1 AS x FROM transactions WHERE merchant_id = ? LIMIT 1', id)
+  if (!used) a.remove(entity, id)
+}
+
 type LogEntry = {
   seq: number
   action: 'insert' | 'update' | 'delete'
@@ -171,7 +184,7 @@ export function undoGroup(db: Db, groupId: string): Audited<{ reverted: number }
     (a) => {
       for (const e of entries) {
         const before = e.before ? (JSON.parse(e.before) as Row & { id: string }) : undefined
-        if (e.action === 'insert') a.remove(e.entity, e.entity_id)
+        if (e.action === 'insert') removeUnlessShared(db, a, e.entity, e.entity_id)
         else if (e.action === 'delete') a.insert(e.entity, before!)
         else a.update(e.entity, e.entity_id, before!)
       }

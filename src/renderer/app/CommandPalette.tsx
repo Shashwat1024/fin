@@ -13,7 +13,9 @@ import {
   ReceiptTextIcon,
   RepeatIcon,
   SettingsIcon,
+  TagsIcon,
   TargetIcon,
+  WandSparklesIcon,
   WalletIcon,
 } from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
@@ -101,6 +103,12 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/goals'))}>
             <TargetIcon /> Goals
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/categories'))}>
+            <TagsIcon /> Categories
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/categories?tab=rules'))}>
+            <WandSparklesIcon /> Rules
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/settings'))}>
             <SettingsIcon /> Settings

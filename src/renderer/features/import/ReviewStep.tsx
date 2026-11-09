@@ -1,6 +1,6 @@
-import { useId, useMemo } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeftIcon, CopyCheckIcon, InfoIcon } from 'lucide-react'
+import { ArrowLeftIcon, CopyCheckIcon, InfoIcon, SparklesIcon } from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { displayBalance } from '@domain/ledger'
 import { ErrorState, FormField, LoadingState } from '@renderer/components/layout'
@@ -49,6 +49,8 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
   })
 
   const status = useMemo(() => new Map(preview.data?.rows.map((r) => [r.rowNumber, r]) ?? []), [preview.data])
+  // Suggested categories are applied only to the lines the user ticks (FR-020).
+  const [accepted, setAccepted] = useState<Set<number>>(new Set())
   if (!file || !mapping || !result || !account) return null
   if (preview.isPending) return <LoadingState label="Comparing with your transactions…" />
   if (preview.isError) return <ErrorState error={preview.error} onRetry={() => void preview.refetch()} />
@@ -70,6 +72,17 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
   const closing = wizard.closing
   const laterActivity = closing && preview.data.account.lastTxnDate && preview.data.account.lastTxnDate > closing.date
 
+  const suggested = rows.filter(
+    (r) => r.suggestion && (r.status === 'new' || (r.status === 'possible_duplicate' && importPossible.has(r.rowNumber))),
+  )
+  const acceptedShown = suggested.filter((r) => accepted.has(r.rowNumber))
+  const toggleAccepted = (rowNumber: number, on: boolean) => {
+    const next = new Set(accepted)
+    if (on) next.add(rowNumber)
+    else next.delete(rowNumber)
+    setAccepted(next)
+  }
+
   const togglePossible = (rowNumber: number, on: boolean) => {
     const next = new Set(importPossible)
     if (on) next.add(rowNumber)
@@ -87,6 +100,7 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
       rejected: result.rows.flatMap((r) => (r.status === 'ok' ? [] : [{ rowNumber: r.rowNumber, raw: r.raw, status: r.status, message: r.message }])),
       importPossibleDuplicates: [...importPossible],
       statementClosing: closing,
+      categories: acceptedShown.map((r) => ({ rowNumber: r.rowNumber, categoryId: r.suggestion!.categoryId })),
       savePresetAs: wizard.savePresetAs.trim() || null,
     })
 
@@ -149,6 +163,58 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
                     <span className="w-28 text-right text-xs text-muted-foreground">
                       {importPossible.has(p.rowNumber) ? 'Will import' : 'Will skip'}
                     </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {suggested.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SparklesIcon className="size-4 text-primary" aria-hidden /> Suggested categories
+            </CardTitle>
+            <CardDescription>
+              From your rules and what you chose before for the same merchant. Only the ticked ones are used; the rest are imported
+              without a category.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <div className="flex items-center gap-3 border-b pb-2 text-sm">
+              <Checkbox
+                id={`${id}-all`}
+                checked={acceptedShown.length === suggested.length ? true : acceptedShown.length > 0 ? 'indeterminate' : false}
+                onCheckedChange={(v) => setAccepted(v === true ? new Set(suggested.map((r) => r.rowNumber)) : new Set())}
+              />
+              <label htmlFor={`${id}-all`} className="font-medium">
+                Use all {plural(suggested.length, 'suggestion')}
+              </label>
+            </div>
+            <ul className="divide-y">
+              {suggested.map((r) => {
+                const line = okRows.find((l) => l.rowNumber === r.rowNumber)!
+                return (
+                  <li key={r.rowNumber} className="flex items-center gap-3 py-2 text-sm">
+                    <Checkbox
+                      id={`${id}-s${r.rowNumber}`}
+                      checked={accepted.has(r.rowNumber)}
+                      onCheckedChange={(v) => toggleAccepted(r.rowNumber, v === true)}
+                    />
+                    <label htmlFor={`${id}-s${r.rowNumber}`} className="grid flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{r.merchant ?? line.values.description}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {formatDate(line.values.date)} · <MoneyText minor={line.values.amountMinor} />
+                        </span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate">{r.suggestion!.categoryPath}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{r.suggestion!.reason}</span>
+                      </span>
+                    </label>
                   </li>
                 )
               })}

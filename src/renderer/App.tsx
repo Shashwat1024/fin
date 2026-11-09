@@ -8,6 +8,7 @@ import { AccountsPage } from '@renderer/features/accounts/AccountsPage'
 import { ReconcileDialogProvider } from '@renderer/features/accounts/ReconcileDialog'
 import { ImportPage } from '@renderer/features/import/ImportPage'
 import { BudgetPage } from '@renderer/features/budget/BudgetPage'
+import { CategoriesPage } from '@renderer/features/categories/CategoriesPage'
 import { DashboardPage } from '@renderer/features/dashboard/DashboardPage'
 import { GoalsPage } from '@renderer/features/goals/GoalsPage'
 import { Onboarding } from '@renderer/features/onboarding/Onboarding'
@@ -30,6 +31,7 @@ function Routed() {
         <Route path="/recurring" element={<RecurringPage />} />
         <Route path="/budget" element={<BudgetPage />} />
         <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<DashboardPage />} />
       </Routes>

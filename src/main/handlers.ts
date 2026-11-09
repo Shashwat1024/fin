@@ -2,6 +2,21 @@ import { undoGroup } from '@db/audit'
 import { all, type Db } from '@db/connection'
 import { todayIn } from '@domain/dates'
 import { createAccount, listAccounts, setAccountArchived, updateAccount } from '@db/repos/accounts'
+import {
+  applyRule,
+  categoryUsage,
+  createCategory,
+  createRule,
+  deleteCategory,
+  deleteRule,
+  draftRule,
+  listRules,
+  previewRule,
+  previewSavedRule,
+  suggestForTxns,
+  updateCategory,
+  updateRule,
+} from '@db/repos/categorization'
 import { dashboardSummary } from '@db/repos/dashboard'
 import { listCategories, listTags } from '@db/repos/categories'
 import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
@@ -34,6 +49,7 @@ import {
   updateTransaction,
   updateTransfer,
 } from '@db/repos/transactions'
+import { invariant } from '@shared/errors'
 import type { Channel, Output, ParsedInput } from '@shared/contract'
 import type { ActivityEntry } from '@shared/types'
 import { backupHandlers } from './backupHandlers'
@@ -105,6 +121,22 @@ export const handlers: Handlers = {
   'goals.delete': ({ db }, input) => deleteGoal(db, input.id),
   'goals.contribute': ({ db }, input) => contribute(db, input, today(db)),
   'goals.deleteContribution': ({ db }, input) => deleteContribution(db, input.id),
+  'categories.create': ({ db }, input) => createCategory(db, input),
+  'categories.update': ({ db }, input) => updateCategory(db, input),
+  'categories.usage': ({ db }, input) => categoryUsage(db, input.id),
+  'categories.delete': ({ db }, input) => deleteCategory(db, input.id, input.replacementId),
+  'rules.list': ({ db }) => listRules(db),
+  'rules.create': ({ db }, input) => createRule(db, input),
+  'rules.update': ({ db }, input) => updateRule(db, input.id, input.input),
+  'rules.delete': ({ db }, input) => deleteRule(db, input.id),
+  'rules.preview': ({ db }, input) => {
+    const only = input.onlyUncategorized ?? true
+    if (input.ruleId) return previewSavedRule(db, input.ruleId, only)
+    if (input.rule) return previewRule(db, draftRule(input.rule), only)
+    throw invariant('Choose a rule to preview')
+  },
+  'rules.apply': ({ db }, input) => applyRule(db, input.ruleId, input.txnIds),
+  'suggestions.forTxns': ({ db }, input) => suggestForTxns(db, input.txnIds),
   'undo.apply': ({ db }, input) => {
     const r = undoGroup(db, input.auditGroupId)
     return { reverted: r.result.reverted, auditGroupId: r.auditGroupId }

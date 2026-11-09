@@ -5,7 +5,7 @@ import { MoneyText } from '@renderer/components/MoneyText'
 import { Checkbox } from '@renderer/components/ui/checkbox'
 import { Spinner } from '@renderer/components/ui/spinner'
 import { cn } from '@renderer/lib/utils'
-import type { TxnRow } from '@shared/types'
+import type { TxnRow, TxnSuggestion } from '@shared/types'
 import { TxnDescription } from './TxnDescription'
 
 const COLS = 'grid grid-cols-[2.25rem_6.5rem_minmax(0,1fr)_10rem_9rem] items-center gap-3 px-3'
@@ -20,13 +20,30 @@ type Props = {
   onSelectedChange: (next: Set<string>) => void
   onOpen: (txn: TxnRow) => void
   onDelete: (ids: string[]) => void
+  /** Category suggestions for uncategorised rows, accepted or dismissed one at a time. */
+  suggestions?: ReadonlyMap<string, TxnSuggestion>
+  onAcceptSuggestion?: (s: TxnSuggestion) => void
+  onDismissSuggestion?: (txnId: string) => void
 }
 
 /**
  * Virtualized, keyboard-navigable ledger (ARIA grid). ↑/↓ move, Enter opens, Space selects,
  * Delete removes, Ctrl+A selects all loaded rows.
  */
-export function TransactionList({ rows, total, hasMore, loadingMore, onLoadMore, selected, onSelectedChange, onOpen, onDelete }: Props) {
+export function TransactionList({
+  rows,
+  total,
+  hasMore,
+  loadingMore,
+  onLoadMore,
+  selected,
+  onSelectedChange,
+  onOpen,
+  onDelete,
+  suggestions,
+  onAcceptSuggestion,
+  onDismissSuggestion,
+}: Props) {
   const parentRef = useRef<HTMLDivElement>(null)
   const [focus, setFocus] = useState(0)
   const virtualizer = useVirtualizer({
@@ -140,7 +157,15 @@ export function TransactionList({ rows, total, hasMore, loadingMore, onLoadMore,
                   {formatDate(row.postedDate)}
                 </div>
                 <div role="gridcell" className="min-w-0">
-                  <TxnDescription txn={row} />
+                  <TxnDescription
+                    txn={row}
+                    suggest={(() => {
+                      const sg = suggestions?.get(row.id)
+                      return sg && onAcceptSuggestion && onDismissSuggestion
+                        ? { suggestion: sg, onAccept: () => onAcceptSuggestion(sg), onDismiss: () => onDismissSuggestion(row.id) }
+                        : undefined
+                    })()}
+                  />
                 </div>
                 <div role="gridcell" className="truncate text-muted-foreground">
                   {row.accountName}

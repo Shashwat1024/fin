@@ -18,6 +18,8 @@ import type {
 import { withAudit, type AuditWriter } from '../audit'
 import { all, get, newId, nowIso, type Db } from '../connection'
 import { assertAccountUsable, getAccount } from './accounts'
+import { suggestForLines } from './categorization'
+import { assertCategoryUsable, resolveMerchantId } from './categories'
 
 type Line = { rowNumber: number; date: CalendarDate; amountMinor: number; description: string }
 type Classified = { rowNumber: number; status: ImportRowStatus; match: ImportMatch | null; fingerprint: string; occurrence: number }
@@ -88,7 +90,17 @@ function batchBySameFile(db: Db, accountId: string, fileHash: string | null | un
 export function previewImport(db: Db, input: ImportPreviewInput): ImportPreview {
   const account = getAccount(db, input.accountId)
   return {
-    rows: classifyLines(db, input.accountId, input.rows).map(({ rowNumber, status, match }) => ({ rowNumber, status, match })),
+    rows: (() => {
+      const suggestions = suggestForLines(db, input.accountId, input.rows)
+      return classifyLines(db, input.accountId, input.rows).map(({ rowNumber, status, match }, i) => ({
+        rowNumber,
+        status,
+        match,
+        merchant: suggestions[i]!.merchant,
+        // Only lines that will become new transactions need a category.
+        suggestion: status === 'duplicate' ? null : suggestions[i]!.suggestion,
+      }))
+    })(),
     sameFile: batchBySameFile(db, input.accountId, input.fileHash),
     account: {
       ledgerBalanceMinor: account.ledgerBalanceMinor,
@@ -111,6 +123,8 @@ export function commitImport(db: Db, input: ImportCommitInput): Mutation<{ batch
     // Re-classify on the server: the renderer's preview may be stale.
     const classified = classifyLines(db, input.accountId, input.rows)
     const chosen = new Set(input.importPossibleDuplicates)
+    const accepted = new Map((input.categories ?? []).map((c) => [c.rowNumber, c.categoryId]))
+    for (const categoryId of new Set(accepted.values())) assertCategoryUsable(db, categoryId)
     const batchId = newId('imp')
     const now = nowIso()
     const counts: ImportCounts = {
@@ -159,7 +173,7 @@ export function commitImport(db: Db, input: ImportCommitInput): Mutation<{ batch
         counts.skipped++
       } else {
         outcome = c.status === 'possible_duplicate' ? 'possible_duplicate_imported' : 'imported'
-        txnId = insertImportedTxn(a, input.accountId, batchId, line, c, now)
+        txnId = insertImportedTxn(db, a, input.accountId, batchId, line, c, now, accepted.get(line.rowNumber) ?? null)
         counts.imported++
       }
       writeRow(line.rowNumber, line.raw, outcome, c.match ? `Matches ${c.match.postedDate} ${c.match.payee}`.slice(0, 500) : null, txnId)
@@ -173,12 +187,14 @@ export function commitImport(db: Db, input: ImportCommitInput): Mutation<{ batch
 }
 
 function insertImportedTxn(
+  db: Db,
   a: AuditWriter,
   accountId: string,
   batchId: string,
   line: ImportCommitInput['rows'][number],
   c: Classified,
   now: string,
+  categoryId: string | null,
 ): string {
   const id = newId('txn')
   a.insert('transactions', {
@@ -187,6 +203,8 @@ function insertImportedTxn(
     posted_date: line.date,
     amount_minor: line.amountMinor,
     payee: line.description,
+    merchant_id: resolveMerchantId(db, a, line.description),
+    category_id: categoryId,
     import_batch_id: batchId,
     fingerprint: c.fingerprint,
     occurrence_index: c.occurrence,

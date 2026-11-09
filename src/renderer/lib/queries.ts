@@ -51,6 +51,15 @@ export const useBudgetMonth = (month: string) =>
   useQuery({ queryKey: ['budget', month], queryFn: () => call('budget.month', { month }), placeholderData: (prev) => prev })
 export const useGoals = () => useQuery({ queryKey: ['goals'], queryFn: () => call('goals.list', undefined) })
 
+export const useRules = () => useQuery({ queryKey: ['rules'], queryFn: () => call('rules.list', undefined) })
+export const useSuggestions = (txnIds: readonly string[]) =>
+  useQuery({
+    queryKey: ['suggestions', txnIds],
+    queryFn: () => call('suggestions.forTxns', { txnIds: [...txnIds] }),
+    enabled: txnIds.length > 0,
+    placeholderData: (prev) => prev,
+  })
+
 export const PAGE_SIZE = 200
 
 export const useTxnPages = (filter: TxnFilter) =>
@@ -61,9 +70,9 @@ export const useTxnPages = (filter: TxnFilter) =>
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   })
 
-/** Ledger data is local and cheap to reload, so any change refreshes everything except static lists. */
+/** Ledger data is local and cheap to reload, so any change refreshes every query (categories included). */
 export function refreshLedger(qc: QueryClient) {
-  return qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== 'categories' })
+  return qc.invalidateQueries()
 }
 
 export async function undoChange(qc: QueryClient, auditGroupId: string) {

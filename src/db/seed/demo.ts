@@ -2,6 +2,7 @@ import { addDays, addMonths, startOfMonth } from '@domain/dates'
 import type { Db } from '../connection'
 import { createAccount } from '../repos/accounts'
 import { listCategories } from '../repos/categories'
+import { createRule } from '../repos/categorization'
 import { assignBudget, contribute, createGoal, createRecurring } from '../repos/planning'
 import { updateSettings } from '../repos/settings'
 import { createTransaction, createTransfer } from '../repos/transactions'
@@ -67,6 +68,21 @@ export function seedDemoData(db: Db, today: string): void {
     if (day(9) <= today) createTransfer(db, { fromAccountId: bank, toAccountId: wallet, postedDate: day(9), amountMinor: 200_000 })
   }
   seedPlanning(db, today, start, { bank, card, funds }, c)
+
+  // Rules, and a few recent lines left uncategorised so suggestions can be tried (US6).
+  createRule(db, { name: 'Ride apps', conditions: [{ field: 'description', op: 'contains', value: 'uber' }], categoryId: c('Transport › Cab & auto') })
+  createRule(db, {
+    name: 'Pharmacy',
+    conditions: [{ field: 'description', op: 'regex', value: 'apollo|pharm|medplus' }],
+    categoryId: c('Health › Medicines'),
+  })
+  const recent = (days: number, amountMinor: number, payee: string, accountId = bank) => {
+    const d = addDays(today, -days)
+    if (d >= start) createTransaction(db, { accountId, postedDate: d, amountMinor, payee })
+  }
+  recent(1, -38_500, 'UPI/428812349876/Swiggy/swiggy@icici/Payment')
+  recent(2, -27_400, 'UBER *TRIP HELP.UBER.COM', card)
+  recent(3, -64_000, 'UPI-MEDPLUS PHARMACY-MEDPLUS@YBL-YESB0YBLUPI-428899991234-UPI')
   updateSettings(db, { onboarded: true })
 }
 

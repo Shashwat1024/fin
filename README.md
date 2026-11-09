@@ -57,6 +57,10 @@ different folder, for example a throwaway one while testing.
   payments matched automatically, overdue ones flagged, skip or link by hand); a zero-based monthly
   budget with keyboard entry, carry-forward and overspending taken from next month; savings goals
   with the monthly amount needed and a projected date; Overview cards for all three.
-- ⏭️ Next: categorization rules and suggestions (US6).
+- ✅ User Story 6: category manager (add, rename, move, regroup, merge or delete with a replacement),
+  rules with a live match count, a preview of exactly what would change and one-step undo, merchants
+  read from UPI/IMPS/NEFT/card narrations, and category suggestions (from rules and your past choices
+  for the same merchant) in the ledger and import review — never applied until accepted.
+- ⏭️ Next: cash-flow forecast and net-worth history (US7).
   See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
 

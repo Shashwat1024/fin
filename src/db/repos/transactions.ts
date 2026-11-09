@@ -6,7 +6,7 @@ import type { Mutation, PayeeSuggestion, TxnDetail, TxnPage, TxnRow } from '@sha
 import { withAudit, type AuditWriter } from '../audit'
 import { all, get, newId, nowIso, type Db, type SqlParam } from '../connection'
 import { assertAccountUsable } from './accounts'
-import { assertCategoryUsable, expandCategoryIds, resolveTagIds, UNCATEGORIZED } from './categories'
+import { assertCategoryUsable, expandCategoryIds, resolveMerchantId, resolveTagIds, UNCATEGORIZED } from './categories'
 
 type TxnRecord = {
   id: string
@@ -26,7 +26,7 @@ const TAG_SEP = '\u001f'
 
 const ROW_SELECT = `
   SELECT t.id, t.account_id, a.name AS account_name, a.type AS account_type, a.currency,
-         t.posted_date, t.amount_minor, t.payee, t.notes, t.category_id,
+         t.posted_date, t.amount_minor, t.payee, m.display_name AS merchant_name, t.notes, t.category_id,
          CASE WHEN pc.name IS NOT NULL THEN pc.name || ' › ' || c.name ELSE c.name END AS category_path,
          (SELECT COUNT(*) FROM splits s WHERE s.transaction_id = t.id) AS split_count,
          (SELECT group_concat(g.name, char(31)) FROM transaction_tags tt JOIN tags g ON g.id = tt.tag_id
@@ -37,6 +37,7 @@ const ROW_SELECT = `
   JOIN accounts a ON a.id = t.account_id
   LEFT JOIN categories c ON c.id = t.category_id
   LEFT JOIN categories pc ON pc.id = c.parent_id
+  LEFT JOIN merchants m ON m.id = t.merchant_id
   LEFT JOIN transactions o ON o.transfer_id = t.transfer_id AND o.id <> t.id
   LEFT JOIN accounts oa ON oa.id = o.account_id`
 
@@ -49,6 +50,7 @@ type RawRow = {
   posted_date: string
   amount_minor: number
   payee: string
+  merchant_name: string | null
   notes: string | null
   category_id: string | null
   category_path: string | null
@@ -74,6 +76,7 @@ function mapRow(r: RawRow): TxnRow {
     postedDate: r.posted_date,
     amountMinor: r.amount_minor,
     payee: r.payee,
+    merchantName: r.merchant_name,
     notes: r.notes,
     categoryId: r.category_id,
     categoryPath: r.category_path,
@@ -180,6 +183,7 @@ export function createTransaction(db: Db, input: TxnInput): Mutation<{ txn: TxnD
       posted_date: input.postedDate,
       amount_minor: input.amountMinor,
       payee: input.payee ?? '',
+      merchant_id: resolveMerchantId(db, a, input.payee ?? ''),
       category_id: splits.length > 0 ? null : (input.categoryId ?? null),
       notes: input.notes ?? null,
       status: input.status ?? 'cleared',
@@ -227,7 +231,8 @@ export function updateTransaction(db: Db, id: string, patch: Partial<TxnInput>):
       status: patch.status ?? cur.status,
     }
     const changed = (Object.keys(next) as (keyof typeof next)[]).some((k) => next[k] !== cur[k])
-    if (changed) a.update('transactions', id, { ...next, updated_at: nowIso() })
+    const merchant = next.payee !== cur.payee && cur.kind === 'standard' ? { merchant_id: resolveMerchantId(db, a, next.payee) } : {}
+    if (changed) a.update('transactions', id, { ...next, ...merchant, updated_at: nowIso() })
     if (splitsChanged) writeSplits(db, a, id, splits)
     if (patch.tags !== undefined) setTags(db, a, id, patch.tags)
   })

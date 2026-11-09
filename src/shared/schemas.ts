@@ -164,6 +164,8 @@ export const importCommitInput = z.object({
   /** Choices for possible duplicates; anything not listed is skipped. */
   importPossibleDuplicates: z.array(z.number().int().min(1)).max(MAX_IMPORT_ROWS),
   statementClosing: z.object({ date: calendarDate, balanceMinor: minor }).nullable().optional(),
+  /** Suggested categories the user accepted, by source line (FR-020). */
+  categories: z.array(z.object({ rowNumber: z.number().int().min(1), categoryId: id })).max(MAX_IMPORT_ROWS).optional(),
   savePresetAs: z.string().trim().min(1).max(80).nullable().optional(),
 })
 
@@ -236,3 +238,42 @@ export const contributeInput = z.object({
 
 export type RecurringInput = z.output<typeof recurringInput>
 export type GoalInput = z.output<typeof goalInput>
+
+// ---- Categorisation (US6) -----------------------------------------------------------------------
+
+const categoryGroup = z.enum(['needs', 'wants', 'goals', 'buffer', 'income', 'transfer'])
+export const categoryCreateInput = z.object({ name, parentId: id.nullable().optional(), group: categoryGroup.optional() })
+export const categoryUpdateInput = z.object({
+  id,
+  name: name.optional(),
+  parentId: id.nullable().optional(),
+  group: categoryGroup.optional(),
+})
+export const categoryDeleteInput = z.object({ id, replacementId: id.nullable().optional() })
+
+const ruleText = z.string().trim().min(1, 'Enter some text').max(200)
+export const ruleCondition = z.discriminatedUnion('field', [
+  z.object({ field: z.literal('description'), op: z.enum(['contains', 'equals', 'startsWith', 'regex']), value: ruleText }),
+  z.object({ field: z.literal('merchant'), op: z.enum(['equals', 'contains']), value: ruleText }),
+  z.object({ field: z.literal('amount'), op: z.literal('between'), min: minor.min(0).nullable().optional(), max: minor.min(0).nullable().optional() }),
+  z.object({ field: z.literal('direction'), op: z.literal('equals'), value: z.enum(['in', 'out']) }),
+  z.object({ field: z.literal('account'), op: z.literal('equals'), value: id }),
+])
+export const ruleInput = z.object({
+  name,
+  priority: z.number().int().min(0).max(10_000).optional(),
+  enabled: z.boolean().optional(),
+  conditions: z.array(ruleCondition).min(1, 'Add at least one condition').max(10),
+  categoryId: id,
+})
+export const ruleUpdate = z.object({ id, input: ruleInput })
+export const rulePreviewInput = z.object({
+  ruleId: id.optional(),
+  rule: ruleInput.optional(),
+  /** Leave transactions that already have a category alone (default). */
+  onlyUncategorized: z.boolean().optional(),
+})
+export const ruleApplyInput = z.object({ ruleId: id, txnIds: z.array(id).min(1).max(5000) })
+export const suggestionsInput = z.object({ txnIds: z.array(id).max(1000) })
+
+export type RuleInput = z.output<typeof ruleInput>

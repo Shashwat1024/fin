@@ -6,7 +6,7 @@ import { EmptyState, ErrorState, LoadingState, PageHeader, ShortcutHint } from '
 import { MoneyText } from '@renderer/components/MoneyText'
 import { ALL_ACCOUNTS } from '@renderer/components/pickers'
 import { Button } from '@renderer/components/ui/button'
-import { useFinMutation, useSettings, useTxnPages } from '@renderer/lib/queries'
+import { useFinMutation, useSettings, useSuggestions, useTxnPages } from '@renderer/lib/queries'
 import { BulkActionBar } from './BulkActionBar'
 import { useTransactionDialog } from './TransactionDialog'
 import { DEFAULT_FILTERS, isFiltered, rangeFromParams, toTxnFilter, TransactionFilters, type FilterState } from './TransactionFilters'
@@ -34,6 +34,18 @@ export function TransactionsPage() {
   const query = useTxnPages(useMemo(() => toTxnFilter(filters, today, fy), [filters, today, fy]))
   const rows = useMemo(() => query.data?.pages.flatMap((p) => p.rows) ?? [], [query.data])
   const totals = query.data?.pages[0]?.totals
+  // Suggestions for uncategorised rows: shown, never applied until accepted (FR-020).
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  const candidateIds = useMemo(
+    () => rows.filter((r) => r.kind === 'standard' && !r.categoryId && r.splitCount === 0).map((r) => r.id).slice(0, 1000),
+    [rows],
+  )
+  const suggestions = useSuggestions(candidateIds)
+  const suggestionMap = useMemo(
+    () => new Map((suggestions.data ?? []).filter((s) => !dismissed.has(s.txnId)).map((s) => [s.txnId, s])),
+    [suggestions.data, dismissed],
+  )
+  const accept = useFinMutation('txns.update', { success: (r) => `Categorised as ${r.txn.categoryPath}` })
   const remove = useFinMutation('txns.delete', {
     success: (r) => `Deleted ${r.count} transaction${r.count === 1 ? '' : 's'}`,
     onSuccess: () => setSelected(new Set()),
@@ -105,6 +117,9 @@ export function TransactionsPage() {
           onSelectedChange={setSelected}
           onOpen={(t) => dialog.open({ txnId: t.id })}
           onDelete={(ids) => remove.mutate({ ids })}
+          suggestions={suggestionMap}
+          onAcceptSuggestion={(sg) => accept.mutate({ id: sg.txnId, patch: { categoryId: sg.categoryId } })}
+          onDismissSuggestion={(id) => setDismissed((d) => new Set(d).add(id))}
         />
       )}
     </div>

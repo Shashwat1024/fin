@@ -1,8 +1,9 @@
 import type { GoalStatus } from '@domain/goals'
 import type { AccountGroup, AccountNature, AccountType } from '@domain/ledger'
 import type { Frequency, OccurrenceState } from '@domain/recurrence'
+import type { RuleCondition } from '@domain/rules'
 
-export type { AccountGroup, Frequency, GoalStatus, OccurrenceState }
+export type { AccountGroup, Frequency, GoalStatus, OccurrenceState, RuleCondition }
 
 export type Theme = 'system' | 'light' | 'dark'
 
@@ -81,6 +82,8 @@ export type TxnRow = {
   postedDate: string
   amountMinor: number
   payee: string
+  /** Learned from the narration or payee; null when unknown. */
+  merchantName: string | null
   notes: string | null
   categoryId: string | null
   categoryPath: string | null
@@ -127,7 +130,14 @@ export type ImportRowStatus = 'new' | 'duplicate' | 'possible_duplicate'
 export type ImportMatch = { id: string; postedDate: string; amountMinor: number; payee: string }
 
 export type ImportPreview = {
-  rows: { rowNumber: number; status: ImportRowStatus; match: ImportMatch | null }[]
+  rows: {
+    rowNumber: number
+    status: ImportRowStatus
+    match: ImportMatch | null
+    /** Counterparty read from the narration, when recognisable (FR-017). */
+    merchant: string | null
+    suggestion: Suggestion | null
+  }[]
   /** Set when a file with the same contents was imported before. */
   sameFile: { batchId: string; importedAt: string; undone: boolean } | null
   account: { ledgerBalanceMinor: number; balanceMinor: number; lastTxnDate: string | null }
@@ -338,3 +348,41 @@ export type GoalDto = {
   /** Newest first, at most 20. */
   contributions: GoalContributionDto[]
 }
+
+// ---- Categorisation: categories, rules, suggestions (US6) -------------------------------------
+
+
+export type CategoryUsage = { transactions: number; splits: number; budgets: number; recurring: number; rules: number; children: number }
+
+export type RuleDto = {
+  id: string
+  name: string
+  priority: number
+  enabled: boolean
+  conditions: RuleCondition[]
+  categoryId: string
+  categoryPath: string
+}
+
+/** A category Fin proposes. Never applied until the user accepts it (FR-020). */
+export type Suggestion = {
+  categoryId: string
+  categoryPath: string
+  source: 'rule' | 'merchant'
+  /** "Rule: Food delivery" or "You chose this for Swiggy 4 times" */
+  reason: string
+  ruleId: string | null
+}
+
+export type TxnSuggestion = Suggestion & { txnId: string }
+
+export type RuleMatch = {
+  id: string
+  postedDate: string
+  amountMinor: number
+  payee: string
+  accountName: string
+  categoryPath: string | null
+}
+
+export type RulePreview = { count: number; matches: RuleMatch[] }

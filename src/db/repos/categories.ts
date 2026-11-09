@@ -1,7 +1,8 @@
+import { merchantKey, merchantName } from '@domain/import/narration'
 import { invariant, notFound } from '@shared/errors'
 import type { CategoryDto, CategoryGroup, TagDto } from '@shared/types'
 import type { AuditWriter } from '../audit'
-import { all, get, newId, nowIso, type Db } from '../connection'
+import { all, get, newId, nowIso, run, type Db } from '../connection'
 
 type CategoryRow = {
   id: string
@@ -75,4 +76,62 @@ export function resolveTagIds(db: Db, a: AuditWriter, names: readonly string[]):
     }
   }
   return ids
+}
+
+/**
+ * The merchant for a payee or narration ("UPI-SWIGGY-…" → Swiggy), created inside the audit group
+ * when new. Null when no usable name can be read.
+ */
+export function resolveMerchantId(db: Db, a: AuditWriter, payee: string): string | null {
+  const name = merchantName(payee)
+  if (!name) return null
+  const key = merchantKey(name)
+  const existing = get<{ id: string }>(db, 'SELECT id FROM merchants WHERE normalized_key = ?', key)
+  if (existing) return existing.id
+  const id = newId('mer')
+  const now = nowIso()
+  a.insert('merchants', { id, display_name: name, normalized_key: key, created_at: now, updated_at: now })
+  return id
+}
+
+/** Find a merchant without creating one (for lines not yet imported). */
+export function findMerchantId(db: Db, payee: string): string | null {
+  const name = merchantName(payee)
+  return name ? (get<{ id: string }>(db, 'SELECT id FROM merchants WHERE normalized_key = ?', merchantKey(name))?.id ?? null) : null
+}
+
+/**
+ * Give older transactions a merchant (data from before merchants were learned). Derived metadata,
+ * so it is written directly rather than as an undoable change. Idempotent.
+ */
+export function backfillMerchants(db: Db): number {
+  const rows = all<{ id: string; payee: string }>(
+    db,
+    "SELECT id, payee FROM transactions WHERE merchant_id IS NULL AND kind = 'standard' AND payee <> '' AND deleted_at IS NULL",
+  )
+  if (rows.length === 0) return 0
+  const byKey = new Map(all<{ id: string; normalized_key: string }>(db, 'SELECT id, normalized_key FROM merchants').map((m) => [m.normalized_key, m.id]))
+  let n = 0
+  db.exec('BEGIN IMMEDIATE')
+  try {
+    for (const r of rows) {
+      const name = merchantName(r.payee)
+      if (!name) continue
+      const key = merchantKey(name)
+      let id = byKey.get(key)
+      if (!id) {
+        id = newId('mer')
+        const now = nowIso()
+        run(db, 'INSERT INTO merchants (id, display_name, normalized_key, created_at, updated_at) VALUES (?, ?, ?, ?, ?)', id, name, key, now, now)
+        byKey.set(key, id)
+      }
+      run(db, 'UPDATE transactions SET merchant_id = ? WHERE id = ?', id, r.id)
+      n++
+    }
+    db.exec('COMMIT')
+  } catch (err) {
+    db.exec('ROLLBACK')
+    throw err
+  }
+  return n
 }

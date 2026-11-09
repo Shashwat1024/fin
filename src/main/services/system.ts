@@ -5,6 +5,7 @@ import { autoBackupIfDue, countData, createBackup, prepareBackup, swapDatabaseFi
 import { openDatabase, type Db } from '@db/connection'
 import { migrate } from '@db/migrate'
 import { getSettings } from '@db/repos/settings'
+import { backfillMerchants } from '@db/repos/categories'
 import { seedDefaultCategories } from '@db/seed/categories'
 import { seedDemoData } from '@db/seed/demo'
 import { snapshotDatabase } from '@db/snapshot'
@@ -40,6 +41,8 @@ export function createSystem(paths: AppPaths, log: Logger, window: () => Browser
       })
       if (r.applied.length) log.info('db.migrated', { from: r.from, to: r.to })
       seedDefaultCategories(d)
+      const learned = backfillMerchants(d)
+      if (learned) log.info('db.merchants_backfilled', { count: learned })
       return d
     } catch (err) {
       d.close()

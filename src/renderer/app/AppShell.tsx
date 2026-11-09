@@ -10,6 +10,7 @@ import {
   RepeatIcon,
   SearchIcon,
   SettingsIcon,
+  TagsIcon,
   TargetIcon,
   type LucideIcon,
 } from 'lucide-react'
@@ -28,6 +29,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo: string }[] = [
   { to: '/recurring', label: 'Recurring', icon: RepeatIcon, combo: 'mod+5' },
   { to: '/budget', label: 'Budget', icon: PieChartIcon, combo: 'mod+6' },
   { to: '/goals', label: 'Goals', icon: TargetIcon, combo: 'mod+7' },
+  { to: '/categories', label: 'Categories', icon: TagsIcon, combo: 'mod+8' },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' },
 ]
 
@@ -60,6 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   useHotkey('mod+5', () => navigate('/recurring'))
   useHotkey('mod+6', () => navigate('/budget'))
   useHotkey('mod+7', () => navigate('/goals'))
+  useHotkey('mod+8', () => navigate('/categories'))
   useHotkey('mod+,', () => navigate('/settings'))
   return (
     <div className="flex h-full">

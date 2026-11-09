@@ -25,14 +25,18 @@ Mutations return an `auditGroupId` usable with `undo.apply`.
 | `txns.bulkUpdate` | `{ ids[], patch: { categoryId?, addTagIds?, removeTagIds? } }` | `{ count, auditGroupId }` | FR-011 |
 | `transfers.create` | `{ fromAccountId, toAccountId, date, amount, notes? }` | `{ transferId, auditGroupId }` | FR-008 |
 | `undo.apply` | `{ auditGroupId }` | `{ reverted: number }` | FR-006/011/019 |
-| `categories.tree` / `.upsert` / `.delete` | — / fields / `{ id, replacementId? }` | `CategoryNode[]` / `Category` / `{ auditGroupId }` | FR-018 |
-| `rules.list` / `.upsert` / `.delete` | | | FR-019 |
-| `rules.preview` | `{ ruleId \| rule }` | `{ matches: TxnSummary[], count }` | FR-019 |
-| `rules.applyToHistory` | `{ ruleId, txnIds[] }` (confirmed subset) | `{ count, auditGroupId }` | FR-019 |
-| `suggestions.forTxns` | `{ txnIds[] }` | `{ txnId, categoryId, source: 'rule'\|'merchant', ruleId? }[]` | FR-020 |
+| `categories.list` | — | `CategoryDto[]` (flat, with `path`) | FR-018 |
+| `categories.create` / `.update` | `{ name, parentId?, group? }` / `{ id, name?, parentId?, group? }` (two levels; a parent with children stays top-level) | `{ category, auditGroupId }` | FR-018 |
+| `categories.usage` | `{ id }` | `{ transactions, splits, budgets, recurring, rules, children }` | FR-018 |
+| `categories.delete` | `{ id, replacementId? }` — required when anything uses it (a merge: transactions, splits, budgets (summed), recurring items, rules move) | `{ moved, auditGroupId }` | FR-018 |
+| `rules.list` | — | `RuleDto[]` in the order they are tried | FR-019 |
+| `rules.create` / `.update` / `.delete` | `{ name, priority?, enabled?, conditions[], categoryId }` / `{ id, input }` / `{ id }` | `{ rule }` / `{}` + `auditGroupId` | FR-019 |
+| `rules.preview` | `{ ruleId \| rule, onlyUncategorized? = true }` | `{ count, matches: RuleMatch[] (≤ 500) }` — nothing changes | FR-019 |
+| `rules.apply` | `{ ruleId, txnIds[] }` (the confirmed subset; each re-checked) | `{ count, skipped, auditGroupId }` | FR-019 |
+| `suggestions.forTxns` | `{ txnIds[] }` | `TxnSuggestion[]` `{ txnId, categoryId, categoryPath, source: 'rule'\|'merchant', reason, ruleId }` for uncategorised, unsplit rows | FR-020 |
 | `import.openFile` | — (main shows dialog) | `{ fileToken, fileName, sniff: { encoding, delimiter, headerRow, sampleRows } }` | FR-012 |
-| `import.preview` | `{ fileToken, accountId, mapping \| presetId }` | `ImportPreview` (see [import-csv.md](./import-csv.md)) | FR-012–014 |
-| `import.commit` | `{ fileToken, accountId, mapping, decisions: { rowNumber, action: 'import'\|'skip' }[], acceptSuggestions: boolean, savePresetAs? }` | `{ batchId, counts }` | FR-015/016 |
+| `import.preview` | `{ fileToken, accountId, mapping \| presetId }` | `ImportPreview` (see [import-csv.md](./import-csv.md)); each row also has `merchant` (from the narration) and a `suggestion` | FR-012–014, FR-017/020 |
+| `import.commit` | `{ fileToken, accountId, mapping, decisions: { rowNumber, action: 'import'\|'skip' }[], categories?: { rowNumber, categoryId }[] (accepted suggestions only), savePresetAs? }` | `{ batchId, counts }` | FR-015/016 |
 | `import.batches` | — | `ImportBatch[]` | FR-015 |
 | `import.undo` | `{ batchId, includeEdited: boolean }` | `{ removed, auditGroupId }` | FR-015 |
 | `recurring.list` | — | `RecurringItemDto[]` (with `scheduleText`, `nextDue`) | FR-021 |
