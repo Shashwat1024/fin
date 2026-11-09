@@ -6,6 +6,7 @@ import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { SHORTCUTS } from '@renderer/lib/hotkeys'
 import { undoChange, useActivity, useFinMutation, useSettings } from '@renderer/lib/queries'
+import { DataSettings } from './DataSettings'
 import { PreferenceFields } from './PreferenceFields'
 
 function relativeTime(iso: string): string {
@@ -39,6 +40,8 @@ export function SettingsPage() {
             <PreferenceFields value={settings.data} onChange={(patch) => update.mutate(patch)} />
           </CardContent>
         </Card>
+
+        <DataSettings />
 
         <Card>
           <CardHeader>
@@ -99,8 +102,9 @@ export function SettingsPage() {
               <LockIcon className="size-4" /> Privacy
             </CardTitle>
             <CardDescription>
-              Fin works fully offline. Your data is stored only on this computer and is never sent anywhere. Backup and
-              export are coming in a later update.
+              Fin works fully offline. Your data is stored only on this computer and is never sent anywhere. For
+              protection if this computer is lost, turn on your operating system's disk encryption (BitLocker on
+              Windows) and keep passphrase-protected backups.
             </CardDescription>
           </CardHeader>
         </Card>

@@ -1,14 +1,11 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, type WebContents } from 'electron'
 import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { openDatabase, type Db } from '@db/connection'
-import { migrate } from '@db/migrate'
-import { seedDefaultCategories } from '@db/seed/categories'
-import { snapshotDatabase } from '@db/snapshot'
 import { IPC_CHANNEL } from '@shared/contract'
 import { dispatch } from './dispatch'
 import { createFileLogger } from './logging'
 import { resolvePaths } from './paths'
+import { createSystem } from './services/system'
 
 const isDev = !app.isPackaged && Boolean(process.env.ELECTRON_RENDERER_URL)
 const paths = resolvePaths(app.getPath('appData'))
@@ -16,21 +13,8 @@ mkdirSync(paths.dataDir, { recursive: true })
 app.setPath('userData', paths.dataDir)
 const log = createFileLogger(paths.logFile, isDev ? 'debug' : 'info')
 
-let db: Db | undefined
 let mainWindow: BrowserWindow | undefined
-
-function openDb(): Db {
-  const d = openDatabase(paths.dbFile)
-  const r = migrate(d, {
-    beforeMigrate: (_pending, from) => {
-      snapshotDatabase(d, paths.backupDir, `pre-upgrade-v${from}`)
-      log.info('db.pre_migration_backup', { version: from })
-    },
-  })
-  if (r.applied.length) log.info('db.migrated', { from: r.from, to: r.to })
-  seedDefaultCategories(d)
-  return d
-}
+const system = createSystem(paths, log, () => mainWindow)
 
 const devOrigin = process.env.ELECTRON_RENDERER_URL ? new URL(process.env.ELECTRON_RENDERER_URL).origin : null
 
@@ -101,7 +85,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     try {
-      db = openDb()
+      system.start()
     } catch (err) {
       log.error('db.open_failed', { kind: err instanceof Error ? err.name : 'unknown' })
       dialog.showErrorBox(
@@ -118,10 +102,11 @@ if (!app.requestSingleInstanceLock()) {
         log.warn('ipc.untrusted_sender')
         return { ok: false, error: { code: 'VALIDATION', message: 'Untrusted sender' } }
       }
-      return dispatch(db!, channel, payload, log)
+      return dispatch({ db: system.db, env: system.env }, channel, payload, log)
     })
     log.info('app.ready', { version: app.getVersion() })
     createWindow()
+    void system.dailyBackup()
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
@@ -131,12 +116,5 @@ if (!app.requestSingleInstanceLock()) {
     if (process.platform !== 'darwin') app.quit()
   })
 
-  app.on('will-quit', () => {
-    try {
-      db?.exec('PRAGMA optimize')
-      db?.close()
-    } catch {
-      // Closing is best-effort; WAL guarantees durability of committed data.
-    }
-  })
+  app.on('will-quit', () => system.close())
 }

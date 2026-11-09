@@ -196,3 +196,33 @@ export type DashboardSummary = {
   /** Money in and out for the last six months, oldest first (spending as positive numbers). */
   months: MonthFlow[]
 }
+
+// ---- Backups, export, demo (US4) --------------------------------------------------------------
+
+export type BackupKind = 'auto' | 'manual' | 'pre-restore' | 'pre-upgrade'
+
+export type BackupInfo = {
+  fileName: string
+  path: string
+  /** Local time the backup was made, 'YYYY-MM-DDTHH:mm:ss'. */
+  createdAt: string
+  kind: BackupKind
+  encrypted: boolean
+  sizeBytes: number
+}
+
+export type DataCounts = { accounts: number; transactions: number; importBatches: number; latestTxnDate: string | null }
+
+export type BackupProblem = 'NOT_FOUND' | 'NEEDS_PASSPHRASE' | 'WRONG_PASSPHRASE' | 'NOT_FIN' | 'DAMAGED' | 'TOO_NEW'
+
+export type BackupInspection =
+  | { valid: true; encrypted: boolean; schemaVersion: number; needsUpgrade: boolean; counts: DataCounts }
+  | { valid: false; reason: BackupProblem; message: string }
+
+export type AppStatus = {
+  demo: boolean
+  dataDir: string
+  backupDir: string
+  defaultBackupDir: string
+  counts: DataCounts
+}

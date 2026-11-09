@@ -19,8 +19,10 @@ import {
 } from '@db/repos/transactions'
 import type { Channel, Output, ParsedInput } from '@shared/contract'
 import type { ActivityEntry } from '@shared/types'
+import { backupHandlers } from './backupHandlers'
+import type { HandlerContext } from './env'
 
-export type Handler<C extends Channel> = (db: Db, input: ParsedInput<C>) => Output<C>
+export type Handler<C extends Channel> = (ctx: HandlerContext, input: ParsedInput<C>) => Output<C> | Promise<Output<C>>
 export type Handlers = { [C in Channel]: Handler<C> }
 
 function activity(db: Db, limit: number): ActivityEntry[] {
@@ -40,34 +42,35 @@ function activity(db: Db, limit: number): ActivityEntry[] {
 }
 
 export const handlers: Handlers = {
-  'settings.get': (db) => getSettings(db),
-  'settings.update': (db, input) => updateSettings(db, input),
-  'accounts.list': (db, input) => listAccounts(db, input?.includeArchived ?? false),
-  'accounts.create': (db, input) => createAccount(db, input),
-  'accounts.update': (db, input) => updateAccount(db, input.id, input.patch),
-  'accounts.archive': (db, input) => setAccountArchived(db, input.id, input.archived),
-  'categories.list': (db) => listCategories(db),
-  'tags.list': (db) => listTags(db),
-  'txns.query': (db, input) => queryTransactions(db, input),
-  'txns.get': (db, input) => getTransaction(db, input.id),
-  'txns.create': (db, input) => createTransaction(db, input),
-  'txns.update': (db, input) => updateTransaction(db, input.id, input.patch),
-  'txns.delete': (db, input) => deleteTransactions(db, input.ids),
-  'txns.bulkUpdate': (db, input) => bulkUpdate(db, input),
-  'transfers.create': (db, input) => createTransfer(db, input),
-  'transfers.update': (db, input) => updateTransfer(db, input.transferId, input.patch),
-  'payees.suggest': (db, input) => suggestPayees(db, input.prefix, input.limit),
-  'activity.list': (db, input) => activity(db, input?.limit ?? 50),
-  'accounts.reconcile': (db, input) => reconcile(db, input.id, input.statementDate, input.statementBalanceMinor),
-  'import.presets': (db) => listPresets(db),
-  'import.savePreset': (db, input) => savePreset(db, input.name, input.mapping),
-  'import.preview': (db, input) => previewImport(db, input),
-  'import.commit': (db, input) => commitImport(db, input),
-  'import.batches': (db) => listBatches(db),
-  'import.batchRows': (db, input) => batchRows(db, input.id),
-  'import.undo': (db, input) => undoImport(db, input.batchId, input.includeEdited),
-  'dashboard.summary': (db, input) => dashboardSummary(db, input?.asOf ?? todayIn(getSettings(db).timezone)),
-  'undo.apply': (db, input) => {
+  ...backupHandlers,
+  'settings.get': ({ db }) => getSettings(db),
+  'settings.update': ({ db }, input) => updateSettings(db, input),
+  'accounts.list': ({ db }, input) => listAccounts(db, input?.includeArchived ?? false),
+  'accounts.create': ({ db }, input) => createAccount(db, input),
+  'accounts.update': ({ db }, input) => updateAccount(db, input.id, input.patch),
+  'accounts.archive': ({ db }, input) => setAccountArchived(db, input.id, input.archived),
+  'categories.list': ({ db }) => listCategories(db),
+  'tags.list': ({ db }) => listTags(db),
+  'txns.query': ({ db }, input) => queryTransactions(db, input),
+  'txns.get': ({ db }, input) => getTransaction(db, input.id),
+  'txns.create': ({ db }, input) => createTransaction(db, input),
+  'txns.update': ({ db }, input) => updateTransaction(db, input.id, input.patch),
+  'txns.delete': ({ db }, input) => deleteTransactions(db, input.ids),
+  'txns.bulkUpdate': ({ db }, input) => bulkUpdate(db, input),
+  'transfers.create': ({ db }, input) => createTransfer(db, input),
+  'transfers.update': ({ db }, input) => updateTransfer(db, input.transferId, input.patch),
+  'payees.suggest': ({ db }, input) => suggestPayees(db, input.prefix, input.limit),
+  'activity.list': ({ db }, input) => activity(db, input?.limit ?? 50),
+  'accounts.reconcile': ({ db }, input) => reconcile(db, input.id, input.statementDate, input.statementBalanceMinor),
+  'import.presets': ({ db }) => listPresets(db),
+  'import.savePreset': ({ db }, input) => savePreset(db, input.name, input.mapping),
+  'import.preview': ({ db }, input) => previewImport(db, input),
+  'import.commit': ({ db }, input) => commitImport(db, input),
+  'import.batches': ({ db }) => listBatches(db),
+  'import.batchRows': ({ db }, input) => batchRows(db, input.id),
+  'import.undo': ({ db }, input) => undoImport(db, input.batchId, input.includeEdited),
+  'dashboard.summary': ({ db }, input) => dashboardSummary(db, input?.asOf ?? todayIn(getSettings(db).timezone)),
+  'undo.apply': ({ db }, input) => {
     const r = undoGroup(db, input.auditGroupId)
     return { reverted: r.result.reverted, auditGroupId: r.auditGroupId }
   },

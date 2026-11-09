@@ -34,6 +34,18 @@ export const inputSchemas = {
   'import.batchRows': s.idInput,
   'import.undo': s.importUndoInput,
   'dashboard.summary': s.dashboardInput,
+  'app.status': s.empty,
+  'backup.list': s.empty,
+  'backup.create': s.backupCreateInput,
+  'backup.pickFile': s.empty,
+  'backup.inspect': s.backupInspectInput,
+  'backup.restore': s.backupRestoreInput,
+  'backup.chooseFolder': s.empty,
+  'backup.openFolder': s.empty,
+  'export.json': s.empty,
+  'export.csv': s.empty,
+  'demo.enter': s.empty,
+  'demo.exit': s.empty,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -71,6 +83,19 @@ export interface Outputs {
   'import.batchRows': t.ImportRowDto[]
   'import.undo': t.Mutation<{ removed: number; kept: number }>
   'dashboard.summary': t.DashboardSummary
+  'app.status': t.AppStatus
+  'backup.list': t.BackupInfo[]
+  'backup.create': t.BackupInfo
+  /** null when the file dialog is cancelled. */
+  'backup.pickFile': { path: string } | null
+  'backup.inspect': t.BackupInspection
+  'backup.restore': { preRestoreBackup: t.BackupInfo; counts: t.DataCounts }
+  'backup.chooseFolder': t.Settings | null
+  'backup.openFolder': null
+  'export.json': { path: string } | null
+  'export.csv': { path: string } | null
+  'demo.enter': t.AppStatus
+  'demo.exit': t.AppStatus
 }
 
 export type Output<C extends Channel> = Outputs[C]

@@ -34,6 +34,9 @@ export const useTxnSummary = (filter: TxnFilter, key: string) =>
 
 export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: () => call('dashboard.summary', undefined) })
 
+export const useAppStatus = () => useQuery({ queryKey: ['app', 'status'], queryFn: () => call('app.status', undefined) })
+export const useBackups = () => useQuery({ queryKey: ['backups'], queryFn: () => call('backup.list', undefined) })
+
 export const PAGE_SIZE = 200
 
 export const useTxnPages = (filter: TxnFilter) =>
@@ -65,6 +68,8 @@ type MutationOptions<C extends Channel> = {
   /** Show errors as a toast (default true). Forms that render field errors can turn this off. */
   toastErrors?: boolean
   onSuccess?: (data: Output<C>) => void
+  /** The open database was replaced (restore, demo): drop every cached query, categories included. */
+  reloadAll?: boolean
 }
 
 /** Shared mutation hook: calls the channel, refreshes ledger queries, and offers one-step undo. */
@@ -73,14 +78,20 @@ export function useFinMutation<C extends Channel>(channel: C, opts: MutationOpti
   return useMutation({
     mutationFn: (input: Input<C>) => call(channel, input),
     onSuccess: async (data) => {
-      await refreshLedger(qc)
+      if (opts.reloadAll) {
+        // Navigate etc. before the reset: the app re-mounts while every query reloads.
+        opts.onSuccess?.(data)
+        await qc.resetQueries()
+      } else {
+        await refreshLedger(qc)
+      }
       if (opts.success) {
         const message = typeof opts.success === 'function' ? opts.success(data) : opts.success
         const groupId =
           data && typeof data === 'object' && 'auditGroupId' in data ? (data as { auditGroupId: string }).auditGroupId : null
         toast.success(message, groupId ? { action: { label: 'Undo', onClick: () => void undoChange(qc, groupId) } } : {})
       }
-      opts.onSuccess?.(data)
+      if (!opts.reloadAll) opts.onSuccess?.(data)
     },
     onError: (err) => {
       if (opts.toastErrors !== false) toast.error(err.message)

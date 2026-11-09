@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom'
-import { FileUpIcon, LandmarkIcon, PlusIcon } from 'lucide-react'
+import { FileUpIcon, FlaskConicalIcon, LandmarkIcon, PlusIcon } from 'lucide-react'
 import { EmptyState, Page, PageHeader } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
+import { useDemoMode } from '@renderer/features/demo/useDemoMode'
 import { useAccountDialog } from '@renderer/features/accounts/AccountDialog'
 
 /** Overview before any account exists: the ways to get data in. */
 export function DashboardEmpty() {
   const accountDialog = useAccountDialog()
+  const demo = useDemoMode()
   return (
     <Page>
       <PageHeader title="Overview" />
@@ -23,6 +25,9 @@ export function DashboardEmpty() {
               <Link to="/import">
                 <FileUpIcon /> Import a statement
               </Link>
+            </Button>
+            <Button variant="ghost" onClick={demo.enter} disabled={demo.pending}>
+              <FlaskConicalIcon /> Explore demo data
             </Button>
           </div>
         }

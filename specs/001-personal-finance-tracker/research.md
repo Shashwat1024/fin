@@ -161,6 +161,14 @@ and reference digits are kept (stripping them could merge distinct same-day paym
 - **Rationale**: Node `crypto` only (no extra native deps); Constitution IV.
 - **Alternatives**: SQLCipher for at-rest encryption (extra native build; deferred — rely on OS disk
   encryption, documented in README).
+- **As built (US4)**: `node:sqlite` has no backup API, so backups use `VACUUM INTO` (consistent and
+  transactional) written to a `.tmp` name and renamed. Files are `fin-YYYYMMDD-HHmmss-<kind>.db|.finbackup`
+  (kinds: auto, manual, pre-restore, pre-upgrade). The `.finbackup` header is
+  `"FINBAK" 00 01 | log2N | r | p | salt(16) | iv(12) | tag(16)`, and the header is GCM associated data.
+  Candidates are copied/decrypted into `<data>/tmp`, checked (`application_id`, `quick_check`, schema
+  version), then swapped in by rename with the old file kept aside until the swap succeeds. The DB is
+  reopened in-process (migrating up) instead of relaunching; if the restored file cannot be opened, the
+  pre-restore backup is put back. Demo mode opens a separate fresh `demo.db`.
 
 ## R16. Testing strategy
 

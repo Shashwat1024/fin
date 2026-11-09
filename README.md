@@ -18,6 +18,12 @@ The product requirements are in [docs/PRD.md](docs/PRD.md). Project principles a
 
 The initial product is single-user and local-only. It does not require an account, hosted backend, or bank credentials.
 
+- Your data lives in `%APPDATA%\Fin` (`fin.db`), with backups in `%APPDATA%\Fin\backups` unless you choose another
+  folder in Settings › Data. A cloud-synced backup folder sends copies of your data through that service.
+- The database itself is not encrypted. Turn on disk encryption (BitLocker) and use passphrase-protected backups
+  (`.finbackup`: scrypt + AES-256-GCM). A forgotten passphrase cannot be recovered.
+- The app blocks all network requests; `tests/e2e/offline.spec.ts` checks this across every core flow.
+
 ## Running locally
 
 Requires Node 24+ on Windows.
@@ -44,6 +50,9 @@ different folder, for example a throwaway one while testing.
   month, income, savings rate, card dues and net worth. Each card links to the records that add
   up to it, shows how current its data is (per account, incl. latest import), and the six-month
   money in/out chart has a table view.
-- ⏭️ Next: backup/restore & export (US4).
+- ✅ User Story 4: daily automatic backups (last 14 kept), manual and passphrase-protected backups,
+  restore that checks the file and backs up your current data first, JSON/CSV export, demo mode,
+  and an offline test across every core flow.
+- ⏭️ Next: planning — recurring items, budgets and goals (US5).
   See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
 

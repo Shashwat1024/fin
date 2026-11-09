@@ -160,21 +160,21 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ### Tests for User Story 4
 
-- [ ] T064 [P] [US4] Integration tests for backup create/list/retention(14)/inspect/restore round-trip, older-schema migrate-up, invalid file refusal in `tests/integration/db/backup.test.ts`
-- [ ] T065 [P] [US4] Unit tests for encrypted backup format (scrypt + AES-256-GCM; wrong passphrase fails) in `tests/unit/db/encryption.test.ts`
-- [ ] T066 [P] [US4] Tests for JSON export v1 shape and CSV columns per contracts/export-json.md in `tests/integration/db/export.test.ts`
-- [ ] T067 [P] [US4] E2E offline test blocking all network and asserting zero outbound requests across core flows in `tests/e2e/offline.spec.ts`
+- [x] T064 [P] [US4] Integration tests for backup create/list/retention(14)/inspect/restore round-trip, older-schema migrate-up, invalid file refusal in `tests/integration/db/backup.test.ts`
+- [x] T065 [P] [US4] Unit tests for encrypted backup format (scrypt + AES-256-GCM; wrong passphrase fails) in `tests/unit/db/encryption.test.ts`
+- [x] T066 [P] [US4] Tests for JSON export v1 shape and CSV columns per contracts/export-json.md in `tests/integration/db/export.test.ts`
+- [x] T067 [P] [US4] E2E offline test blocking all network and asserting zero outbound requests across core flows in `tests/e2e/offline.spec.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T068 [US4] Implement backup create/list/inspect/restore with pre-restore backup and relaunch in `src/db/backup.ts`
-- [ ] T069 [US4] Implement `.finbackup` encryption/decryption in `src/db/backupCrypto.ts`
-- [ ] T070 [US4] Schedule daily automatic backup on launch with retention and wire pre-migration backup in `src/main/services/backup.ts`
-- [ ] T071 [P] [US4] Implement JSON and CSV exporters in `src/db/export.ts` and IPC `export.*`
-- [ ] T072 [US4] Build Settings › Data screen (backup now, list, restore with explicit overwrite confirmation showing counts/date, export, backup folder picker) in `src/renderer/features/settings/DataSettings.tsx`
-- [ ] T073 [US4] Implement demo mode (separate DB file, seeded dataset, clear banner) in `src/db/seed/demo.ts` and `src/main/services/demo.ts`
+- [x] T068 [US4] Implement backup create/list/inspect/restore with pre-restore backup and relaunch in `src/db/backup.ts`
+- [x] T069 [US4] Implement `.finbackup` encryption/decryption in `src/db/backupCrypto.ts`
+- [x] T070 [US4] Schedule daily automatic backup on launch with retention and wire pre-migration backup in `src/main/services/backup.ts` (as built: `system.ts` with `autoBackupIfDue` in `src/db/backup.ts`)
+- [x] T071 [P] [US4] Implement JSON and CSV exporters in `src/db/export.ts` and IPC `export.*`
+- [x] T072 [US4] Build Settings › Data screen (backup now, list, restore with explicit overwrite confirmation showing counts/date, export, backup folder picker) in `src/renderer/features/settings/DataSettings.tsx` (+ `BackupDialogs.tsx`)
+- [x] T073 [US4] Implement demo mode (separate DB file, seeded dataset, clear banner) in `src/db/seed/demo.ts` and `src/main/services/demo.ts` (as built: `system.ts`, banner in `features/demo/`)
 
-**Checkpoint**: 1.0 P1 stories complete (US1–US4)
+**Checkpoint**: 1.0 P1 stories complete (US1–US4) ✅ (2026-11-09: `tests/e2e/us4-data.spec.ts` and `tests/e2e/offline.spec.ts` pass)
 
 ---
 

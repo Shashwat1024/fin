@@ -114,6 +114,9 @@ describe('dashboard summary', () => {
     expect(bankSrc().lastDataDate).toBe(TODAY)
     expect(s.cash.asOf).toBe('2026-11-08') // the wallet's last entry
     expect(bankSrc().lastImport).toBeNull()
+    // Spending freshness ignores accounts money is not spent from (the index fund and loan never change here).
+    expect(s.spent.sources.map((x) => x.accountName).sort()).toEqual(['Amex', 'HDFC Savings', 'Wallet'])
+    expect(s.netWorth.asOf).toBe('2026-09-01')
 
     const line = (rowNumber: number, date: string, amountMinor: number) => ({
       rowNumber,

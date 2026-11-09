@@ -46,13 +46,17 @@ Mutations return an `auditGroupId` usable with `undo.apply`.
 | `forecast.run` | `{ days: 30\|60\|90 }` | `{ points: { date, balance }[], low: { date, balance }, belowBuffer: Range[], confidence: 'high'\|'medium'\|'low', assumptions: Assumption[] }` | FR-027 |
 | `networth.history` | `{ from, to, interval: 'month' }` | `{ date, assets, liabilities, net }[]` | FR-028 |
 | `valuations.upsert` | `{ accountId, date, value }` | `Valuation` | FR-028 |
-| `export.csv` / `export.json` | `{ filter? }` | `{ path }` (main shows save dialog) | FR-030 |
-| `backup.create` | `{ passphrase? }` | `BackupInfo` | FR-031/033 |
-| `backup.list` | — | `BackupInfo[]` | FR-031 |
-| `backup.inspect` | `{ path, passphrase? }` | `{ valid, reason?, createdAt, schemaVersion, counts }` | FR-032 |
-| `backup.restore` | `{ path, passphrase?, confirm: true }` | `{ preRestoreBackup: BackupInfo }` then app relaunches | FR-032 |
-| `demo.enter` / `demo.exit` | — | — (switches to a separate demo DB file) | FR-034 |
+| `export.csv` / `export.json` | — | `{ path } \| null` (main shows the save dialog; null if cancelled) | FR-030 |
+| `app.status` | — | `AppStatus` `{ demo, dataDir, backupDir, defaultBackupDir, counts }` | FR-031/034 |
+| `backup.create` | `{ passphrase? }` (≥ 8 chars) | `BackupInfo` `{ fileName, path, createdAt, kind, encrypted, sizeBytes }` | FR-031/033 |
+| `backup.list` | — | `BackupInfo[]`, newest first (chosen folder + default folder) | FR-031 |
+| `backup.pickFile` | — | `{ path } \| null` (open dialog) | FR-032 |
+| `backup.inspect` | `{ path, passphrase? }` | `BackupInspection`: `{ valid: true, encrypted, schemaVersion, needsUpgrade, counts }` or `{ valid: false, reason, message }` | FR-032 |
+| `backup.restore` | `{ path, passphrase?, confirm: true }` | `{ preRestoreBackup, counts }`; the database is swapped in place (no relaunch) and the renderer reloads every query | FR-032 |
+| `backup.chooseFolder` / `backup.openFolder` | — | `Settings \| null` / `null` | FR-031 |
+| `demo.enter` / `demo.exit` | — | `AppStatus` (switches to a fresh `demo.db`, deleted on exit and at launch) | FR-034 |
 
 Invariants enforced in main (return `INVARIANT`): splits sum to total; transfer legs are exact
 negatives; category depth ≤ 2; deleting a used category requires `replacementId`;
-`backup.restore` requires `confirm: true` and a prior successful `inspect` of the same path.
+`backup.restore` requires `confirm: true` and re-checks the file itself before anything changes; backup,
+restore and folder changes are refused in demo mode.

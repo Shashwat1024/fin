@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { FileUpIcon, LandmarkIcon, LayoutDashboardIcon, PlusIcon, ReceiptTextIcon, SearchIcon, SettingsIcon, type LucideIcon } from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
+import { DemoBanner } from '@renderer/features/demo/DemoBanner'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { useHotkey } from '@renderer/lib/hotkeys'
 import { cn } from '@renderer/lib/utils'
@@ -68,9 +69,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </div>
       </aside>
-      <main id="main" className="min-w-0 flex-1 overflow-auto bg-background">
-        {children}
-      </main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <DemoBanner />
+        <main id="main" className="min-h-0 flex-1 overflow-auto bg-background">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

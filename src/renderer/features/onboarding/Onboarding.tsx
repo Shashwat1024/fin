@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { LockIcon } from 'lucide-react'
+import { FlaskConicalIcon, LockIcon } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { AccountFields, useAccountForm } from '@renderer/features/accounts/AccountForm'
+import { useDemoMode } from '@renderer/features/demo/useDemoMode'
 import { PreferenceFields } from '@renderer/features/settings/PreferenceFields'
 import { useFinMutation } from '@renderer/lib/queries'
 import type { Settings } from '@shared/types'
@@ -14,6 +15,7 @@ export function Onboarding({ settings }: { settings: Settings }) {
   const save = useFinMutation('settings.update')
   const finish = () => save.mutate({ onboarded: true })
   const account = useAccountForm(undefined, finish)
+  const demo = useDemoMode()
 
   return (
     <div className="flex h-full items-center justify-center overflow-auto bg-muted/40 p-8">
@@ -30,7 +32,10 @@ export function Onboarding({ settings }: { settings: Settings }) {
             <CardContent>
               <PreferenceFields value={prefs} onChange={(patch) => setPrefs((p) => ({ ...p, ...patch }))} />
             </CardContent>
-            <CardFooter className="justify-end">
+            <CardFooter className="justify-between">
+              <Button variant="ghost" onClick={demo.enter} disabled={demo.pending}>
+                <FlaskConicalIcon /> Explore with demo data first
+              </Button>
               <Button
                 onClick={() => {
                   const { onboarded: _o, backupDir: _b, ...patch } = prefs

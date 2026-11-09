@@ -1,6 +1,6 @@
-import type { Db } from '@db/connection'
 import { inputSchemas, type Channel, type Result } from '@shared/contract'
 import { AppError } from '@shared/errors'
+import type { HandlerContext } from './env'
 import { handlers } from './handlers'
 import type { Logger } from './logging'
 
@@ -12,7 +12,7 @@ function isChannel(c: unknown): c is Channel {
  * Validate and execute one request from the (untrusted) renderer. Never throws: every failure
  * becomes a typed error result. Logs carry only the channel, timing and error code.
  */
-export function dispatch(db: Db, channel: unknown, payload: unknown, log?: Logger): Result<unknown> {
+export async function dispatch(ctx: HandlerContext, channel: unknown, payload: unknown, log?: Logger): Promise<Result<unknown>> {
   const started = performance.now()
   if (!isChannel(channel)) {
     log?.warn('ipc.unknown_channel')
@@ -31,8 +31,8 @@ export function dispatch(db: Db, channel: unknown, payload: unknown, log?: Logge
     }
   }
   try {
-    const handler = handlers[channel] as (db: Db, input: unknown) => unknown
-    const data = handler(db, parsed.data)
+    const handler = handlers[channel] as (ctx: HandlerContext, input: unknown) => unknown
+    const data = await handler(ctx, parsed.data)
     log?.debug('ipc.ok', { channel, ms: Math.round(performance.now() - started) })
     return { ok: true, data }
   } catch (err) {

@@ -57,6 +57,13 @@ export function dashboardSummary(db: Db, today: string): DashboardSummary {
   }
   const sumGroup = (group: AccountGroup) => accounts.filter(ACCOUNT_GROUPS[group]).reduce((t, a) => t + a.balanceMinor, 0)
 
+  // Spending and income happen in cash, bank and card accounts; an investment or loan that is only
+  // updated occasionally should not make this month's spending look out of date.
+  const spendingSources = allSources.filter((x) => {
+    const a = accounts.find((acc) => acc.id === x.accountId)!
+    return a.isLiquid || a.type === 'credit_card'
+  })
+
   const monthStart = startOfMonth(today)
   const current = flow(db, monthStart, today)
   const prev = samePointLastMonth(today)
@@ -79,12 +86,12 @@ export function dashboardSummary(db: Db, today: string): DashboardSummary {
     today,
     cash: metric(sumGroup('cash'), sourcesFor('cash'), { page: 'accounts', group: 'cash' }),
     spent: {
-      ...metric(current.outMinor, allSources, { ...mtd, direction: 'out' }),
+      ...metric(current.outMinor, spendingSources, { ...mtd, direction: 'out' }),
       previousMinor: previous.outMinor,
       previousFrom: prev.from,
       previousTo: prev.to,
     },
-    income: metric(current.inMinor, allSources, { ...mtd, direction: 'in' }),
+    income: metric(current.inMinor, spendingSources, { ...mtd, direction: 'in' }),
     savingsRate: { percent: savingsRatePercent, drill: mtd },
     cardDues: {
       ...metric(sumGroup('cards'), sourcesFor('cards'), { page: 'accounts', group: 'cards' }),

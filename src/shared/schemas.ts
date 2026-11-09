@@ -177,3 +177,11 @@ export type ImportCommitInput = z.output<typeof importCommitInput>
 // ---- Dashboard ----------------------------------------------------------------------------------
 
 export const dashboardInput = z.object({ asOf: calendarDate.optional() }).optional()
+
+// ---- Backups, export, demo ---------------------------------------------------------------------
+
+export const passphrase = z.string().min(8, 'Use at least 8 characters').max(200)
+export const backupCreateInput = z.object({ passphrase: passphrase.optional() }).optional()
+const backupPath = z.string().min(1).max(4000)
+export const backupInspectInput = z.object({ path: backupPath, passphrase: z.string().max(200).optional() })
+export const backupRestoreInput = backupInspectInput.extend({ confirm: z.literal(true) })
