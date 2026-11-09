@@ -6,16 +6,18 @@ How to run Fin locally and prove each user story works. Data shapes are defined 
 ## Prerequisites
 
 - Windows 10/11 x64, Node 24 LTS, npm, Git.
-- Visual Studio Build Tools are **not** required if prebuilt `better-sqlite3` binaries download;
-  otherwise install "Desktop development with C++".
+- No native build tools are needed (storage uses Node's built-in `node:sqlite`).
+- VS Code terminals set `ELECTRON_RUN_AS_NODE=1`; the npm scripts and E2E fixtures strip it, so
+  `npm run dev` works from any terminal.
 
 ## Setup
 
 ```powershell
-npm install            # postinstall rebuilds native modules for Electron
+npm install
 npm run dev            # launches the app with hot reload
 npm run typecheck; npm run lint; npm test        # unit + integration
-npm run test:e2e       # Playwright against a built app
+npm run test:e2e       # builds, then runs Playwright against the real Electron app
+$env:SCREENSHOTS=1; npx playwright test screenshots   # optional: screenshots in test-results/screens
 npm run seed:perf      # optional: writes a 50k-transaction profile to a temp data dir
 npm run package        # NSIS installer in release/
 ```

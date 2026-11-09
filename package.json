@@ -12,17 +12,17 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "start": "electron-vite preview",
+    "dev": "node scripts/electron-vite.mjs dev",
+    "build": "node scripts/electron-vite.mjs build",
+    "start": "node scripts/electron-vite.mjs preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "electron-vite build && playwright test",
-    "package": "electron-vite build && electron-builder --win --x64"
+    "test:e2e": "npm run build && playwright test",
+    "package": "npm run build && electron-builder --win --x64"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

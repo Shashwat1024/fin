@@ -27,14 +27,14 @@ Within each story, write tests first and confirm they fail before implementing.
 
 **Purpose**: Project initialization and tooling
 
-- [ ] T001 Scaffold electron-vite React + TypeScript project at repository root (`package.json`, `electron.vite.config.ts`, `src/main/index.ts`, `src/preload/index.ts`, `src/renderer/main.tsx`)
-- [ ] T002 Configure strict TypeScript project references for main/preload/renderer/domain in `tsconfig.json`, `tsconfig.node.json`, `tsconfig.web.json`
-- [ ] T003 [P] Configure ESLint + Prettier with a `no-restricted-imports` rule forbidding electron/better-sqlite3/react imports under `src/domain/**` in `eslint.config.js`
-- [ ] T004 [P] Install and configure Tailwind CSS and shadcn/ui (Radix) with design tokens and light/dark themes in `src/renderer/styles/globals.css` and `components.json`
-- [ ] T005 [P] Configure Vitest with coverage thresholds (≥ 90% lines for `src/domain`) in `vitest.config.ts`
-- [ ] T006 [P] Configure Playwright for Electron with temp data dir fixture in `playwright.config.ts` and `tests/e2e/fixtures.ts`
-- [ ] T007 Add `better-sqlite3` with `electron-builder install-app-deps` postinstall and a Node-ABI rebuild for tests; document in `package.json` scripts (`dev`, `build`, `typecheck`, `lint`, `test`, `test:e2e`, `seed:perf`, `package`)
-- [ ] T008 [P] Configure electron-builder NSIS target (Windows x64, app id, icon) in `electron-builder.yml`
+- [x] T001 Scaffold electron-vite React + TypeScript project at repository root (`package.json`, `electron.vite.config.ts`, `src/main/index.ts`, `src/preload/index.ts`, `src/renderer/main.tsx`)
+- [x] T002 Configure strict TypeScript project references for main/preload/renderer/domain in `tsconfig.json`, `tsconfig.node.json`, `tsconfig.web.json`
+- [x] T003 [P] Configure ESLint + Prettier with a `no-restricted-imports` rule forbidding electron/better-sqlite3/react imports under `src/domain/**` in `eslint.config.js`
+- [x] T004 [P] Install and configure Tailwind CSS and shadcn/ui (Radix) with design tokens and light/dark themes in `src/renderer/styles/globals.css` and `components.json`
+- [x] T005 [P] Configure Vitest with coverage thresholds (≥ 90% lines for `src/domain`) in `vitest.config.ts`
+- [x] T006 [P] Configure Playwright for Electron with temp data dir fixture in `playwright.config.ts` and `tests/e2e/fixtures.ts`
+- [x] T007 ~~Add `better-sqlite3`~~ Use built-in `node:sqlite` (see research R3 update — no native rebuild needed); document in `package.json` scripts (`dev`, `build`, `typecheck`, `lint`, `test`, `test:e2e`, `seed:perf`, `package`)
+- [x] T008 [P] Configure electron-builder NSIS target (Windows x64, app id, icon) in `electron-builder.yml`
 
 ---
 
@@ -44,24 +44,24 @@ Within each story, write tests first and confirm they fail before implementing.
 
 **⚠️ CRITICAL**: No user story work begins until this phase is complete
 
-- [ ] T009 [P] Write unit tests for Money (add, subtract, negate, largest-remainder allocate, en-IN format, parse with grouping/Dr/Cr/parentheses) in `tests/unit/domain/money.test.ts`
-- [ ] T010 [P] Write unit tests for calendar dates (today in timezone, month math, month-end clamp, FY range for April start) in `tests/unit/domain/dates.test.ts`
-- [ ] T011 [P] Implement Money type and helpers in `src/domain/money.ts`
-- [ ] T012 [P] Implement calendar-date helpers in `src/domain/dates.ts`
-- [ ] T013 Implement DB connection (WAL, foreign_keys, app_id marker) in `src/db/connection.ts` and data paths (`%APPDATA%/Fin`, `FIN_DATA_DIR` override, demo DB) in `src/main/paths.ts`
-- [ ] T014 Implement migration runner with `schema_migrations`, per-migration transaction, and pre-migration backup hook in `src/db/migrate.ts`
-- [ ] T015 Create initial schema (settings, accounts, transactions, splits, transfers, categories, tags, transaction_tag, merchants, audit_log, FTS5 table, indexes per data-model.md) in `src/db/migrations/0001_init.sql`
-- [ ] T016 Write integration tests for migrations (fresh apply, idempotent re-run, failure rolls back) in `tests/integration/db/migrate.test.ts`
-- [ ] T017 [P] Implement settings repository with defaults (INR, Asia/Kolkata, FY April, en-IN, theme) in `src/db/repos/settings.ts`
-- [ ] T018 Implement audit log + undo-by-group (inverse replay, itself audited) in `src/db/repos/audit.ts` with tests in `tests/integration/db/audit.test.ts`
-- [ ] T019 Define IPC contract types and `Result` envelope in `src/shared/contract.ts` and base Zod schemas (Money, date, ids, filters) in `src/shared/schemas.ts`
-- [ ] T020 Implement IPC handler registry (validate → service → Result, error mapping) in `src/main/ipc.ts` and typed `window.fin` bridge in `src/preload/index.ts` and `src/renderer/lib/ipc.ts`
-- [ ] T021 [P] Implement redacting logger (no amounts, payees, account names) in `src/main/logging.ts` with tests in `tests/unit/main/logging.test.ts`
-- [ ] T022 Harden Electron window (contextIsolation, sandbox, nodeIntegration off, CSP, block navigation/window.open/permissions, no remote content) in `src/main/index.ts`
-- [ ] T023 [P] Build app shell: sidebar routes, keyboard navigation, theme switcher, TanStack Query client in `src/renderer/App.tsx`, `src/renderer/routes.tsx`, `src/renderer/lib/queryClient.ts`
-- [ ] T024 [P] Create shared state components (Empty, Loading, ErrorState) and `MoneyText` in `src/renderer/components/states/` and `src/renderer/components/MoneyText.tsx`
-- [ ] T025 [P] Implement command palette (Ctrl+K) skeleton with route commands in `src/renderer/components/CommandPalette.tsx`
-- [ ] T026 Seed default two-level category set (with groups needs/wants/goals/buffer/income/transfer) in `src/db/seed/categories.ts`
+- [x] T009 [P] Write unit tests for Money (add, subtract, negate, largest-remainder allocate, en-IN format, parse with grouping/Dr/Cr/parentheses) in `tests/unit/domain/money.test.ts`
+- [x] T010 [P] Write unit tests for calendar dates (today in timezone, month math, month-end clamp, FY range for April start) in `tests/unit/domain/dates.test.ts`
+- [x] T011 [P] Implement Money type and helpers in `src/domain/money.ts`
+- [x] T012 [P] Implement calendar-date helpers in `src/domain/dates.ts`
+- [x] T013 Implement DB connection (WAL, foreign_keys, app_id marker) in `src/db/connection.ts` and data paths (`%APPDATA%/Fin`, `FIN_DATA_DIR` override, demo DB) in `src/main/paths.ts`
+- [x] T014 Implement migration runner with `schema_migrations`, per-migration transaction, and pre-migration backup hook in `src/db/migrate.ts`
+- [x] T015 Create initial schema (settings, accounts, transactions, splits, transfers, categories, tags, transaction_tag, merchants, audit_log, FTS5 table, indexes per data-model.md) in `src/db/migrations/0001_init.sql`
+- [x] T016 Write integration tests for migrations (fresh apply, idempotent re-run, failure rolls back) in `tests/integration/db/migrate.test.ts`
+- [x] T017 [P] Implement settings repository with defaults (INR, Asia/Kolkata, FY April, en-IN, theme) in `src/db/repos/settings.ts`
+- [x] T018 Implement audit log + undo-by-group (inverse replay, itself audited) in `src/db/repos/audit.ts` with tests in `tests/integration/db/audit.test.ts`
+- [x] T019 Define IPC contract types and `Result` envelope in `src/shared/contract.ts` and base Zod schemas (Money, date, ids, filters) in `src/shared/schemas.ts`
+- [x] T020 Implement IPC handler registry (validate → service → Result, error mapping) in `src/main/ipc.ts` and typed `window.fin` bridge in `src/preload/index.ts` and `src/renderer/lib/ipc.ts`
+- [x] T021 [P] Implement redacting logger (no amounts, payees, account names) in `src/main/logging.ts` with tests in `tests/unit/main/logging.test.ts`
+- [x] T022 Harden Electron window (contextIsolation, sandbox, nodeIntegration off, CSP, block navigation/window.open/permissions, no remote content) in `src/main/index.ts`
+- [x] T023 [P] Build app shell: sidebar routes, keyboard navigation, theme switcher, TanStack Query client in `src/renderer/App.tsx`, `src/renderer/routes.tsx`, `src/renderer/lib/queryClient.ts`
+- [x] T024 [P] Create shared state components (Empty, Loading, ErrorState) and `MoneyText` in `src/renderer/components/states/` and `src/renderer/components/MoneyText.tsx`
+- [x] T025 [P] Implement command palette (Ctrl+K) skeleton with route commands in `src/renderer/components/CommandPalette.tsx`
+- [x] T026 Seed default two-level category set (with groups needs/wants/goals/buffer/income/transfer) in `src/db/seed/categories.ts`
 
 **Checkpoint**: App launches, migration 0001 applied, IPC round-trip works, shell keyboard-navigable
 
@@ -75,26 +75,26 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ### Tests for User Story 1
 
-- [ ] T027 [P] [US1] Unit tests for ledger (balance from opening + txns, split sum validation, transfer leg negation, liability "owed" display) in `tests/unit/domain/ledger.test.ts`
-- [ ] T028 [P] [US1] Integration tests for accounts & transactions repos (CRUD, soft delete, splits, transfers atomicity, filter query + total, FTS search) in `tests/integration/db/transactions.test.ts`
-- [ ] T029 [P] [US1] E2E flow: onboarding → accounts → quick-add → split → transfer → delete/undo in `tests/e2e/us1-ledger.spec.ts`
+- [x] T027 [P] [US1] Unit tests for ledger (balance from opening + txns, split sum validation, transfer leg negation, liability "owed" display) in `tests/unit/domain/ledger.test.ts`
+- [x] T028 [P] [US1] Integration tests for accounts & transactions repos (CRUD, soft delete, splits, transfers atomicity, filter query + total, FTS search) in `tests/integration/db/transactions.test.ts`
+- [x] T029 [P] [US1] E2E flow: onboarding → accounts → quick-add → split → transfer → delete/undo in `tests/e2e/us1-ledger.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T030 [P] [US1] Implement ledger domain logic in `src/domain/ledger.ts`
-- [ ] T031 [P] [US1] Implement accounts repository with computed balances in `src/db/repos/accounts.ts`
-- [ ] T032 [US1] Implement transactions repository (create/update/delete with splits, tags, audit; filter query with cursor + total; FTS) in `src/db/repos/transactions.ts`
-- [ ] T033 [US1] Implement transfers (paired legs in one transaction) in `src/db/repos/transfers.ts`
-- [ ] T034 [US1] Implement services + IPC handlers for `settings.*`, `accounts.*`, `txns.*`, `transfers.create`, `undo.apply` in `src/main/services/ledger.ts`
-- [ ] T035 [P] [US1] Build onboarding (profile defaults, first account) in `src/renderer/features/onboarding/`
-- [ ] T036 [P] [US1] Build accounts list/detail/editor with archive in `src/renderer/features/accounts/`
-- [ ] T037 [US1] Build virtualized transaction table with inline edit, filters (text, date presets incl. current FY, account, category, tag, amount) and filtered total in `src/renderer/features/transactions/TransactionTable.tsx`
-- [ ] T038 [US1] Build split editor with live remaining-difference and transfer form in `src/renderer/features/transactions/SplitEditor.tsx` and `TransferForm.tsx`
-- [ ] T039 [US1] Build keyboard-only quick-add dialog (Ctrl+N, global) in `src/renderer/components/QuickAdd.tsx`
-- [ ] T040 [US1] Add undo toast wired to `auditGroupId` and bulk category/tag edit in `src/renderer/features/transactions/BulkActions.tsx`
-- [ ] T041 [US1] Build settings screen (currency, timezone, FY start, week start, theme) in `src/renderer/features/settings/`
+- [x] T030 [P] [US1] Implement ledger domain logic in `src/domain/ledger.ts`
+- [x] T031 [P] [US1] Implement accounts repository with computed balances in `src/db/repos/accounts.ts`
+- [x] T032 [US1] Implement transactions repository (create/update/delete with splits, tags, audit; filter query with cursor + total; FTS) in `src/db/repos/transactions.ts`
+- [x] T033 [US1] Implement transfers (paired legs in one transaction) in `src/db/repos/transfers.ts`
+- [x] T034 [US1] Implement services + IPC handlers for `settings.*`, `accounts.*`, `txns.*`, `transfers.create`, `undo.apply` in `src/main/services/ledger.ts`
+- [x] T035 [P] [US1] Build onboarding (profile defaults, first account) in `src/renderer/features/onboarding/`
+- [x] T036 [P] [US1] Build accounts list/detail/editor with archive in `src/renderer/features/accounts/`
+- [x] T037 [US1] Build virtualized transaction table with inline edit, filters (text, date presets incl. current FY, account, category, tag, amount) and filtered total in `src/renderer/features/transactions/TransactionTable.tsx`
+- [x] T038 [US1] Build split editor with live remaining-difference and transfer form in `src/renderer/features/transactions/SplitEditor.tsx` and `TransferForm.tsx`
+- [x] T039 [US1] Build keyboard-only quick-add dialog (Ctrl+N, global) in `src/renderer/components/QuickAdd.tsx`
+- [x] T040 [US1] Add undo toast wired to `auditGroupId` and bulk category/tag edit in `src/renderer/features/transactions/BulkActions.tsx`
+- [x] T041 [US1] Build settings screen (currency, timezone, FY start, week start, theme) in `src/renderer/features/settings/`
 
-**Checkpoint**: US1 independently usable — MVP
+**Checkpoint**: US1 independently usable — MVP ✅ (2026-11-09: E2E `tests/e2e/us1-ledger.spec.ts` passes, incl. offline request check)
 
 ---
 

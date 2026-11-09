@@ -17,3 +17,26 @@ The product requirements are in [docs/PRD.md](docs/PRD.md). Project principles a
 ## Privacy boundary
 
 The initial product is single-user and local-only. It does not require an account, hosted backend, or bank credentials.
+
+## Running locally
+
+Requires Node 24+ on Windows.
+
+```powershell
+npm install
+npm run dev          # launch the app
+npm test             # unit + integration tests
+npm run test:e2e     # end-to-end tests against the real Electron app
+npm run lint; npm run typecheck
+```
+
+Data is stored in `%APPDATA%\Fin\` (`fin.db`, `backups\`, `logs\`). Set `FIN_DATA_DIR` to use a
+different folder, for example a throwaway one while testing.
+
+## Status
+
+- ✅ User Story 1 (MVP): accounts, transactions, splits, transfers, quick-add, search & filters,
+  bulk edit, undo, onboarding, settings, command palette.
+- ⏭️ Next: CSV import (US2), dashboard drill-downs (US3), backup/restore & export (US4).
+  See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
+

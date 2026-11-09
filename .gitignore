@@ -32,3 +32,5 @@ coverage/
 
 # Agent-local state that may contain credentials or private context
 .github/.copilot/
+test-results/
+playwright-report/

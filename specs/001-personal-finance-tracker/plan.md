@@ -18,9 +18,9 @@ priority order, with US1 (ledger) as the MVP. See [research.md](./research.md) f
 
 **Language/Version**: TypeScript 5.x (strict) on Node 24 LTS (Electron's bundled Node for runtime)
 
-**Primary Dependencies**: Electron (current stable) + electron-vite, React, Tailwind CSS, shadcn/ui (Radix), TanStack Query/Table/Virtual, Recharts, cmdk, Zod, date-fns, PapaParse, better-sqlite3, ulid; electron-builder for packaging
+**Primary Dependencies**: Electron (current stable) + electron-vite, React, Tailwind CSS, shadcn/ui (Radix), TanStack Query/Table/Virtual, Recharts, cmdk, Zod, date-fns, PapaParse, ulid, built-in `node:sqlite` (see research R3 update); electron-builder for packaging
 
-**Storage**: SQLite (`better-sqlite3`, WAL) at `%APPDATA%/Fin/fin.db`; numbered SQL migrations; FTS5 for search; file backups in `%APPDATA%/Fin/backups/` (configurable)
+**Storage**: SQLite (built-in `node:sqlite`, WAL) at `%APPDATA%/Fin/fin.db`; numbered SQL migrations; FTS5 for search; file backups in `%APPDATA%/Fin/backups/` (configurable)
 
 **Testing**: Vitest (domain unit + DB integration on temp files through real migrations), Playwright `_electron` (E2E smoke), coverage ≥ 90% lines on `src/domain`
 

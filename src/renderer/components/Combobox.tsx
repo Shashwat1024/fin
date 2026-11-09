@@ -11,6 +11,7 @@ import {
   CommandSeparator,
 } from '@renderer/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
+import { optionValue, scoreOption } from '@renderer/lib/search'
 import { cn } from '@renderer/lib/utils'
 
 export type ComboOption = { value: string; label: string; group?: string; hint?: string; indent?: boolean }
@@ -79,14 +80,14 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) min-w-64 p-0" align="start">
-        <Command>
+        <Command filter={scoreOption}>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             {clearLabel && (
               <>
                 <CommandGroup>
-                  <CommandItem value={`__clear ${clearLabel}`} onSelect={() => pick(null)}>
+                  <CommandItem value={optionValue(clearLabel, '', '__clear')} onSelect={() => pick(null)}>
                     <CheckIcon className={cn(value === null ? 'opacity-100' : 'opacity-0')} />
                     {clearLabel}
                   </CommandItem>
@@ -99,7 +100,7 @@ export function Combobox({
                 {items.map((o) => (
                   <CommandItem
                     key={o.value}
-                    value={`${o.label} ${o.group ?? ''} ${o.value}`}
+                    value={optionValue(o.label, o.group ?? '', o.value)}
                     onSelect={() => pick(o.value)}
                     className={cn(o.indent && 'pl-6')}
                   >

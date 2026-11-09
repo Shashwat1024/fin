@@ -18,7 +18,7 @@ unknowns in plan.md are resolved here.
 
 ## R2. UI stack
 
-- **Decision**: React + TypeScript (strict), Tailwind CSS, shadcn/ui (Radix primitives),
+- **Decision**: React + TypeScript (strict), Tailwind CSS, shadcn/ui 4 (`radix-nova` style, Radix primitives; components generated into `src/renderer/components/ui`),
   TanStack Query (server-state over IPC), TanStack Table + TanStack Virtual (50k-row ledger),
   Recharts (charts), cmdk (command palette), Zustand only for ephemeral UI state.
 - **Rationale**: Radix primitives give keyboard/ARIA behavior needed for Constitution VI; TanStack
@@ -37,9 +37,15 @@ unknowns in plan.md are resolved here.
 - **Risk**: native module ABI mismatch with Electron → use `electron-builder install-app-deps`
   (postinstall) and verify in Phase 1.
 
+**Update 2026-11-09 — decision changed to `node:sqlite`.** Electron 45 ships Node 24.22, whose
+built-in `node:sqlite` (`DatabaseSync`) is synchronous, transactional, includes FTS5, and exposes
+`backup()`; `VACUUM INTO` gives synchronous consistent snapshots. Using it removes the native-module
+ABI rebuild risk entirely (no `better-sqlite3`, no build tools), and the same module runs under
+Vitest. Verified in both system Node and Electron's Node.
+
 ## R4. Migrations
 
-- **Decision**: Numbered plain SQL files (`src/db/migrations/0001_init.sql`, …) applied in order at
+- **Decision**: Numbered SQL migrations (`src/db/migrations/0001_init.ts`, exporting the SQL text so every bundler/test runner loads them identically) applied in order at
   startup inside one transaction per migration, tracked in `schema_migrations`. An automatic backup
   is taken before applying any pending migration.
 - **Rationale**: Auditable SQL, no ORM magic, satisfies Constitution IV.
