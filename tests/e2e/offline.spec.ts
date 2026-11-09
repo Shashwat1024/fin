@@ -20,6 +20,9 @@ test('every core flow works with no network requests', async () => {
     ['Control+2', 'Transactions'],
     ['Control+3', 'Accounts'],
     ['Control+4', 'Import'],
+    ['Control+5', 'Recurring'],
+    ['Control+6', 'Budget'],
+    ['Control+7', 'Goals'],
     ['Control+,', 'Settings'],
   ] as const) {
     await page.keyboard.press(key)

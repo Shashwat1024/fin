@@ -2,6 +2,7 @@ import { addDays, addMonths, startOfMonth } from '@domain/dates'
 import type { Db } from '../connection'
 import { createAccount } from '../repos/accounts'
 import { listCategories } from '../repos/categories'
+import { assignBudget, contribute, createGoal, createRecurring } from '../repos/planning'
 import { updateSettings } from '../repos/settings'
 import { createTransaction, createTransfer } from '../repos/transactions'
 
@@ -65,5 +66,57 @@ export function seedDemoData(db: Db, today: string): void {
     if (day(16) <= today) createTransfer(db, { fromAccountId: bank, toAccountId: funds, postedDate: day(16), amountMinor: 1_000_000 })
     if (day(9) <= today) createTransfer(db, { fromAccountId: bank, toAccountId: wallet, postedDate: day(9), amountMinor: 200_000 })
   }
+  seedPlanning(db, today, start, { bank, card, funds }, c)
   updateSettings(db, { onboarded: true })
+}
+
+/** Recurring items, a budget for each month, and two goals (US5). */
+function seedPlanning(
+  db: Db,
+  today: string,
+  start: string,
+  a: { bank: string; card: string; funds: string },
+  c: (path: string) => string,
+) {
+  const day = (d: number) => addDays(start, d - 1)
+  const recurring = (name: string, kind: Parameters<typeof createRecurring>[1]['kind'], accountId: string, amountMinor: number, anchor: string, extra = {}) =>
+    createRecurring(db, { name, kind, accountId, amountMinor, frequency: 'monthly', anchorDate: anchor, ...extra }, today)
+  recurring('Salary', 'income', a.bank, 9_500_000, day(1), { categoryId: c('Income › Salary') })
+  recurring('Rent', 'bill', a.bank, 2_200_000, day(3), { categoryId: c('Housing › Rent') })
+  recurring('Electricity', 'bill', a.bank, 200_000, day(5), { categoryId: c('Housing › Electricity'), toleranceBp: 4000 })
+  recurring('Airtel fibre', 'bill', a.bank, 99_900, day(6), { categoryId: c('Housing › Internet') })
+  recurring('Netflix', 'subscription', a.card, 64_900, day(7), { categoryId: c('Entertainment › Subscriptions') })
+  recurring('Spotify', 'subscription', a.card, 11_900, day(12), { categoryId: c('Entertainment › Subscriptions') })
+  recurring('Index fund SIP', 'savings', a.bank, 1_000_000, day(16), { toAccountId: a.funds })
+
+  const plan: [string, number][] = [
+    ['Housing › Rent', 2_200_000],
+    ['Housing › Electricity', 250_000],
+    ['Housing › Internet', 100_000],
+    ['Bills › Domestic help', 350_000],
+    ['Food › Groceries', 1_200_000],
+    ['Food › Food delivery', 300_000],
+    ['Transport › Cab & auto', 350_000],
+    ['Entertainment › Subscriptions', 80_000],
+    ['Shopping › Household', 300_000],
+    ['Health › Medicines', 200_000],
+    ['Food › Dining out', 200_000],
+    ['Bills › Mobile', 70_000],
+    ['Shopping › Clothing', 300_000],
+    ['Entertainment › Movies & events', 150_000],
+    ['Savings & investments › Mutual funds & SIP', 1_000_000],
+    ['Savings & investments › Emergency fund', 2_250_000],
+  ]
+  for (let m = 0; m <= 3; m++) {
+    const month = addMonths(start, m).slice(0, 7)
+    for (const [path, amount] of plan) assignBudget(db, month, c(path), amount)
+  }
+
+  const emergency = createGoal(db, { name: 'Emergency fund', targetMinor: 30_000_000, targetDate: addMonths(today, 14) }, today).goal.id
+  contribute(db, { goalId: emergency, date: day(1), amountMinor: 6_000_000, note: 'Starting amount' }, today)
+  for (let m = 0; m <= 3; m++) {
+    const date = addDays(addMonths(start, m), 1)
+    if (date <= today) contribute(db, { goalId: emergency, date, amountMinor: 1_500_000 }, today)
+  }
+  createGoal(db, { name: 'Investments to ₹10 lakh', targetMinor: 100_000_000, linkedAccountId: a.funds }, today)
 }

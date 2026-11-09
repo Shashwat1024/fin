@@ -7,8 +7,11 @@ import { AccountDialogProvider } from '@renderer/features/accounts/AccountDialog
 import { AccountsPage } from '@renderer/features/accounts/AccountsPage'
 import { ReconcileDialogProvider } from '@renderer/features/accounts/ReconcileDialog'
 import { ImportPage } from '@renderer/features/import/ImportPage'
+import { BudgetPage } from '@renderer/features/budget/BudgetPage'
 import { DashboardPage } from '@renderer/features/dashboard/DashboardPage'
+import { GoalsPage } from '@renderer/features/goals/GoalsPage'
 import { Onboarding } from '@renderer/features/onboarding/Onboarding'
+import { RecurringPage } from '@renderer/features/recurring/RecurringPage'
 import { SettingsPage } from '@renderer/features/settings/SettingsPage'
 import { TransactionDialogProvider } from '@renderer/features/transactions/TransactionDialog'
 import { TransactionsPage } from '@renderer/features/transactions/TransactionsPage'
@@ -24,6 +27,9 @@ function Routed() {
         <Route path="/transactions" element={<TransactionsRoute />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/import" element={<ImportPage />} />
+        <Route path="/recurring" element={<RecurringPage />} />
+        <Route path="/budget" element={<BudgetPage />} />
+        <Route path="/goals" element={<GoalsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<DashboardPage />} />
       </Routes>

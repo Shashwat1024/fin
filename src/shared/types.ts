@@ -1,6 +1,8 @@
+import type { GoalStatus } from '@domain/goals'
 import type { AccountGroup, AccountNature, AccountType } from '@domain/ledger'
+import type { Frequency, OccurrenceState } from '@domain/recurrence'
 
-export type { AccountGroup }
+export type { AccountGroup, Frequency, GoalStatus, OccurrenceState }
 
 export type Theme = 'system' | 'light' | 'dark'
 
@@ -225,4 +227,114 @@ export type AppStatus = {
   backupDir: string
   defaultBackupDir: string
   counts: DataCounts
+}
+
+// ---- Planning: recurring items, budgets, goals (US5) ------------------------------------------
+
+export type RecurringKind = 'income' | 'bill' | 'subscription' | 'emi' | 'transfer' | 'savings'
+
+export type RecurringItemDto = {
+  id: string
+  name: string
+  kind: RecurringKind
+  accountId: string
+  accountName: string
+  toAccountId: string | null
+  toAccountName: string | null
+  categoryId: string | null
+  categoryPath: string | null
+  /** Expected amount as a positive number; `direction` says which way it moves. */
+  amountMinor: number
+  direction: 'in' | 'out'
+  toleranceBp: number
+  frequency: Frequency
+  interval: number
+  anchorDate: string
+  endDate: string | null
+  count: number | null
+  notes: string | null
+  active: boolean
+  /** "Every month on the 1st" */
+  scheduleText: string
+  /** Next occurrence on or after today, null once the schedule has ended. */
+  nextDue: string | null
+}
+
+export type OccurrenceDto = {
+  /** `${itemId}:${dueDate}` */
+  id: string
+  itemId: string
+  itemName: string
+  kind: RecurringKind
+  accountId: string
+  accountName: string
+  dueDate: string
+  /** Signed from the account's side: income positive, payments negative. */
+  expectedMinor: number
+  state: OccurrenceState
+  matchedTxn: { id: string; postedDate: string; amountMinor: number; payee: string } | null
+  /** Set by the user (a skip or a hand-linked payment) rather than matched automatically. */
+  manual: boolean
+}
+
+export type OccurrenceCandidate = { id: string; postedDate: string; amountMinor: number; payee: string; accountName: string }
+
+export type BudgetRowDto = {
+  categoryId: string
+  name: string
+  group: CategoryGroup
+  carryMinor: number
+  assignedMinor: number
+  spentMinor: number
+  availableMinor: number
+}
+
+export type BudgetGroupDto = {
+  /** The parent category. */
+  id: string
+  name: string
+  rows: BudgetRowDto[]
+  assignedMinor: number
+  spentMinor: number
+  availableMinor: number
+}
+
+export type BudgetMonthDto = {
+  month: string
+  from: string
+  to: string
+  incomeMinor: number
+  /** Last month's unassigned money brought forward (negative when it was over-assigned). */
+  leftoverMinor: number
+  /** Last month's overspending, taken from this month's To assign. */
+  overspentMinor: number
+  assignedMinor: number
+  toAssignMinor: number
+  spentMinor: number
+  availableMinor: number
+  /** Spending this month with no category, so not in any budget line. */
+  uncategorizedMinor: number
+  groups: BudgetGroupDto[]
+}
+
+export type GoalContributionDto = { id: string; date: string; amountMinor: number; note: string | null }
+
+export type GoalDto = {
+  id: string
+  name: string
+  targetMinor: number
+  targetDate: string | null
+  linkedAccountId: string | null
+  linkedAccountName: string | null
+  notes: string | null
+  savedMinor: number
+  remainingMinor: number
+  percent: number
+  monthsLeft: number | null
+  requiredMonthlyMinor: number | null
+  paceMonthlyMinor: number
+  projectedDate: string | null
+  status: GoalStatus
+  /** Newest first, at most 20. */
+  contributions: GoalContributionDto[]
 }

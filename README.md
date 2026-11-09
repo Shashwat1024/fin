@@ -53,6 +53,10 @@ different folder, for example a throwaway one while testing.
 - ✅ User Story 4: daily automatic backups (last 14 kept), manual and passphrase-protected backups,
   restore that checks the file and backs up your current data first, JSON/CSV export, demo mode,
   and an offline test across every core flow.
-- ⏭️ Next: planning — recurring items, budgets and goals (US5).
+- ✅ User Story 5: recurring income, bills, EMIs and subscriptions (month-end dates handled,
+  payments matched automatically, overdue ones flagged, skip or link by hand); a zero-based monthly
+  budget with keyboard entry, carry-forward and overspending taken from next month; savings goals
+  with the monthly amount needed and a projected date; Overview cards for all three.
+- ⏭️ Next: categorization rules and suggestions (US6).
   See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
 

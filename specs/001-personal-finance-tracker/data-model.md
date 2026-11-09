@@ -115,13 +115,17 @@ Rules produce **suggestions**; application to history goes through a previewed, 
   frequency, interval, anchor_date, by_month_day?, by_weekday?, end_date?, count?, active`.
 - **RecurringOccurrence**: `id, item_id, due_date, expected_minor, state (expected|paid|overdue|skipped),
   matched_txn_id?`. Generated on demand for a horizon (≤ 400 days) and persisted when matched/skipped.
+  *As built (US5)*: only user decisions are stored (`state paid|skipped`, unique per item and date);
+  automatic matches and `expected`/`overdue` are derived on every read, so editing or deleting a
+  transaction re-evaluates them exactly. `interval` is stored as `interval_count`, `count` as `occurrences`.
 
 State transitions: `expected → paid` (match) · `expected → overdue` (due_date + grace < today) ·
 `overdue → paid` (late match) · `any → skipped` (user) · `paid → expected` (unmatch/undo).
 
 ## MonthlyBudget
 
-`(month TEXT 'YYYY-MM', category_id) PK, assigned_minor INTEGER`. Spent/available/carry are derived
+`(month TEXT 'YYYY-MM', category_id) PK, assigned_minor INTEGER` (as built: an `id` key for the audit
+log plus `UNIQUE (month, category_id)`; only needs/wants/goals/buffer categories are budgeted). Spent/available/carry are derived
 (research R14), never stored, so history recomputes exactly.
 
 ## Goal / GoalContribution

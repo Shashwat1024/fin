@@ -67,10 +67,32 @@ export function exportJson(db: Db, now = new Date()) {
       `SELECT tr.id, tr.from_txn_id AS fromTxnId, tr.to_txn_id AS toTxnId FROM transfers tr
        WHERE EXISTS (SELECT 1 FROM transactions t WHERE t.id = tr.from_txn_id AND t.deleted_at IS NULL)`,
     ),
-    recurringItems: [],
-    budgets: [],
-    goals: [],
-    goalContributions: [],
+    recurringItems: all<Record<string, unknown>>(
+      db,
+      `SELECT id, name, kind, account_id AS accountId, to_account_id AS toAccountId, category_id AS categoryId,
+              amount_minor AS amountMinor, tolerance_bp AS toleranceBp, frequency, interval_count AS "interval",
+              anchor_date AS anchorDate, end_date AS endDate, occurrences AS count, notes, active
+       FROM recurring_items ORDER BY sort_order, name`,
+    ).map((r) => ({ ...r, active: r.active === 1 })),
+    recurringDecisions: all<Record<string, unknown>>(
+      db,
+      `SELECT item_id AS itemId, due_date AS dueDate, state, matched_txn_id AS matchedTxnId
+       FROM recurring_occurrences ORDER BY item_id, due_date`,
+    ),
+    budgets: all<Record<string, unknown>>(
+      db,
+      'SELECT month, category_id AS categoryId, assigned_minor AS assignedMinor FROM monthly_budgets ORDER BY month, category_id',
+    ),
+    goals: all<Record<string, unknown>>(
+      db,
+      `SELECT id, name, target_minor AS targetMinor, target_date AS targetDate, linked_account_id AS linkedAccountId, notes
+       FROM goals WHERE archived_at IS NULL ORDER BY sort_order, created_at`,
+    ),
+    goalContributions: all<Record<string, unknown>>(
+      db,
+      `SELECT c.id, c.goal_id AS goalId, c.date, c.amount_minor AS amountMinor, c.note
+       FROM goal_contributions c JOIN goals g ON g.id = c.goal_id WHERE g.archived_at IS NULL ORDER BY c.date, c.id`,
+    ),
     valuations: [],
     importBatches: all<Record<string, unknown>>(
       db,

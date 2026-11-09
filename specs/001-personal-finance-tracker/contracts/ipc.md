@@ -35,13 +35,17 @@ Mutations return an `auditGroupId` usable with `undo.apply`.
 | `import.commit` | `{ fileToken, accountId, mapping, decisions: { rowNumber, action: 'import'\|'skip' }[], acceptSuggestions: boolean, savePresetAs? }` | `{ batchId, counts }` | FR-015/016 |
 | `import.batches` | — | `ImportBatch[]` | FR-015 |
 | `import.undo` | `{ batchId, includeEdited: boolean }` | `{ removed, auditGroupId }` | FR-015 |
-| `recurring.list` / `.upsert` / `.delete` | | | FR-021 |
-| `recurring.occurrences` | `{ from, to }` | `Occurrence[]` | FR-021/022 |
-| `recurring.match` / `.skip` | `{ occurrenceId, txnId? }` | `Occurrence` | FR-022 |
-| `recurring.detectCandidates` | — | `Candidate[]` | (P1) |
-| `budget.month` | `{ month: 'YYYY-MM' }` | `{ toAssign, rows: { categoryId, carry, assigned, spent, available }[] }` | FR-023 |
-| `budget.assign` | `{ month, categoryId, assigned }` | `BudgetRow` | FR-023 |
-| `goals.list` / `.upsert` / `.contribute` | | `GoalWithProjection` | FR-024 |
+| `recurring.list` | — | `RecurringItemDto[]` (with `scheduleText`, `nextDue`) | FR-021 |
+| `recurring.create` / `.update` / `.delete` | `RecurringInput` / `{ id, input }` / `{ id }` (amount positive; the kind sets the direction) | `{ item }` / `{}` + `auditGroupId` | FR-021 |
+| `recurring.occurrences` | `{ from, to }` | `OccurrenceDto[]`: state `expected\|paid\|overdue\|skipped`, `matchedTxn`, `manual`. Matching is derived (same account, tolerance, ±3 days; earlier dues claim first) | FR-021/022 |
+| `recurring.candidates` | `{ itemId, dueDate }` | Transactions within 10 days in the same direction, not hand-linked elsewhere | FR-022 |
+| `recurring.setOccurrence` | `{ itemId, dueDate, action: 'skip'\|'match'\|'reset', txnId? }` | `{ auditGroupId }` | FR-022 |
+| `recurring.detectCandidates` | — | `Candidate[]` | (P1, not built yet) |
+| `budget.month` | `{ month: 'YYYY-MM' }` | `BudgetMonthDto`: `toAssign`, income, leftover, overspent, and parent-category groups of `{ carry, assigned, spent, available }` rows; `uncategorizedMinor` | FR-023 |
+| `budget.assign` | `{ month, categoryId, assignedMinor ≥ 0 }` (needs/wants/goals/buffer categories only; 0 removes) | `{ month: BudgetMonthDto, auditGroupId }` | FR-023 |
+| `goals.list` | — | `GoalDto[]` (progress, `requiredMonthlyMinor`, pace, `projectedDate`, `status`, latest 20 entries) | FR-024 |
+| `goals.create` / `.update` / `.delete` | `GoalInput` / `{ id, input }` / `{ id }`; a linked asset account replaces contributions | `{ goal }` / `{}` + `auditGroupId` | FR-024 |
+| `goals.contribute` / `.deleteContribution` | `{ goalId, date, amountMinor ≠ 0, note? }` / `{ id }` | `{ goal }` / `{}` + `auditGroupId` | FR-024 |
 | `dashboard.summary` | `{ asOf? }` | `DashboardSummary` (`src/shared/types.ts`) — each metric `{ valueMinor, asOf, sources: { accountId, accountName, lastDataDate, lastImport }[], drill: DrillTarget }`; `drill` is a transactions date range (+ direction, transfers excluded) or an account group, and the page it opens shows a total equal to the metric. Also `savingsRate`, `cardDues.cardCount` and six `months` of money in/out. | FR-025/026 |
 | `forecast.run` | `{ days: 30\|60\|90 }` | `{ points: { date, balance }[], low: { date, balance }, belowBuffer: Range[], confidence: 'high'\|'medium'\|'low', assumptions: Assumption[] }` | FR-027 |
 | `networth.history` | `{ from, to, interval: 'month' }` | `{ date, assets, liabilities, net }[]` | FR-028 |

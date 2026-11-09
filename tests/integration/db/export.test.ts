@@ -4,8 +4,10 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Db } from '@db/connection'
 import { BOM, CSV_COLUMNS, csvText, exportJson, exportTransactionsCsv } from '@db/export'
+import { LATEST_SCHEMA_VERSION } from '@db/migrate'
 import { createAccount, listAccounts } from '@db/repos/accounts'
 import { dashboardSummary } from '@db/repos/dashboard'
+import { budgetMonth, listGoals, listOccurrences } from '@db/repos/planning'
 import { createTransaction, createTransfer, deleteTransactions, queryTransactions } from '@db/repos/transactions'
 import { seedDemoData } from '@db/seed/demo'
 import { dispatch } from '../../../src/main/dispatch'
@@ -54,7 +56,7 @@ afterEach(() => {
 describe('JSON export v1', () => {
   it('has the documented shape, integer amounts and no deleted records', () => {
     const out = exportJson(db, new Date('2026-11-09T04:00:00Z'))
-    expect(out).toMatchObject({ format: 'fin-export', version: 1, exportedAt: '2026-11-09T04:00:00.000Z', appSchemaVersion: 2 })
+    expect(out).toMatchObject({ format: 'fin-export', version: 1, exportedAt: '2026-11-09T04:00:00.000Z', appSchemaVersion: LATEST_SCHEMA_VERSION })
     expect(Object.keys(out)).toEqual(
       expect.arrayContaining(['settings', 'accounts', 'categories', 'tags', 'merchants', 'rules', 'transactions', 'transfers', 'recurringItems', 'budgets', 'goals', 'goalContributions', 'valuations', 'importBatches']),
     )
@@ -136,6 +138,24 @@ describe('demo data', () => {
     expect(s.income.valueMinor).toBe(9_500_000)
     expect(s.months.slice(-4).every((m) => m.inMinor === 9_500_000 && m.outMinor > 0)).toBe(true)
     expect(accounts.find((a) => a.type === 'cash')!.balanceMinor).toBeGreaterThan(0)
+    // Planning (US5): recurring items match their payments, the budget has money left to assign, goals progress.
+    const occ = listOccurrences(demo, '2026-10-01', '2026-10-31', '2026-11-09')
+    expect(occ.map((o) => [o.itemName, o.state])).toEqual([
+      ['Salary', 'paid'],
+      ['Rent', 'paid'],
+      ['Electricity', 'paid'],
+      ['Airtel fibre', 'paid'],
+      ['Netflix', 'paid'],
+      ['Spotify', 'paid'],
+      ['Index fund SIP', 'paid'],
+    ])
+    const budget = budgetMonth(demo, '2026-11')
+    expect(budget.toAssignMinor).toBeGreaterThan(0)
+    expect(budget.assignedMinor).toBe(9_300_000)
+    expect(listGoals(demo, '2026-11-09').map((g) => [g.name, g.status])).toEqual([
+      ['Emergency fund', 'on_track'],
+      ['Investments to ₹10 lakh', 'on_track'],
+    ])
     demo.close()
   })
 })

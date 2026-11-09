@@ -186,21 +186,23 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ### Tests for User Story 5
 
-- [ ] T074 [P] [US5] Unit tests for recurrence expansion (month-end, 29 Feb, interval > 1, end date/count) and matching tolerance in `tests/unit/domain/recurrence.test.ts`
-- [ ] T075 [P] [US5] Unit tests for budget math (to assign, available, positive carry, overspend reduces next To assign) in `tests/unit/domain/budget.test.ts`
-- [ ] T076 [P] [US5] Unit tests for goal progress, required monthly, projected date in `tests/unit/domain/goals.test.ts`
+- [x] T074 [P] [US5] Unit tests for recurrence expansion (month-end, 29 Feb, interval > 1, end date/count) and matching tolerance in `tests/unit/domain/recurrence.test.ts`
+- [x] T075 [P] [US5] Unit tests for budget math (to assign, available, positive carry, overspend reduces next To assign) in `tests/unit/domain/budget.test.ts`
+- [x] T076 [P] [US5] Unit tests for goal progress, required monthly, projected date in `tests/unit/domain/goals.test.ts` (+ integration: `tests/integration/db/planning.test.ts`)
 
 ### Implementation for User Story 5
 
-- [ ] T077 [US5] Add migration for recurring_items, recurring_occurrences, monthly_budgets, goals, goal_contributions in `src/db/migrations/0003_planning.sql`
-- [ ] T078 [P] [US5] Implement recurrence domain in `src/domain/recurrence.ts`
-- [ ] T079 [P] [US5] Implement budget domain in `src/domain/budget.ts`
-- [ ] T080 [P] [US5] Implement goals domain in `src/domain/goals.ts`
-- [ ] T081 [US5] Implement repos + services + IPC (`recurring.*`, `budget.*`, `goals.*`) in `src/db/repos/planning.ts` and `src/main/services/planning.ts`
-- [ ] T082 [P] [US5] Build recurring items list/editor and upcoming/overdue view in `src/renderer/features/recurring/`
-- [ ] T083 [P] [US5] Build zero-based budget month view with keyboard assignment and group subtotals in `src/renderer/features/budget/`
-- [ ] T084 [P] [US5] Build goals view with progress and projection in `src/renderer/features/goals/`
-- [ ] T085 [US5] Add 14-day commitments and goals cards to dashboard in `src/renderer/features/dashboard/`
+- [x] T077 [US5] Add migration for recurring_items, recurring_occurrences, monthly_budgets, goals, goal_contributions in `src/db/migrations/0003_planning.ts` (occurrences store only user decisions: skips and hand-linked payments)
+- [x] T078 [P] [US5] Implement recurrence domain in `src/domain/recurrence.ts`
+- [x] T079 [P] [US5] Implement budget domain in `src/domain/budget.ts`
+- [x] T080 [P] [US5] Implement goals domain in `src/domain/goals.ts`
+- [x] T081 [US5] Implement repos + services + IPC (`recurring.*`, `budget.*`, `goals.*`) in `src/db/repos/planning.ts` (as built: no separate service; handlers in `src/main/handlers.ts`)
+- [x] T082 [P] [US5] Build recurring items list/editor and upcoming/overdue view in `src/renderer/features/recurring/`
+- [x] T083 [P] [US5] Build zero-based budget month view with keyboard assignment and group subtotals in `src/renderer/features/budget/`
+- [x] T084 [P] [US5] Build goals view with progress and projection in `src/renderer/features/goals/`
+- [x] T085 [US5] Add 14-day commitments and goals cards to dashboard in `src/renderer/features/dashboard/` (+ a To assign card; `PlanningCards.tsx`)
+
+**Checkpoint**: US5 complete ✅ (2026-11-09: `tests/e2e/us5-planning.spec.ts` passes; demo data includes recurring items, budgets and goals)
 
 ---
 

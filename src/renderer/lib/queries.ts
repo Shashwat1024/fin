@@ -1,10 +1,17 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { todayIn } from '@domain/dates'
 import type { Channel, Input, Output } from '@shared/contract'
 import type { TxnFilter } from '@shared/schemas'
 import { call } from './ipc'
 
 export const useSettings = () => useQuery({ queryKey: ['settings'], queryFn: () => call('settings.get', undefined) })
+
+/** Today's date in the user's time zone. */
+export function useToday(): string {
+  const { data } = useSettings()
+  return todayIn(data?.timezone ?? 'Asia/Kolkata')
+}
 
 export const useAccounts = (includeArchived = false) =>
   useQuery({ queryKey: ['accounts', includeArchived], queryFn: () => call('accounts.list', { includeArchived }) })
@@ -36,6 +43,13 @@ export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: (
 
 export const useAppStatus = () => useQuery({ queryKey: ['app', 'status'], queryFn: () => call('app.status', undefined) })
 export const useBackups = () => useQuery({ queryKey: ['backups'], queryFn: () => call('backup.list', undefined) })
+
+export const useRecurring = () => useQuery({ queryKey: ['recurring', 'items'], queryFn: () => call('recurring.list', undefined) })
+export const useOccurrences = (from: string, to: string) =>
+  useQuery({ queryKey: ['recurring', 'occurrences', from, to], queryFn: () => call('recurring.occurrences', { from, to }) })
+export const useBudgetMonth = (month: string) =>
+  useQuery({ queryKey: ['budget', month], queryFn: () => call('budget.month', { month }), placeholderData: (prev) => prev })
+export const useGoals = () => useQuery({ queryKey: ['goals'], queryFn: () => call('goals.list', undefined) })
 
 export const PAGE_SIZE = 200
 

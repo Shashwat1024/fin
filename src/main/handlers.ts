@@ -5,6 +5,23 @@ import { createAccount, listAccounts, setAccountArchived, updateAccount } from '
 import { dashboardSummary } from '@db/repos/dashboard'
 import { listCategories, listTags } from '@db/repos/categories'
 import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
+import {
+  assignBudget,
+  budgetMonth,
+  contribute,
+  createGoal,
+  createRecurring,
+  deleteContribution,
+  deleteGoal,
+  deleteRecurring,
+  listGoals,
+  listOccurrences,
+  listRecurring,
+  occurrenceCandidates,
+  setOccurrence,
+  updateGoal,
+  updateRecurring,
+} from '@db/repos/planning'
 import { getSettings, updateSettings } from '@db/repos/settings'
 import {
   bulkUpdate,
@@ -41,6 +58,9 @@ function activity(db: Db, limit: number): ActivityEntry[] {
   }))
 }
 
+/** Today in the user's time zone. */
+const today = (db: Db) => todayIn(getSettings(db).timezone)
+
 export const handlers: Handlers = {
   ...backupHandlers,
   'settings.get': ({ db }) => getSettings(db),
@@ -69,7 +89,22 @@ export const handlers: Handlers = {
   'import.batches': ({ db }) => listBatches(db),
   'import.batchRows': ({ db }, input) => batchRows(db, input.id),
   'import.undo': ({ db }, input) => undoImport(db, input.batchId, input.includeEdited),
-  'dashboard.summary': ({ db }, input) => dashboardSummary(db, input?.asOf ?? todayIn(getSettings(db).timezone)),
+  'dashboard.summary': ({ db }, input) => dashboardSummary(db, input?.asOf ?? today(db)),
+  'recurring.list': ({ db }) => listRecurring(db, today(db)),
+  'recurring.create': ({ db }, input) => createRecurring(db, input, today(db)),
+  'recurring.update': ({ db }, input) => updateRecurring(db, input.id, input.input, today(db)),
+  'recurring.delete': ({ db }, input) => deleteRecurring(db, input.id),
+  'recurring.occurrences': ({ db }, input) => listOccurrences(db, input.from, input.to, today(db)),
+  'recurring.candidates': ({ db }, input) => occurrenceCandidates(db, input.itemId, input.dueDate),
+  'recurring.setOccurrence': ({ db }, input) => setOccurrence(db, input),
+  'budget.month': ({ db }, input) => budgetMonth(db, input.month),
+  'budget.assign': ({ db }, input) => assignBudget(db, input.month, input.categoryId, input.assignedMinor),
+  'goals.list': ({ db }) => listGoals(db, today(db)),
+  'goals.create': ({ db }, input) => createGoal(db, input, today(db)),
+  'goals.update': ({ db }, input) => updateGoal(db, input.id, input.input, today(db)),
+  'goals.delete': ({ db }, input) => deleteGoal(db, input.id),
+  'goals.contribute': ({ db }, input) => contribute(db, input, today(db)),
+  'goals.deleteContribution': ({ db }, input) => deleteContribution(db, input.id),
   'undo.apply': ({ db }, input) => {
     const r = undoGroup(db, input.auditGroupId)
     return { reverted: r.result.reverted, auditGroupId: r.auditGroupId }

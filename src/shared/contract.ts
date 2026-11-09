@@ -46,6 +46,21 @@ export const inputSchemas = {
   'export.csv': s.empty,
   'demo.enter': s.empty,
   'demo.exit': s.empty,
+  'recurring.list': s.empty,
+  'recurring.create': s.recurringInput,
+  'recurring.update': s.recurringUpdate,
+  'recurring.delete': s.idInput,
+  'recurring.occurrences': s.occurrencesInput,
+  'recurring.candidates': s.occurrenceRef,
+  'recurring.setOccurrence': s.occurrenceAction,
+  'budget.month': s.budgetMonthInput,
+  'budget.assign': s.budgetAssignInput,
+  'goals.list': s.empty,
+  'goals.create': s.goalInput,
+  'goals.update': s.goalUpdate,
+  'goals.delete': s.idInput,
+  'goals.contribute': s.contributeInput,
+  'goals.deleteContribution': s.idInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -96,6 +111,21 @@ export interface Outputs {
   'export.csv': { path: string } | null
   'demo.enter': t.AppStatus
   'demo.exit': t.AppStatus
+  'recurring.list': t.RecurringItemDto[]
+  'recurring.create': t.Mutation<{ item: t.RecurringItemDto }>
+  'recurring.update': t.Mutation<{ item: t.RecurringItemDto }>
+  'recurring.delete': t.Mutation<object>
+  'recurring.occurrences': t.OccurrenceDto[]
+  'recurring.candidates': t.OccurrenceCandidate[]
+  'recurring.setOccurrence': t.Mutation<object>
+  'budget.month': t.BudgetMonthDto
+  'budget.assign': t.Mutation<{ month: t.BudgetMonthDto }>
+  'goals.list': t.GoalDto[]
+  'goals.create': t.Mutation<{ goal: t.GoalDto }>
+  'goals.update': t.Mutation<{ goal: t.GoalDto }>
+  'goals.delete': t.Mutation<object>
+  'goals.contribute': t.Mutation<{ goal: t.GoalDto }>
+  'goals.deleteContribution': t.Mutation<object>
 }
 
 export type Output<C extends Channel> = Outputs[C]

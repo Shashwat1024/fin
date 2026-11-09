@@ -8,9 +8,12 @@ import {
   LandmarkIcon,
   LayoutDashboardIcon,
   MoonIcon,
+  PieChartIcon,
   PlusIcon,
   ReceiptTextIcon,
+  RepeatIcon,
   SettingsIcon,
+  TargetIcon,
   WalletIcon,
 } from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
@@ -89,6 +92,15 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/accounts'))}>
             <LandmarkIcon /> Accounts
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/recurring'))}>
+            <RepeatIcon /> Recurring
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/budget'))}>
+            <PieChartIcon /> Budget
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/goals'))}>
+            <TargetIcon /> Goals
           </CommandItem>
           <CommandItem onSelect={run(() => navigate('/settings'))}>
             <SettingsIcon /> Settings

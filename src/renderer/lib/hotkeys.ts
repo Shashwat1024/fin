@@ -49,6 +49,9 @@ export const SHORTCUTS = [
   { combo: 'mod+2', label: 'Go to Transactions' },
   { combo: 'mod+3', label: 'Go to Accounts' },
   { combo: 'mod+4', label: 'Go to Import' },
+  { combo: 'mod+5', label: 'Go to Recurring' },
+  { combo: 'mod+6', label: 'Go to Budget' },
+  { combo: 'mod+7', label: 'Go to Goals' },
   { combo: 'mod+,', label: 'Go to Settings' },
 ] as const
 

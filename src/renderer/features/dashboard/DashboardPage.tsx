@@ -14,6 +14,7 @@ import { useAccounts, useDashboard, useTxnSummary } from '@renderer/lib/queries'
 import { plural } from '@renderer/lib/text'
 import type { AccountDto, DashboardSummary, Metric } from '@shared/types'
 import { DashboardEmpty } from './DashboardEmpty'
+import { PlanningCards } from './PlanningCards'
 import { MonthlyFlowChart } from './MonthlyFlowChart'
 
 /** "1–9 Oct": the comparison window for month-to-date spending. */
@@ -114,6 +115,8 @@ export function DashboardPage() {
           footer={fresh(netWorth, 'Net worth')}
         />
       </div>
+
+      <PlanningCards />
 
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
         <MonthlyFlowChart months={d.months} />

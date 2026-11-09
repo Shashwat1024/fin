@@ -14,6 +14,11 @@ const AUDITED = new Set([
   'import_batches',
   'import_rows',
   'mapping_presets',
+  'recurring_items',
+  'recurring_occurrences',
+  'monthly_budgets',
+  'goals',
+  'goal_contributions',
 ])
 
 const columnCache = new WeakMap<Db, Map<string, Set<string>>>()

@@ -1,6 +1,18 @@
 import type { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { FileUpIcon, LandmarkIcon, LayoutDashboardIcon, PlusIcon, ReceiptTextIcon, SearchIcon, SettingsIcon, type LucideIcon } from 'lucide-react'
+import {
+  FileUpIcon,
+  LandmarkIcon,
+  LayoutDashboardIcon,
+  PieChartIcon,
+  PlusIcon,
+  ReceiptTextIcon,
+  RepeatIcon,
+  SearchIcon,
+  SettingsIcon,
+  TargetIcon,
+  type LucideIcon,
+} from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
 import { DemoBanner } from '@renderer/features/demo/DemoBanner'
@@ -13,6 +25,9 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo: string }[] = [
   { to: '/transactions', label: 'Transactions', icon: ReceiptTextIcon, combo: 'mod+2' },
   { to: '/accounts', label: 'Accounts', icon: LandmarkIcon, combo: 'mod+3' },
   { to: '/import', label: 'Import', icon: FileUpIcon, combo: 'mod+4' },
+  { to: '/recurring', label: 'Recurring', icon: RepeatIcon, combo: 'mod+5' },
+  { to: '/budget', label: 'Budget', icon: PieChartIcon, combo: 'mod+6' },
+  { to: '/goals', label: 'Goals', icon: TargetIcon, combo: 'mod+7' },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' },
 ]
 
@@ -42,6 +57,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   useHotkey('mod+2', () => navigate('/transactions'))
   useHotkey('mod+3', () => navigate('/accounts'))
   useHotkey('mod+4', () => navigate('/import'))
+  useHotkey('mod+5', () => navigate('/recurring'))
+  useHotkey('mod+6', () => navigate('/budget'))
+  useHotkey('mod+7', () => navigate('/goals'))
   useHotkey('mod+,', () => navigate('/settings'))
   return (
     <div className="flex h-full">

@@ -185,3 +185,54 @@ export const backupCreateInput = z.object({ passphrase: passphrase.optional() })
 const backupPath = z.string().min(1).max(4000)
 export const backupInspectInput = z.object({ path: backupPath, passphrase: z.string().max(200).optional() })
 export const backupRestoreInput = backupInspectInput.extend({ confirm: z.literal(true) })
+
+// ---- Planning (US5) ------------------------------------------------------------------------------
+
+export const monthKey = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Invalid month (expected YYYY-MM)')
+
+export const recurringInput = z
+  .object({
+    name,
+    kind: z.enum(['income', 'bill', 'subscription', 'emi', 'transfer', 'savings']),
+    accountId: id,
+    toAccountId: id.nullable().optional(),
+    categoryId: id.nullable().optional(),
+    /** Positive; the kind sets the direction (income in, everything else out). */
+    amountMinor: minor.min(1, 'Amount must be greater than zero'),
+    toleranceBp: z.number().int().min(0).max(5000).optional(),
+    frequency: z.enum(['weekly', 'monthly', 'yearly']),
+    interval: z.number().int().min(1, 'At least 1').max(52).optional(),
+    anchorDate: calendarDate,
+    endDate: calendarDate.nullable().optional(),
+    count: z.number().int().min(1).max(1000).nullable().optional(),
+    notes: notes.optional(),
+    active: z.boolean().optional(),
+  })
+  .refine((v) => !v.endDate || v.endDate >= v.anchorDate, { message: 'The end date is before the first date', path: ['endDate'] })
+  .refine((v) => !v.toAccountId || v.toAccountId !== v.accountId, { message: 'Choose a different account', path: ['toAccountId'] })
+
+export const recurringUpdate = z.object({ id, input: recurringInput })
+export const occurrencesInput = z.object({ from: calendarDate, to: calendarDate }).refine((v) => v.from <= v.to, 'from must not be after to')
+export const occurrenceRef = z.object({ itemId: id, dueDate: calendarDate })
+export const occurrenceAction = occurrenceRef.extend({ action: z.enum(['skip', 'match', 'reset']), txnId: id.optional() })
+
+export const budgetMonthInput = z.object({ month: monthKey })
+export const budgetAssignInput = z.object({ month: monthKey, categoryId: id, assignedMinor: minor.min(0, 'Assign zero or more') })
+
+export const goalInput = z.object({
+  name,
+  targetMinor: minor.min(1, 'Target must be greater than zero'),
+  targetDate: calendarDate.nullable().optional(),
+  linkedAccountId: id.nullable().optional(),
+  notes: notes.optional(),
+})
+export const goalUpdate = z.object({ id, input: goalInput })
+export const contributeInput = z.object({
+  goalId: id,
+  date: calendarDate,
+  amountMinor: minor.refine((v) => v !== 0, 'Amount cannot be zero'),
+  note: z.string().trim().max(300).nullable().optional(),
+})
+
+export type RecurringInput = z.output<typeof recurringInput>
+export type GoalInput = z.output<typeof goalInput>
