@@ -98,6 +98,7 @@ export const txnFilter = z.object({
   maxAmountMinor: minor.min(0).optional(),
   direction: z.enum(['in', 'out']).optional(),
   kind: z.enum(['standard', 'transfer']).optional(),
+  importBatchId: id.optional(),
   cursor: z.string().max(200).optional(),
   limit: z.number().int().min(1).max(500).optional(),
 })
@@ -112,3 +113,63 @@ export type TxnInput = z.output<typeof txnInput>
 export type TxnFilter = z.output<typeof txnFilter>
 export type TransferInput = z.output<typeof transferInput>
 export type BulkUpdateInput = z.output<typeof bulkUpdateInput>
+
+// ---- CSV import -------------------------------------------------------------------------------
+
+export const mappingSchema = z.object({
+  headerRow: z.number().int().min(0).max(1000),
+  dateOrder: z.enum(['dmy', 'mdy', 'ymd']),
+  amountMode: z.enum(['single', 'debit_credit', 'indicator']),
+  columns: z.object({
+    date: z.string().max(200),
+    description: z.string().max(200),
+    amount: z.string().max(200).optional(),
+    debit: z.string().max(200).optional(),
+    credit: z.string().max(200).optional(),
+    indicator: z.string().max(200).optional(),
+    balance: z.string().max(200).optional(),
+    reference: z.string().max(200).optional(),
+  }),
+  signInverted: z.boolean().optional(),
+})
+
+const rawCells = z.array(z.string().max(2000)).max(100)
+const MAX_IMPORT_ROWS = 20_000
+
+const importedLine = z.object({
+  rowNumber: z.number().int().min(1),
+  raw: rawCells,
+  date: calendarDate,
+  amountMinor: minor.refine((v) => v !== 0, 'Amount cannot be zero'),
+  description: z.string().max(1000),
+  reference: z.string().max(200).nullable().optional(),
+  balanceMinor: minor.nullable().optional(),
+})
+
+export const importPreviewInput = z.object({
+  accountId: id,
+  fileHash: z.string().max(128).nullable().optional(),
+  rows: z.array(importedLine.pick({ rowNumber: true, date: true, amountMinor: true, description: true })).max(MAX_IMPORT_ROWS),
+})
+
+export const importCommitInput = z.object({
+  accountId: id,
+  fileName: z.string().trim().min(1).max(260),
+  fileHash: z.string().max(128).nullable().optional(),
+  mapping: mappingSchema,
+  rows: z.array(importedLine).max(MAX_IMPORT_ROWS),
+  rejected: z
+    .array(z.object({ rowNumber: z.number().int().min(1), raw: rawCells, status: z.enum(['error', 'ignored']), message: z.string().max(500) }))
+    .max(MAX_IMPORT_ROWS),
+  /** Choices for possible duplicates; anything not listed is skipped. */
+  importPossibleDuplicates: z.array(z.number().int().min(1)).max(MAX_IMPORT_ROWS),
+  statementClosing: z.object({ date: calendarDate, balanceMinor: minor }).nullable().optional(),
+  savePresetAs: z.string().trim().min(1).max(80).nullable().optional(),
+})
+
+export const importUndoInput = z.object({ batchId: id, includeEdited: z.boolean() })
+export const savePresetInput = z.object({ name: z.string().trim().min(1).max(80), mapping: mappingSchema.omit({ headerRow: true }) })
+export const reconcileInput = z.object({ id, statementDate: calendarDate, statementBalanceMinor: minor })
+
+export type ImportPreviewInput = z.output<typeof importPreviewInput>
+export type ImportCommitInput = z.output<typeof importCommitInput>

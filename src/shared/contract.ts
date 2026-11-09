@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import type { Preset } from '@domain/import/presets'
 import type { ErrorCode } from './errors'
 import * as s from './schemas'
 import type * as t from './types'
@@ -24,6 +25,14 @@ export const inputSchemas = {
   'payees.suggest': s.payeeSuggestInput,
   'activity.list': s.activityInput,
   'undo.apply': s.undoInput,
+  'accounts.reconcile': s.reconcileInput,
+  'import.presets': s.empty,
+  'import.savePreset': s.savePresetInput,
+  'import.preview': s.importPreviewInput,
+  'import.commit': s.importCommitInput,
+  'import.batches': s.empty,
+  'import.batchRows': s.idInput,
+  'import.undo': s.importUndoInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -52,6 +61,14 @@ export interface Outputs {
   'payees.suggest': t.PayeeSuggestion[]
   'activity.list': t.ActivityEntry[]
   'undo.apply': t.Mutation<{ reverted: number }>
+  'accounts.reconcile': t.ReconcileResult
+  'import.presets': Preset[]
+  'import.savePreset': t.Mutation<{ preset: Preset }>
+  'import.preview': t.ImportPreview
+  'import.commit': t.Mutation<{ batchId: string; counts: t.ImportCounts }>
+  'import.batches': t.ImportBatchDto[]
+  'import.batchRows': t.ImportRowDto[]
+  'import.undo': t.Mutation<{ removed: number; kept: number }>
 }
 
 export type Output<C extends Channel> = Outputs[C]

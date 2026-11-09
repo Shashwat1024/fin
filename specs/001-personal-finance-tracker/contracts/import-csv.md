@@ -1,28 +1,29 @@
 # Contract: CSV Import Mapping & Preview
 
-## Mapping config (also the MappingPreset `config` JSON)
+## Mapping config (also the MappingPreset `mapping` JSON, without `headerRow`)
+
+Source of truth: `src/domain/import/mapping.ts`.
 
 ```ts
 type Mapping = {
-  encoding: 'utf-8' | 'utf-16le' | 'windows-1252';
-  delimiter: ',' | ';' | '\t' | '|';
-  headerRow: number;                 // 0-based index after skipping preamble
-  skipFooterRows?: number;
-  dateFormat: 'DD/MM/YYYY' | 'DD-MM-YYYY' | 'DD/MM/YY' | 'DD MMM YYYY' | 'YYYY-MM-DD' | 'MM/DD/YYYY';
-  columns: {
-    date: string; description: string;
-    amount?: string;                 // amountMode 'single'
-    debit?: string; credit?: string; // amountMode 'debit_credit'
-    balance?: string; reference?: string; category?: string;
-  };
-  amountMode: 'single' | 'debit_credit';
-  signInverted?: boolean;            // e.g. credit-card exports where purchases are positive
-};
+  headerRow: number                  // index of the header among non-blank rows (bank preambles skipped)
+  dateOrder: 'dmy' | 'mdy' | 'ymd'   // separators, 2/4-digit years, month names and times handled automatically
+  amountMode: 'single' | 'debit_credit' | 'indicator'
+  columns: {                         // referenced by header text (case/punctuation-insensitive)
+    date: string; description: string
+    amount?: string                  // 'single' and 'indicator'
+    debit?: string; credit?: string  // 'debit_credit'
+    indicator?: string               // 'indicator': a column holding Dr / Cr
+    balance?: string; reference?: string
+  }
+  signInverted?: boolean             // e.g. card exports where purchases are positive
+}
 ```
 
-Amount cell parsing: strip currency symbols and spaces; accept Indian or western grouping; `Dr`
-suffix or parentheses → negative, `Cr` suffix → positive (then `signInverted` applies). Blank debit
-and blank credit in the same row → row error `AMOUNT_MISSING`.
+Encoding (BOM → UTF-8/UTF-16; else strict UTF-8; else Windows-1252) and the delimiter (`,` `;` tab
+`|`) are detected automatically. Amount cells accept Indian or western grouping, currency symbols,
+`Dr`/`Cr` suffixes and parentheses. Lines with neither a date nor an amount (totals, footers) are
+reported as "not a transaction line" and never imported.
 
 ## Preview response
 
@@ -45,8 +46,11 @@ type ImportPreview = {
 };
 ```
 
-Default decisions: `new` → import, `duplicate` → skip, `possible_duplicate` → user must choose,
-`error` → cannot import (reported, retained in ImportRow as `failed`).
+Default decisions: `new` → import, `duplicate` → skip (never importable), `possible_duplicate` →
+skipped unless the user ticks it, `error` → cannot import (reported, retained in ImportRow as
+`failed`). As built, the renderer produces the parsed rows and the main process returns per-row
+statuses (`import.preview`); `import.commit` re-classifies before writing. The `transferMatch` and
+`suggestion` fields are deferred to US6.
 
 ## Built-in presets (fixtures required for each)
 

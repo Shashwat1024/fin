@@ -4,6 +4,7 @@ import {
   ArrowDownLeftIcon,
   ArrowLeftRightIcon,
   ArrowUpRightIcon,
+  FileUpIcon,
   LandmarkIcon,
   LayoutDashboardIcon,
   MoonIcon,
@@ -73,6 +74,9 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={run(() => accountDialog.open())}>
             <PlusIcon /> New account
+          </CommandItem>
+          <CommandItem onSelect={run(() => navigate('/import'))}>
+            <FileUpIcon /> Import a bank statement
           </CommandItem>
         </CommandGroup>
         <CommandSeparator />

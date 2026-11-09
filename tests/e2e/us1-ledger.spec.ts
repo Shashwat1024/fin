@@ -1,29 +1,17 @@
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { _electron as electron, expect, test, type ElectronApplication, type Page } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+import { externalRequests, launchFin, onboard, toast as toastOn, type FinApp } from './app'
 
-let app: ElectronApplication
+let fin: FinApp
 let page: Page
-let dataDir: string
-const requests: string[] = []
 
 test.beforeAll(async () => {
-  dataDir = mkdtempSync(join(tmpdir(), 'fin-e2e-'))
-  // Editors built on Electron (e.g. VS Code) set this for child processes; it would start Electron as plain Node.
-  const { ELECTRON_RUN_AS_NODE: _ignored, ...env } = process.env
-  app = await electron.launch({ args: ['.'], env: { ...env, FIN_DATA_DIR: dataDir } as Record<string, string> })
-  page = await app.firstWindow()
-  page.on('request', (r) => requests.push(r.url()))
+  fin = await launchFin()
+  page = fin.page
 })
 
-test.afterAll(async () => {
-  await app?.close()
-  rmSync(dataDir, { recursive: true, force: true })
-})
+test.afterAll(async () => fin?.close())
 
-/** The newest toast containing `text` (older toasts may still be on screen). */
-const toast = (text: string) => page.locator('[data-sonner-toast]', { hasText: text }).last()
+const toast = (text: string) => toastOn(page, text)
 
 async function pickCategory(index: number, name: string) {
   await page.getByRole('combobox', { name: 'Category' }).nth(index).click()
@@ -32,13 +20,7 @@ async function pickCategory(index: number, name: string) {
 }
 
 test('US1: onboarding, accounts, quick-add, split, transfer, delete and undo', async () => {
-  // Onboarding
-  await expect(page.getByText('Welcome to Fin')).toBeVisible()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.getByLabel('Name').fill('HDFC Savings')
-  await page.getByLabel('Balance on start date').fill('50,000')
-  await page.getByRole('button', { name: 'Add account and finish' }).click()
-  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+  await onboard(page, 'HDFC Savings', '50,000')
   await expect(page.getByRole('link', { name: /Cash position/ })).toContainText('₹50,000.00')
 
   // Second account via the accounts page
@@ -104,6 +86,6 @@ test('US1: onboarding, accounts, quick-add, split, transfer, delete and undo', a
 })
 
 test('offline: the app makes no network requests', async () => {
-  const external = requests.filter((u) => !u.startsWith('file:') && !u.startsWith('data:') && !u.startsWith('devtools:'))
+  const external = externalRequests(fin.requests)
   expect(external).toEqual([])
 })

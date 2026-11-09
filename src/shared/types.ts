@@ -115,3 +115,44 @@ export type ActivityEntry = { id: string; at: string; label: string; undone: boo
 
 /** Every mutation returns the audit group id so the UI can offer a one-step undo. */
 export type Mutation<T> = T & { auditGroupId: string }
+
+// ---- CSV import -------------------------------------------------------------------------------
+
+export type ImportRowStatus = 'new' | 'duplicate' | 'possible_duplicate'
+
+export type ImportMatch = { id: string; postedDate: string; amountMinor: number; payee: string }
+
+export type ImportPreview = {
+  rows: { rowNumber: number; status: ImportRowStatus; match: ImportMatch | null }[]
+  /** Set when a file with the same contents was imported before. */
+  sameFile: { batchId: string; importedAt: string; undone: boolean } | null
+  account: { ledgerBalanceMinor: number; balanceMinor: number; lastTxnDate: string | null }
+}
+
+export type ImportCounts = {
+  total: number
+  imported: number
+  duplicate: number
+  skipped: number
+  failed: number
+  ignored: number
+}
+
+export type ImportBatchDto = {
+  id: string
+  accountId: string
+  accountName: string
+  fileName: string
+  importedAt: string
+  counts: ImportCounts
+  statementClosing: { date: string; balanceMinor: number } | null
+  undone: boolean
+  /** Transactions from this batch still in the ledger. */
+  liveCount: number
+  /** Of those, how many were changed after import (e.g. recategorized). */
+  editedCount: number
+}
+
+export type ImportRowDto = { rowNumber: number; raw: string[]; outcome: string; message: string | null; transactionId: string | null }
+
+export type ReconcileResult = { statementBalanceMinor: number; computedBalanceMinor: number; differenceMinor: number; asOf: string }

@@ -495,6 +495,10 @@ export function queryTransactions(db: Db, filter: TxnFilter): TxnPage {
     where.push('t.kind = ?')
     params.push(filter.kind)
   }
+  if (filter.importBatchId) {
+    where.push('t.import_batch_id = ?')
+    params.push(filter.importBatchId)
+  }
 
   const whereSql = where.join(' AND ')
 

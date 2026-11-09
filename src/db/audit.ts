@@ -11,6 +11,9 @@ const AUDITED = new Set([
   'splits',
   'transaction_tags',
   'transfers',
+  'import_batches',
+  'import_rows',
+  'mapping_presets',
 ])
 
 const columnCache = new WeakMap<Db, Map<string, Set<string>>>()

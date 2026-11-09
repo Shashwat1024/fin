@@ -13,6 +13,8 @@ export type FilterState = {
   accountId: string
   categoryId: string | null
   direction: 'all' | 'in' | 'out'
+  /** Hidden filter set by links from import history. */
+  importBatchId?: string | null
 }
 
 export const DEFAULT_FILTERS: FilterState = { text: '', range: 'all', accountId: ALL_ACCOUNTS, categoryId: null, direction: 'all' }
@@ -26,11 +28,12 @@ export function toTxnFilter(f: FilterState, today: string, fyStartMonth: number)
     accountIds: f.accountId === ALL_ACCOUNTS ? undefined : [f.accountId],
     categoryIds: f.categoryId ? [f.categoryId] : undefined,
     direction: f.direction === 'all' ? undefined : f.direction,
+    importBatchId: f.importBatchId ?? undefined,
   }
 }
 
 export const isFiltered = (f: FilterState) =>
-  f.text.trim() !== '' || f.range !== 'all' || f.accountId !== ALL_ACCOUNTS || f.categoryId !== null || f.direction !== 'all'
+  f.text.trim() !== '' || f.range !== 'all' || f.accountId !== ALL_ACCOUNTS || f.categoryId !== null || f.direction !== 'all' || Boolean(f.importBatchId)
 
 type Props = { value: FilterState; onChange: (f: FilterState) => void; today: string; fyStartMonth: number }
 
@@ -89,6 +92,11 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
           <SelectItem value="in">Money in</SelectItem>
         </SelectContent>
       </Select>
+      {value.importBatchId && (
+        <Button variant="secondary" size="sm" onClick={() => onChange({ ...value, importBatchId: null })} aria-label="Remove import filter">
+          From one import <XIcon />
+        </Button>
+      )}
       {isFiltered(value) && (
         <Button variant="ghost" size="sm" onClick={() => onChange(DEFAULT_FILTERS)}>
           <XIcon /> Clear

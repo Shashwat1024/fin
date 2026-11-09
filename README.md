@@ -37,6 +37,9 @@ different folder, for example a throwaway one while testing.
 
 - ✅ User Story 1 (MVP): accounts, transactions, splits, transfers, quick-add, search & filters,
   bulk edit, undo, onboarding, settings, command palette.
-- ⏭️ Next: CSV import (US2), dashboard drill-downs (US3), backup/restore & export (US4).
+- ✅ User Story 2: CSV statement import with built-in HDFC / ICICI / SBI / Axis / Kotak / card
+  layouts, saved layouts, duplicate detection, balance check, import history with raw lines and
+  one-step batch undo, and reconciliation against a statement balance.
+- ⏭️ Next: dashboard drill-downs (US3), backup/restore & export (US4).
   See [tasks.md](specs/001-personal-finance-tracker/tasks.md).
 

@@ -5,6 +5,8 @@ import { AppShell } from '@renderer/app/AppShell'
 import { CommandPalette } from '@renderer/app/CommandPalette'
 import { AccountDialogProvider } from '@renderer/features/accounts/AccountDialog'
 import { AccountsPage } from '@renderer/features/accounts/AccountsPage'
+import { ReconcileDialogProvider } from '@renderer/features/accounts/ReconcileDialog'
+import { ImportPage } from '@renderer/features/import/ImportPage'
 import { DashboardPage } from '@renderer/features/dashboard/DashboardPage'
 import { Onboarding } from '@renderer/features/onboarding/Onboarding'
 import { SettingsPage } from '@renderer/features/settings/SettingsPage'
@@ -21,6 +23,7 @@ function Routed() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/transactions" element={<TransactionsRoute />} />
         <Route path="/accounts" element={<AccountsPage />} />
+        <Route path="/import" element={<ImportPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<DashboardPage />} />
       </Routes>
@@ -42,6 +45,7 @@ export function App() {
   return (
     <HashRouter>
       <AccountDialogProvider>
+        <ReconcileDialogProvider>
         <TransactionDialogProvider>
           {settings.data.onboarded ? (
             <>
@@ -56,6 +60,7 @@ export function App() {
             <Onboarding settings={settings.data} />
           )}
         </TransactionDialogProvider>
+        </ReconcileDialogProvider>
       </AccountDialogProvider>
     </HashRouter>
   )

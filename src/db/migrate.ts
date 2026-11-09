@@ -1,9 +1,13 @@
 import { APP_ID, all, nowIso, run, type Db } from './connection'
 import m0001 from './migrations/0001_init'
+import m0002 from './migrations/0002_imports'
 
 export type Migration = { version: number; name: string; sql: string }
 
-export const MIGRATIONS: readonly Migration[] = [{ version: 1, name: 'init', sql: m0001 }]
+export const MIGRATIONS: readonly Migration[] = [
+  { version: 1, name: 'init', sql: m0001 },
+  { version: 2, name: 'imports', sql: m0002 },
+]
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]!.version
 

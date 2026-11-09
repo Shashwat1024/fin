@@ -106,27 +106,27 @@ Within each story, write tests first and confirm they fail before implementing.
 
 ### Tests for User Story 2
 
-- [ ] T042 [P] [US2] Create synthetic fixture CSVs (HDFC, ICICI, SBI, Axis, Kotak, generic card; incl. preamble lines, Dr/Cr, blank cells, a malformed row, repeated identical rows) in `tests/fixtures/csv/`
-- [ ] T043 [P] [US2] Unit tests for sniffing (encoding, delimiter, header row after preamble) in `tests/unit/domain/import/sniff.test.ts`
-- [ ] T044 [P] [US2] Unit tests for amount parsing and mapping→parsed rows with per-row errors in `tests/unit/domain/import/parse.test.ts`
-- [ ] T045 [P] [US2] Unit tests for fingerprint normalisation, occurrence index, possible-duplicate window in `tests/unit/domain/import/fingerprint.test.ts`
-- [ ] T046 [P] [US2] Integration tests for import commit, re-import idempotency, batch undo (incl. edited rows), reconcile in `tests/integration/db/import.test.ts`
-- [ ] T047 [P] [US2] E2E import wizard flow incl. duplicate review and undo in `tests/e2e/us2-import.spec.ts`
+- [x] T042 [P] [US2] Create synthetic fixture CSVs (HDFC, ICICI, SBI, Axis, Kotak, generic card; incl. preamble lines, Dr/Cr, blank cells, a malformed row, repeated identical rows) in `tests/fixtures/csv/`
+- [x] T043 [P] [US2] Unit tests for sniffing (encoding, delimiter, header row after preamble) in `tests/unit/domain/import/sniff.test.ts`
+- [x] T044 [P] [US2] Unit tests for amount parsing and mapping→parsed rows with per-row errors in `tests/unit/domain/import/parse.test.ts`
+- [x] T045 [P] [US2] Unit tests for fingerprint normalisation, occurrence index, possible-duplicate window in `tests/unit/domain/import/fingerprint.test.ts`
+- [x] T046 [P] [US2] Integration tests for import commit, re-import idempotency, batch undo (incl. edited rows), reconcile in `tests/integration/db/import.test.ts`
+- [x] T047 [P] [US2] E2E import wizard flow incl. duplicate review and undo in `tests/e2e/us2-import.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T048 [US2] Add migration for import_batches, import_rows, mapping_presets in `src/db/migrations/0002_imports.sql`
-- [ ] T049 [P] [US2] Implement sniffing in `src/domain/import/sniff.ts`
-- [ ] T050 [P] [US2] Implement amount parsing in `src/domain/import/amount.ts` and mapping parser in `src/domain/import/parse.ts`
-- [ ] T051 [P] [US2] Implement fingerprinting and duplicate classification in `src/domain/import/fingerprint.ts`
-- [ ] T052 [P] [US2] Author built-in presets per contracts/import-csv.md in `src/domain/import/presets/*.json`
-- [ ] T053 [US2] Implement imports repository (batch, raw rows, presets, commit in one transaction, undo) in `src/db/repos/imports.ts`
-- [ ] T054 [US2] Implement import service + IPC (`import.openFile`, `.preview`, `.commit`, `.batches`, `.undo`, `accounts.reconcile`) streaming via PapaParse in `src/main/services/import.ts`
-- [ ] T055 [US2] Build import wizard steps (file → mapping → date format → preview → duplicates → confirm) in `src/renderer/features/import/ImportWizard.tsx`
-- [ ] T056 [US2] Build import history with raw-row viewer and undo confirmation (lists edited rows) in `src/renderer/features/import/ImportHistory.tsx`
-- [ ] T057 [US2] Build reconcile dialog showing computed vs statement balance in `src/renderer/features/accounts/ReconcileDialog.tsx`
+- [x] T048 [US2] Add migration for import_batches, import_rows, mapping_presets in `src/db/migrations/0002_imports.sql`
+- [x] T049 [P] [US2] Implement sniffing (decode + delimiter + header detection) in `src/domain/import/decode.ts` and `src/domain/import/csv.ts`
+- [x] T050 [P] [US2] Implement mapping parser (reusing `parseAmount` from `src/domain/money.ts`) and date parsing in `src/domain/import/mapping.ts` and `src/domain/import/dates.ts`
+- [x] T051 [P] [US2] Implement fingerprinting and duplicate classification in `src/domain/import/fingerprint.ts`
+- [x] T052 [P] [US2] Author built-in presets per contracts/import-csv.md in `src/domain/import/presets.ts`
+- [x] T053 [US2] Implement imports repository (batch, raw rows, presets, commit in one transaction, undo) in `src/db/repos/imports.ts`
+- [x] T054 [US2] Implement import IPC (`import.preview`, `.commit`, `.batches`, `.batchRows`, `.undo`, `.presets`, `.savePreset`, `accounts.reconcile`) in `src/main/handlers.ts`; files are read and parsed in the renderer with the shared domain code
+- [x] T055 [US2] Build import wizard steps (file → mapping → date format → preview → duplicates → confirm) in `src/renderer/features/import/ImportWizard.tsx`
+- [x] T056 [US2] Build import history with raw-row viewer and undo confirmation (lists edited rows) in `src/renderer/features/import/ImportHistory.tsx`
+- [x] T057 [US2] Build reconcile dialog showing computed vs statement balance in `src/renderer/features/accounts/ReconcileDialog.tsx`
 
-**Checkpoint**: US1 + US2 work independently
+**Checkpoint**: US1 + US2 work independently ✅ (2026-11-09: `tests/e2e/us2-import.spec.ts` passes)
 
 ---
 

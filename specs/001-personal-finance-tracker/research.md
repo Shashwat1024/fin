@@ -107,6 +107,14 @@ Vitest. Verified in both system Node and Electron's Node.
   same account, same amount, |date diff| ≤ 2 days, different fingerprint → flagged.
 - **Rationale**: Satisfies FR-014 and SC-003 deterministically.
 
+**Update 2026-11-09 (as built)**: files are read, decoded and parsed in the renderer with the shared
+domain code (`src/domain/import/*`), so mapping previews are instant and no file paths cross IPC;
+the main process re-validates every row (Zod) and re-classifies duplicates before committing.
+Columns are referenced by header text (presets survive different preamble lengths). A third
+amount layout, "amount + Dr/Cr column" (Kotak), was added. The fingerprint is stored as the exact
+readable key `date|amount|NORMALISED DESCRIPTION` rather than a SHA-256 (no collisions possible),
+and reference digits are kept (stripping them could merge distinct same-day payments).
+
 ## R11. UPI / IMPS / NEFT narration parsing
 
 - **Decision**: Ordered regex table in `src/domain/import/narration.ts`, e.g.

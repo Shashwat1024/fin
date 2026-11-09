@@ -22,6 +22,7 @@ export function TransactionsPage() {
     ...DEFAULT_FILTERS,
     accountId: params.get('account') ?? ALL_ACCOUNTS,
     categoryId: params.get('category'),
+    importBatchId: params.get('batch'),
     range: (RANGES as readonly string[]).includes(params.get('range') ?? '') ? (params.get('range') as FilterState['range']) : 'all',
     direction: params.get('direction') === 'in' || params.get('direction') === 'out' ? (params.get('direction') as 'in' | 'out') : 'all',
   }))

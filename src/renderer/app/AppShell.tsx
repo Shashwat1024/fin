@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LandmarkIcon, LayoutDashboardIcon, PlusIcon, ReceiptTextIcon, SearchIcon, SettingsIcon, type LucideIcon } from 'lucide-react'
+import { FileUpIcon, LandmarkIcon, LayoutDashboardIcon, PlusIcon, ReceiptTextIcon, SearchIcon, SettingsIcon, type LucideIcon } from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
@@ -11,6 +11,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo: string }[] = [
   { to: '/', label: 'Overview', icon: LayoutDashboardIcon, combo: 'mod+1' },
   { to: '/transactions', label: 'Transactions', icon: ReceiptTextIcon, combo: 'mod+2' },
   { to: '/accounts', label: 'Accounts', icon: LandmarkIcon, combo: 'mod+3' },
+  { to: '/import', label: 'Import', icon: FileUpIcon, combo: 'mod+4' },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' },
 ]
 
@@ -39,6 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   useHotkey('mod+1', () => navigate('/'))
   useHotkey('mod+2', () => navigate('/transactions'))
   useHotkey('mod+3', () => navigate('/accounts'))
+  useHotkey('mod+4', () => navigate('/import'))
   useHotkey('mod+,', () => navigate('/settings'))
   return (
     <div className="flex h-full">

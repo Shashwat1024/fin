@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArchiveIcon, ArchiveRestoreIcon, LandmarkIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, ReceiptTextIcon, WalletIcon } from 'lucide-react'
+import { ArchiveIcon, ArchiveRestoreIcon, FileUpIcon, ScaleIcon, LandmarkIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, ReceiptTextIcon, WalletIcon } from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { ACCOUNT_TYPE_LABELS } from '@domain/ledger'
 import { EmptyState, ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
@@ -22,6 +22,7 @@ import { useAccounts, useFinMutation } from '@renderer/lib/queries'
 import { summarizeAccounts } from '@renderer/lib/summary'
 import type { AccountDto } from '@shared/types'
 import { useAccountDialog } from './AccountDialog'
+import { useReconcileDialog } from './ReconcileDialog'
 
 const SECTIONS: { title: string; match: (a: AccountDto) => boolean }[] = [
   { title: 'Cash & bank', match: (a) => a.isLiquid },
@@ -96,6 +97,7 @@ export function AccountsPage() {
 function AccountCard({ account }: { account: AccountDto }) {
   const navigate = useNavigate()
   const dialog = useAccountDialog()
+  const reconcile = useReconcileDialog()
   const archive = useFinMutation('accounts.archive', {
     success: (r) => `${r.account.archived ? 'Archived' : 'Restored'} ${r.account.name}`,
   })
@@ -123,6 +125,12 @@ function AccountCard({ account }: { account: AccountDto }) {
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => dialog.open(account)}>
                 <PencilIcon /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => reconcile.open(account)}>
+                <ScaleIcon /> Check against statement
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate('/import')}>
+                <FileUpIcon /> Import statement
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => archive.mutate({ id: account.id, archived: !account.archived })}>

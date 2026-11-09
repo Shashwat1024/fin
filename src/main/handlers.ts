@@ -2,6 +2,7 @@ import { undoGroup } from '@db/audit'
 import { all, type Db } from '@db/connection'
 import { createAccount, listAccounts, setAccountArchived, updateAccount } from '@db/repos/accounts'
 import { listCategories, listTags } from '@db/repos/categories'
+import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
 import { getSettings, updateSettings } from '@db/repos/settings'
 import {
   bulkUpdate,
@@ -55,6 +56,14 @@ export const handlers: Handlers = {
   'transfers.update': (db, input) => updateTransfer(db, input.transferId, input.patch),
   'payees.suggest': (db, input) => suggestPayees(db, input.prefix, input.limit),
   'activity.list': (db, input) => activity(db, input?.limit ?? 50),
+  'accounts.reconcile': (db, input) => reconcile(db, input.id, input.statementDate, input.statementBalanceMinor),
+  'import.presets': (db) => listPresets(db),
+  'import.savePreset': (db, input) => savePreset(db, input.name, input.mapping),
+  'import.preview': (db, input) => previewImport(db, input),
+  'import.commit': (db, input) => commitImport(db, input),
+  'import.batches': (db) => listBatches(db),
+  'import.batchRows': (db, input) => batchRows(db, input.id),
+  'import.undo': (db, input) => undoImport(db, input.batchId, input.includeEdited),
   'undo.apply': (db, input) => {
     const r = undoGroup(db, input.auditGroupId)
     return { reverted: r.result.reverted, auditGroupId: r.auditGroupId }
