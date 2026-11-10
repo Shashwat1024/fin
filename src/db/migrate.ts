@@ -1,10 +1,12 @@
+// The SQL lives with the Rust backend (crates/fin-core/migrations), so both backends run identical
+// migrations while the port is in progress (specs/002-rust-tauri-port).
 import { APP_ID, all, nowIso, run, type Db } from './connection'
-import m0001 from './migrations/0001_init'
-import m0002 from './migrations/0002_imports'
-import m0003 from './migrations/0003_planning'
-import m0004 from './migrations/0004_rules'
-import m0005 from './migrations/0005_valuations'
-import m0006 from './migrations/0006_dismissed_insights'
+import m0001 from '../../crates/fin-core/migrations/0001_init.sql?raw'
+import m0002 from '../../crates/fin-core/migrations/0002_imports.sql?raw'
+import m0003 from '../../crates/fin-core/migrations/0003_planning.sql?raw'
+import m0004 from '../../crates/fin-core/migrations/0004_rules.sql?raw'
+import m0005 from '../../crates/fin-core/migrations/0005_valuations.sql?raw'
+import m0006 from '../../crates/fin-core/migrations/0006_dismissed_insights.sql?raw'
 
 export type Migration = { version: number; name: string; sql: string }
 

@@ -15,14 +15,8 @@ fn main() {
         }
         let reply = match serde_json::from_str::<Value>(&line) {
             Ok(req) => {
-                let channel = req
-                    .get("channel")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default();
-                fin_core::dispatch::dispatch(
-                    channel,
-                    req.get("input").cloned().unwrap_or(Value::Null),
-                )
+                let channel = req.get("channel").and_then(Value::as_str).unwrap_or_default();
+                fin_core::dispatch::dispatch(channel, req.get("input").cloned())
             }
             Err(_) => {
                 json!({ "ok": false, "error": { "code": "VALIDATION", "message": "Bad request" } })

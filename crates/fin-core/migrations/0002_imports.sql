@@ -1,4 +1,4 @@
-export default /* sql */ `
+
 CREATE TABLE mapping_presets (
   id         TEXT PRIMARY KEY,
   name       TEXT NOT NULL,
@@ -41,4 +41,3 @@ CREATE TABLE import_rows (
 CREATE INDEX import_rows_batch ON import_rows (batch_id, row_number);
 
 CREATE INDEX txn_import_batch ON transactions (import_batch_id);
-`

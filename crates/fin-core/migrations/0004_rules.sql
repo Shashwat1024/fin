@@ -1,4 +1,4 @@
-export default /* sql */ `
+
 -- Categorisation rules (FR-019): AND-ed conditions as JSON, one category as the action.
 CREATE TABLE rules (
   id          TEXT PRIMARY KEY,
@@ -13,4 +13,3 @@ CREATE TABLE rules (
 
 -- Merchants are learned from narrations/payees; suggestions use each merchant's past categories.
 CREATE INDEX txn_merchant ON transactions (merchant_id) WHERE deleted_at IS NULL;
-`

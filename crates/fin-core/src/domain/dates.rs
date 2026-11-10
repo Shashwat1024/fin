@@ -37,23 +37,14 @@ fn parse_parts(s: &str) -> Option<Parts> {
     }
     let digits = |r: std::ops::Range<usize>| -> Option<u32> {
         let part = &s[r];
-        part.bytes()
-            .all(|c| c.is_ascii_digit())
-            .then(|| part.parse().ok())
-            .flatten()
+        part.bytes().all(|c| c.is_ascii_digit()).then(|| part.parse().ok()).flatten()
     };
-    Some(Parts {
-        year: digits(0..4)? as i32,
-        month: digits(5..7)?,
-        day: digits(8..10)?,
-    })
+    Some(Parts { year: digits(0..4)? as i32, month: digits(5..7)?, day: digits(8..10)? })
 }
 
 pub fn is_calendar_date(s: &str) -> bool {
     match parse_parts(s) {
-        Some(p) => {
-            (1..=12).contains(&p.month) && p.day >= 1 && p.day <= days_in_month(p.year, p.month)
-        }
+        Some(p) => (1..=12).contains(&p.month) && p.day >= 1 && p.day <= days_in_month(p.year, p.month),
         None => false,
     }
 }
@@ -67,11 +58,7 @@ pub fn parts(date: &str) -> Result<Parts, DateError> {
 
 pub fn make_date(year: i32, month: u32, day: u32) -> Result<String, DateError> {
     let d = format!("{year:04}-{month:02}-{day:02}");
-    if is_calendar_date(&d) {
-        Ok(d)
-    } else {
-        Err(DateError(d))
-    }
+    if is_calendar_date(&d) { Ok(d) } else { Err(DateError(d)) }
 }
 
 fn to_naive(date: &str) -> Result<NaiveDate, DateError> {
@@ -93,12 +80,7 @@ pub fn today_in_at(time_zone: &str, now: chrono::DateTime<Utc>) -> String {
         Ok(tz) => now.with_timezone(&tz).date_naive(),
         Err(_) => now.date_naive(),
     };
-    format!(
-        "{:04}-{:02}-{:02}",
-        local.year(),
-        local.month(),
-        local.day()
-    )
+    format!("{:04}-{:02}-{:02}", local.year(), local.month(), local.day())
 }
 
 /// Whether `zone` is a time zone the app accepts (IANA name).
@@ -108,9 +90,7 @@ pub fn is_time_zone(zone: &str) -> bool {
 
 pub fn add_days(date: &str, days: i64) -> Result<String, DateError> {
     let d = to_naive(date)?;
-    let moved = d
-        .checked_add_signed(chrono::Duration::days(days))
-        .ok_or_else(|| DateError(date.to_owned()))?;
+    let moved = d.checked_add_signed(chrono::Duration::days(days)).ok_or_else(|| DateError(date.to_owned()))?;
     from_naive(moved)
 }
 
@@ -163,11 +143,7 @@ pub struct FinancialYear {
 /// Financial year containing `date`, given the FY start month (India: 4 = April).
 pub fn financial_year(date: &str, fy_start_month: u32) -> Result<FinancialYear, DateError> {
     let p = parts(date)?;
-    let start_year = if p.month >= fy_start_month {
-        p.year
-    } else {
-        p.year - 1
-    };
+    let start_year = if p.month >= fy_start_month { p.year } else { p.year - 1 };
     let from = make_date(start_year, fy_start_month, 1)?;
     let to = add_days(&add_months(&from, 12, None)?, -1)?;
     let label = if fy_start_month == 1 {
@@ -200,38 +176,19 @@ impl RangePreset {
     }
 }
 
-pub fn preset_range(
-    preset: RangePreset,
-    today: &str,
-    fy_start_month: u32,
-) -> Result<DateRange, DateError> {
+pub fn preset_range(preset: RangePreset, today: &str, fy_start_month: u32) -> Result<DateRange, DateError> {
     Ok(match preset {
-        RangePreset::ThisMonth => DateRange {
-            from: start_of_month(today),
-            to: end_of_month(today)?,
-        },
+        RangePreset::ThisMonth => DateRange { from: start_of_month(today), to: end_of_month(today)? },
         RangePreset::LastMonth => {
             let prev = add_months(&start_of_month(today), -1, None)?;
-            DateRange {
-                to: end_of_month(&prev)?,
-                from: prev,
-            }
+            DateRange { to: end_of_month(&prev)?, from: prev }
         }
         RangePreset::ThisFy => {
             let fy = financial_year(today, fy_start_month)?;
-            DateRange {
-                from: fy.from,
-                to: fy.to,
-            }
+            DateRange { from: fy.from, to: fy.to }
         }
-        RangePreset::Last30Days => DateRange {
-            from: add_days(today, -29)?,
-            to: today.to_owned(),
-        },
-        RangePreset::Last90Days => DateRange {
-            from: add_days(today, -89)?,
-            to: today.to_owned(),
-        },
+        RangePreset::Last30Days => DateRange { from: add_days(today, -29)?, to: today.to_owned() },
+        RangePreset::Last90Days => DateRange { from: add_days(today, -89)?, to: today.to_owned() },
     })
 }
 
@@ -250,18 +207,8 @@ const MONTHS_LONG: [&str; 12] = [
     "November",
     "December",
 ];
-const MONTHS_SHORT: [&str; 12] = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec",
-];
-const WEEKDAYS_LONG: [&str; 7] = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-];
+const MONTHS_SHORT: [&str; 12] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
+const WEEKDAYS_LONG: [&str; 7] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 /// `Intl.DateTimeFormat('en-IN', { month: 'long' })`, month 1–12.
 pub fn month_long(month: u32) -> &'static str {
@@ -322,28 +269,20 @@ mod tests {
     #[test]
     fn financial_years_and_presets() {
         let fy = financial_year("2026-11-10", 4).unwrap();
-        assert_eq!(
-            (fy.from.as_str(), fy.to.as_str(), fy.label.as_str()),
-            ("2026-04-01", "2027-03-31", "FY 2026-27")
-        );
+        assert_eq!((fy.from.as_str(), fy.to.as_str(), fy.label.as_str()), ("2026-04-01", "2027-03-31", "FY 2026-27"));
         let fy = financial_year("2027-01-10", 4).unwrap();
         assert_eq!(fy.label, "FY 2026-27");
         assert_eq!(financial_year("2026-11-10", 1).unwrap().label, "2026");
         assert_eq!(financial_year("2099-05-01", 4).unwrap().label, "FY 2099-00");
         let r = preset_range(RangePreset::LastMonth, "2026-03-31", 4).unwrap();
-        assert_eq!(
-            (r.from.as_str(), r.to.as_str()),
-            ("2026-02-01", "2026-02-28")
-        );
+        assert_eq!((r.from.as_str(), r.to.as_str()), ("2026-02-01", "2026-02-28"));
         let r = preset_range(RangePreset::Last30Days, "2026-03-31", 4).unwrap();
         assert_eq!(r.from, "2026-03-02");
     }
 
     #[test]
     fn today_in_time_zone() {
-        let now = chrono::DateTime::parse_from_rfc3339("2026-11-09T20:00:00Z")
-            .unwrap()
-            .with_timezone(&Utc);
+        let now = chrono::DateTime::parse_from_rfc3339("2026-11-09T20:00:00Z").unwrap().with_timezone(&Utc);
         assert_eq!(today_in_at("Asia/Kolkata", now), "2026-11-10");
         assert_eq!(today_in_at("America/New_York", now), "2026-11-09");
         assert!(is_time_zone("Asia/Calcutta"));

@@ -5,10 +5,7 @@ use fin_core::domain::{dates as d, money as m};
 use serde_json::Value;
 
 fn vectors() -> Value {
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../tests/parity/vectors/domain.json"
-    );
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/parity/vectors/domain.json");
     serde_json::from_str(&std::fs::read_to_string(path).expect("run npm test first")).unwrap()
 }
 
@@ -53,22 +50,12 @@ fn major_strings_and_rupees_match() {
 fn allocate_matches() {
     let v = vectors();
     for c in v["alloc"].as_array().unwrap() {
-        let weights: Vec<f64> = c["weights"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|w| w.as_f64().unwrap())
-            .collect();
+        let weights: Vec<f64> = c["weights"].as_array().unwrap().iter().map(|w| w.as_f64().unwrap()).collect();
         let got = m::allocate(c["total"].as_i64().unwrap(), &weights);
         if c["out"].get("error").is_some() {
             assert!(got.is_err(), "{c}");
         } else {
-            let want: Vec<i64> = c["out"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|x| x.as_i64().unwrap())
-                .collect();
+            let want: Vec<i64> = c["out"].as_array().unwrap().iter().map(|x| x.as_i64().unwrap()).collect();
             assert_eq!(got.unwrap(), want, "{c}");
         }
     }
@@ -83,26 +70,10 @@ fn date_arithmetic_matches() {
         let date = s(&c["date"]);
         let anchor = c["anchor"].as_u64().map(|a| a as u32);
         let months = c["months"].as_i64().unwrap() as i32;
-        assert_eq!(
-            d::add_months(date, months, anchor).unwrap(),
-            s(&c["addMonths"]),
-            "{c}"
-        );
-        assert_eq!(
-            d::add_days(date, c["days"].as_i64().unwrap()).unwrap(),
-            s(&c["addDays"]),
-            "{c}"
-        );
-        assert_eq!(
-            d::diff_days(date, s(&c["other"])).unwrap(),
-            c["diffDays"].as_i64().unwrap(),
-            "{c}"
-        );
-        assert_eq!(
-            d::weekday(date).unwrap() as i64,
-            c["weekday"].as_i64().unwrap(),
-            "{c}"
-        );
+        assert_eq!(d::add_months(date, months, anchor).unwrap(), s(&c["addMonths"]), "{c}");
+        assert_eq!(d::add_days(date, c["days"].as_i64().unwrap()).unwrap(), s(&c["addDays"]), "{c}");
+        assert_eq!(d::diff_days(date, s(&c["other"])).unwrap(), c["diffDays"].as_i64().unwrap(), "{c}");
+        assert_eq!(d::weekday(date).unwrap() as i64, c["weekday"].as_i64().unwrap(), "{c}");
         assert_eq!(d::end_of_month(date).unwrap(), s(&c["endOfMonth"]), "{c}");
         let fy_start = c["fyStart"].as_u64().unwrap() as u32;
         let fy = d::financial_year(date, fy_start).unwrap();
@@ -123,16 +94,10 @@ fn date_arithmetic_matches() {
 fn validity_today_and_names_match() {
     let v = vectors();
     for c in v["validity"].as_array().unwrap() {
-        assert_eq!(
-            d::is_calendar_date(s(&c["s"])),
-            c["out"].as_bool().unwrap(),
-            "{c}"
-        );
+        assert_eq!(d::is_calendar_date(s(&c["s"])), c["out"].as_bool().unwrap(), "{c}");
     }
     for c in v["today"].as_array().unwrap() {
-        let at = chrono::DateTime::parse_from_rfc3339(s(&c["at"]))
-            .unwrap()
-            .with_timezone(&chrono::Utc);
+        let at = chrono::DateTime::parse_from_rfc3339(s(&c["at"])).unwrap().with_timezone(&chrono::Utc);
         assert_eq!(d::today_in_at(s(&c["zone"]), at), s(&c["out"]), "{c}");
     }
     let names = &v["names"];

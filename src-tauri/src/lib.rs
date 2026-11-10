@@ -7,7 +7,7 @@ use tauri::{WebviewUrl, WebviewWindowBuilder};
 /// `fin:invoke` channel: validation and every error shape are handled by `fin_core::dispatch`.
 #[tauri::command]
 fn fin_invoke(channel: String, input: Option<Value>) -> Value {
-    fin_core::dispatch::dispatch(&channel, input.unwrap_or(Value::Null))
+    fin_core::dispatch::dispatch(&channel, input)
 }
 
 /// Fin's own pages are served from the app protocol (or the dev server while developing).
@@ -16,9 +16,7 @@ fn is_app_url(url: &tauri::Url) -> bool {
         "tauri" => true,
         "http" | "https" => {
             matches!(url.host_str(), Some("tauri.localhost"))
-                || (cfg!(debug_assertions)
-                    && matches!(url.host_str(), Some("localhost"))
-                    && url.port() == Some(5173))
+                || (cfg!(debug_assertions) && matches!(url.host_str(), Some("localhost")) && url.port() == Some(5173))
         }
         _ => false,
     }

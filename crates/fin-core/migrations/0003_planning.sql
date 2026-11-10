@@ -1,4 +1,4 @@
-export default /* sql */ `
+
 -- Recurring income and commitments (FR-021). amount_minor is signed from account_id's side:
 -- income positive, everything else negative. With to_account_id it is a transfer between accounts.
 CREATE TABLE recurring_items (
@@ -68,4 +68,3 @@ CREATE TABLE goal_contributions (
   created_at   TEXT NOT NULL
 );
 CREATE INDEX goal_contributions_goal ON goal_contributions (goal_id, date);
-`

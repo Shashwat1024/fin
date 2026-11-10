@@ -1,4 +1,4 @@
-export default /* sql */ `
+
 CREATE TABLE settings (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -141,4 +141,3 @@ CREATE TABLE audit_log (
   UNIQUE (group_id, seq)
 );
 CREATE INDEX audit_log_entity ON audit_log (entity, entity_id);
-`

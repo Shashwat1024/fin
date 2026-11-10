@@ -29,11 +29,7 @@ pub fn is_safe(minor: i128) -> bool {
 }
 
 fn checked(minor: i128) -> Result<i64, MoneyError> {
-    if is_safe(minor) {
-        Ok(minor as i64)
-    } else {
-        Err(MoneyError::Unsafe(minor))
-    }
+    if is_safe(minor) { Ok(minor as i64) } else { Err(MoneyError::Unsafe(minor)) }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,10 +40,7 @@ pub struct Money {
 
 impl Money {
     pub fn new(minor: i64, currency: &str) -> Result<Self, MoneyError> {
-        Ok(Self {
-            minor: checked(minor as i128)?,
-            currency: currency.to_owned(),
-        })
+        Ok(Self { minor: checked(minor as i128)?, currency: currency.to_owned() })
     }
 
     pub fn inr(minor: i64) -> Result<Self, MoneyError> {
@@ -58,34 +51,22 @@ impl Money {
         if self.currency == other.currency {
             Ok(())
         } else {
-            Err(MoneyError::CurrencyMismatch(
-                self.currency.clone(),
-                other.currency.clone(),
-            ))
+            Err(MoneyError::CurrencyMismatch(self.currency.clone(), other.currency.clone()))
         }
     }
 
     pub fn add(&self, other: &Money) -> Result<Money, MoneyError> {
         self.same_currency(other)?;
-        Money::new(
-            checked(self.minor as i128 + other.minor as i128)?,
-            &self.currency,
-        )
+        Money::new(checked(self.minor as i128 + other.minor as i128)?, &self.currency)
     }
 
     pub fn subtract(&self, other: &Money) -> Result<Money, MoneyError> {
         self.same_currency(other)?;
-        Money::new(
-            checked(self.minor as i128 - other.minor as i128)?,
-            &self.currency,
-        )
+        Money::new(checked(self.minor as i128 - other.minor as i128)?, &self.currency)
     }
 
     pub fn negate(&self) -> Money {
-        Money {
-            minor: -self.minor,
-            currency: self.currency.clone(),
-        }
+        Money { minor: -self.minor, currency: self.currency.clone() }
     }
 }
 
@@ -102,8 +83,8 @@ pub fn sum_minor(values: &[i64]) -> Result<i64, MoneyError> {
 /// Number of minor-unit digits for a currency (INR → 2, JPY → 0), as ICU reports them.
 pub fn minor_digits(currency: &str) -> u32 {
     match currency {
-        "BIF" | "CLP" | "DJF" | "GNF" | "ISK" | "JPY" | "KMF" | "KRW" | "PYG" | "RWF" | "UGX"
-        | "UYI" | "VND" | "VUV" | "XAF" | "XOF" | "XPF" => 0,
+        "BIF" | "CLP" | "DJF" | "GNF" | "ISK" | "JPY" | "KMF" | "KRW" | "PYG" | "RWF" | "UGX" | "UYI" | "VND"
+        | "VUV" | "XAF" | "XOF" | "XPF" => 0,
         "BHD" | "IQD" | "JOD" | "KWD" | "LYD" | "OMR" | "TND" => 3,
         _ => 2,
     }
@@ -129,17 +110,9 @@ pub fn allocate(total_minor: i64, weights: &[f64]) -> Result<Vec<i64>, MoneyErro
     let raw: Vec<f64> = weights.iter().map(|w| (abs * w) / weight_sum).collect();
     let mut parts: Vec<i64> = raw.iter().map(|r| r.floor() as i64).collect();
     let mut remainder = total_minor.abs() - parts.iter().sum::<i64>();
-    let mut order: Vec<(usize, f64)> = raw
-        .iter()
-        .enumerate()
-        .map(|(i, r)| (i, r - r.floor()))
-        .collect();
+    let mut order: Vec<(usize, f64)> = raw.iter().enumerate().map(|(i, r)| (i, r - r.floor())).collect();
     // Larger fractional part first; ties keep the original order.
-    order.sort_by(|a, b| {
-        b.1.partial_cmp(&a.1)
-            .unwrap_or(std::cmp::Ordering::Equal)
-            .then(a.0.cmp(&b.0))
-    });
+    order.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.cmp(&b.0)));
     let mut k = 0;
     while remainder > 0 {
         parts[order[k].0] += 1;
@@ -241,14 +214,9 @@ pub fn parse_amount(input: &str, currency: &str) -> ParseResult {
         let all_digits = |x: &str| x.bytes().all(|b| b.is_ascii_digit());
         match f {
             None if !w.is_empty() && all_digits(w) => (w.to_owned(), String::new()),
-            Some(f) if !f.is_empty() && f.len() <= digits && all_digits(f) && all_digits(w) => (
-                if w.is_empty() {
-                    "0".to_owned()
-                } else {
-                    w.to_owned()
-                },
-                f.to_owned(),
-            ),
+            Some(f) if !f.is_empty() && f.len() <= digits && all_digits(f) && all_digits(w) => {
+                (if w.is_empty() { "0".to_owned() } else { w.to_owned() }, f.to_owned())
+            }
             _ => return invalid(),
         }
     };
@@ -259,20 +227,12 @@ pub fn parse_amount(input: &str, currency: &str) -> ParseResult {
     if minor.len() > 16 {
         return ParseResult::Err("Amount is too large".into());
     }
-    let value: i128 = if minor.is_empty() {
-        0
-    } else {
-        minor.parse().unwrap()
-    };
+    let value: i128 = if minor.is_empty() { 0 } else { minor.parse().unwrap() };
     if !is_safe(value) {
         return ParseResult::Err("Amount is too large".into());
     }
     let value = value as i64;
-    ParseResult::Ok(if negative && value != 0 {
-        -value
-    } else {
-        value
-    })
+    ParseResult::Ok(if negative && value != 0 { -value } else { value })
 }
 
 /// `String.prototype.trim`: removes JS whitespace and line terminators (incl. U+FEFF, NBSP).
@@ -308,26 +268,11 @@ mod tests {
 
     #[test]
     fn rejects_invalid_amounts() {
-        assert_eq!(
-            parse_amount("  ", "INR"),
-            ParseResult::Err("Amount is empty".into())
-        );
-        assert_eq!(
-            parse_amount("12.345", "INR"),
-            ParseResult::Err("\"12.345\" is not a valid amount".into())
-        );
-        assert_eq!(
-            parse_amount("abc", "INR"),
-            ParseResult::Err("\"abc\" is not a valid amount".into())
-        );
-        assert_eq!(
-            parse_amount("1.", "INR"),
-            ParseResult::Err("\"1.\" is not a valid amount".into())
-        );
-        assert_eq!(
-            parse_amount("99999999999999999", "INR"),
-            ParseResult::Err("Amount is too large".into())
-        );
+        assert_eq!(parse_amount("  ", "INR"), ParseResult::Err("Amount is empty".into()));
+        assert_eq!(parse_amount("12.345", "INR"), ParseResult::Err("\"12.345\" is not a valid amount".into()));
+        assert_eq!(parse_amount("abc", "INR"), ParseResult::Err("\"abc\" is not a valid amount".into()));
+        assert_eq!(parse_amount("1.", "INR"), ParseResult::Err("\"1.\" is not a valid amount".into()));
+        assert_eq!(parse_amount("99999999999999999", "INR"), ParseResult::Err("Amount is too large".into()));
         assert_eq!(parse_amount("12", "JPY"), ParseResult::Ok(12));
         assert!(matches!(parse_amount("1.5", "JPY"), ParseResult::Err(_)));
     }
@@ -335,10 +280,7 @@ mod tests {
     #[test]
     fn allocates_exactly() {
         assert_eq!(allocate(100, &[1.0, 1.0, 1.0]).unwrap(), vec![34, 33, 33]);
-        assert_eq!(
-            allocate(-100, &[1.0, 1.0, 1.0]).unwrap(),
-            vec![-34, -33, -33]
-        );
+        assert_eq!(allocate(-100, &[1.0, 1.0, 1.0]).unwrap(), vec![-34, -33, -33]);
         assert_eq!(allocate(1000, &[3.0, 7.0]).unwrap(), vec![300, 700]);
         assert_eq!(allocate(5, &[0.0, 1.0]).unwrap(), vec![0, 5]);
         assert!(allocate(5, &[]).is_err());

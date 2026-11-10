@@ -25,11 +25,7 @@ pub struct AppError {
 
 impl AppError {
     pub fn new(code: ErrorCode, message: impl Into<String>) -> Self {
-        Self {
-            code,
-            message: message.into(),
-            issues: None,
-        }
+        Self { code, message: message.into(), issues: None }
     }
 
     pub fn with_issues(mut self, issues: Value) -> Self {
@@ -51,10 +47,7 @@ impl AppError {
 
     /// The generic failure the interface shows; details stay out of the message.
     pub fn internal() -> Self {
-        Self::new(
-            ErrorCode::Internal,
-            "Something went wrong. Your data was not changed.",
-        )
+        Self::new(ErrorCode::Internal, "Something went wrong. Your data was not changed.")
     }
 }
 
