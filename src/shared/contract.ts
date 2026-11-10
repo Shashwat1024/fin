@@ -82,6 +82,14 @@ export const inputSchemas = {
   'insights.restore': s.insightKeyInput,
   'recurring.detectCandidates': s.empty,
   'scenarios.run': s.scenarioInput,
+  'views.list': s.empty,
+  'views.create': s.viewInput,
+  'views.update': s.viewUpdate,
+  'views.delete': s.idInput,
+  'cards.cycles': s.empty,
+  'insights.calendar': s.calendarInput,
+  'reminders.preview': s.empty,
+  'reminders.test': s.empty,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -168,6 +176,14 @@ export interface Outputs {
   'insights.restore': t.Mutation<object>
   'recurring.detectCandidates': t.RecurringSuggestionDto[]
   'scenarios.run': t.ScenarioDto
+  'views.list': t.SavedViewDto[]
+  'views.create': t.Mutation<{ view: t.SavedViewDto }>
+  'views.update': t.Mutation<{ view: t.SavedViewDto }>
+  'views.delete': t.Mutation<object>
+  'cards.cycles': t.CardCycleDto[]
+  'insights.calendar': t.SpendingCalendarDto
+  'reminders.preview': t.ReminderDto[]
+  'reminders.test': null
 }
 
 export type Output<C extends Channel> = Outputs[C]

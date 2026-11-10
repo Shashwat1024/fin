@@ -1,5 +1,4 @@
-//! Schema migrations, shared byte-for-byte with the TypeScript backend
-//! (`crates/fin-core/migrations/*.sql`). Each runs in its own transaction; a failure rolls back
+//! Schema migrations (`crates/fin-core/migrations/*.sql`; 1–6 are shared with Fin 1.x). Each runs in its own transaction; a failure rolls back
 //! completely so the app never opens a half-upgraded database.
 
 use super::{APP_ID, Db, DbResult, now_iso};
@@ -22,9 +21,10 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "dismissed_insights",
         sql: include_str!("../../migrations/0006_dismissed_insights.sql"),
     },
+    Migration { version: 7, name: "daily_use", sql: include_str!("../../migrations/0007_daily_use.sql") },
 ];
 
-pub const LATEST_SCHEMA_VERSION: i64 = 6;
+pub const LATEST_SCHEMA_VERSION: i64 = 7;
 
 fn migration_error(message: String) -> AppError {
     AppError::new(ErrorCode::Internal, message)

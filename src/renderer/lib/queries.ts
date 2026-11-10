@@ -116,6 +116,15 @@ export const useScenario = (days: 30 | 60 | 90, changes: readonly ScenarioChange
     queryFn: () => call('scenarios.run', { days, changes: [...changes] }),
     placeholderData: (prev) => prev,
   })
+export const useViews = () => useQuery({ queryKey: ['views'], queryFn: () => call('views.list', undefined) })
+export const useCardCycles = () =>
+  useQuery({ queryKey: ['cards', 'cycles'], queryFn: () => call('cards.cycles', undefined) })
+export const useSpendingCalendar = (month: string) =>
+  useQuery({
+    queryKey: ['calendar', month],
+    queryFn: () => call('insights.calendar', { month }),
+    placeholderData: (prev) => prev,
+  })
 export const useRules = () => useQuery({ queryKey: ['rules'], queryFn: () => call('rules.list', undefined) })
 export const useSuggestions = (txnIds: readonly string[]) =>
   useQuery({

@@ -24,6 +24,22 @@ export type Settings = {
   bufferMinor: number
   onboarded: boolean
   backupDir: string | null
+  /** Windows notifications (US11); off until the user turns them on. */
+  notifyEnabled: boolean
+  notifyRecurring: boolean
+  notifyCardDue: boolean
+  notifyLowCash: boolean
+  /** Remind about a card bill this many days before it is due (1–10). */
+  cardDueNoticeDays: number
+  /** HH:MM, local time; reminders wait until quiet hours end. */
+  quietHoursStart: string
+  quietHoursEnd: string
+  /** Include amounts and names in notification text. */
+  notifyShowAmounts: boolean
+  /** Closing the window keeps Fin running in the tray. */
+  keepInTray: boolean
+  /** Start Fin in the tray when the user signs in to Windows. */
+  startAtLogin: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,6 +52,16 @@ export const DEFAULT_SETTINGS: Settings = {
   bufferMinor: 0,
   onboarded: false,
   backupDir: null,
+  notifyEnabled: false,
+  notifyRecurring: true,
+  notifyCardDue: true,
+  notifyLowCash: true,
+  cardDueNoticeDays: 3,
+  quietHoursStart: '22:00',
+  quietHoursEnd: '08:00',
+  notifyShowAmounts: true,
+  keepInTray: false,
+  startAtLogin: false,
 }
 
 export type AccountDto = {
@@ -57,6 +83,9 @@ export type AccountDto = {
   txnCount: number
   lastTxnDate: string | null
   sortOrder: number
+  /** Credit cards with a billing cycle (US10); null otherwise. */
+  statementDay: number | null
+  dueDaysAfter: number | null
 }
 
 export type CategoryGroup = 'needs' | 'wants' | 'goals' | 'buffer' | 'income' | 'transfer'
@@ -227,7 +256,13 @@ export type DashboardSummary = {
   income: Metric
   /** Whole percent of this month's income not spent (null without income); drills to this month's transactions. */
   savingsRate: { percent: number | null; drill: DrillTarget }
-  cardDues: Metric & { cardCount: number }
+  cardDues: Metric & {
+    cardCount: number
+    /** The earliest unpaid statement among cards with a cycle, or null. */
+    nextDue: { accountId: string; accountName: string; amountMinor: number; dueDate: string } | null
+    /** Cards with a cycle whose latest statements are all paid (and at least one has a cycle). */
+    allPaid: boolean
+  }
   netWorth: Metric & { assetsMinor: number; owedMinor: number }
   /** Money in and out for the last six months, oldest first (spending as positive numbers). */
   months: MonthFlow[]
@@ -436,7 +471,7 @@ export type { NetWorthPoint }
 
 /** One input the forecast used, listed so every number on the line can be explained (FR-027). */
 export type ForecastAssumption = {
-  kind: 'start' | 'recurring' | 'baseline' | 'note'
+  kind: 'start' | 'recurring' | 'card' | 'baseline' | 'note'
   label: string
   detail: string | null
   amountMinor: number | null
@@ -496,3 +531,68 @@ export type RecurringSuggestionDto = RecurringSuggestion & {
 }
 
 export type ScenarioDto = ScenarioResult
+
+// ---- Daily use (US9-US12) ------------------------------------------------------------------------
+
+export type SavedViewDto = {
+  id: string
+  name: string
+  /** Transactions filters as URL search parameters, e.g. `q=swiggy&range=this-month`. */
+  query: string
+  pinned: boolean
+  sortOrder: number
+}
+
+export type CardCycleStatus = 'no_statement' | 'nothing_due' | 'paid' | 'due' | 'overdue'
+
+export type CardCycleDto = {
+  accountId: string
+  accountName: string
+  statementDay: number
+  dueDaysAfter: number
+  /** Null until the first statement date after the card's start date. */
+  statementDate: string | null
+  /** Owed at the end of the statement day (0 when in credit). */
+  statementMinor: number
+  dueDate: string | null
+  /** Payments and refunds since the statement. */
+  creditsSinceMinor: number
+  remainingMinor: number
+  /** New spending since the statement (due with the next statement). */
+  spentSinceMinor: number
+  /** Owed now, as on the Accounts page. */
+  owedNowMinor: number
+  nextStatementDate: string
+  nextDueDate: string
+  status: CardCycleStatus
+  /** Days until the due date (negative when overdue); null without a statement. */
+  daysUntilDue: number | null
+}
+
+export type SpendingDay = { date: string; spentMinor: number; count: number }
+
+export type SpendingCalendarDto = {
+  month: string
+  from: string
+  to: string
+  /** Every day of the month, in order (future days have zero). */
+  days: SpendingDay[]
+  totalMinor: number
+  noSpendDays: number
+  /** Days up to today (or the whole month in the past), for the no-spend count. */
+  elapsedDays: number
+  highest: SpendingDay | null
+  weekStart: number
+  today: string
+}
+
+export type ReminderKind = 'recurring_due' | 'recurring_overdue' | 'card_due' | 'low_cash'
+
+export type ReminderDto = {
+  key: string
+  kind: ReminderKind
+  title: string
+  body: string
+  /** Where clicking the notification takes the user. */
+  route: string
+}

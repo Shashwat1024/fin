@@ -18,6 +18,16 @@ pub fn defaults() -> Map<String, Value> {
         ("bufferMinor", json!(0)),
         ("onboarded", json!(false)),
         ("backupDir", Value::Null),
+        ("notifyEnabled", json!(false)),
+        ("notifyRecurring", json!(true)),
+        ("notifyCardDue", json!(true)),
+        ("notifyLowCash", json!(true)),
+        ("cardDueNoticeDays", json!(3)),
+        ("quietHoursStart", json!("22:00")),
+        ("quietHoursEnd", json!("08:00")),
+        ("notifyShowAmounts", json!(true)),
+        ("keepInTray", json!(false)),
+        ("startAtLogin", json!(false)),
     ] {
         m.insert(k.to_owned(), v);
     }

@@ -166,6 +166,8 @@ pub fn seed_demo_data(db: &Db, today: &str) -> DbResult<()> {
             today,
         )?;
     }
+    // A saved view (US9) on the sidebar.
+    super::views::create_view(db, &json!({ "name": "Food delivery", "query": "q=swiggy&range=last-90-days" }))?;
     let mut patch = serde_json::Map::new();
     patch.insert("onboarded".into(), json!(true));
     patch.insert("bufferMinor".into(), json!(5_000_000));

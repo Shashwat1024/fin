@@ -8,7 +8,8 @@
   "appSchemaVersion": 1,
   "settings": { "currency": "INR", "timezone": "Asia/Kolkata", "fyStartMonth": 4 },
   "accounts": [ { "id": "…", "name": "…", "type": "bank", "currency": "INR",
-                  "openingBalanceMinor": 0, "openingDate": "2026-04-01", "archivedAt": null } ],
+                  "openingBalanceMinor": 0, "openingDate": "2026-04-01", "archivedAt": null,
+                  "statementDay": null, "dueDaysAfter": null } ],
   "categories": [ { "id": "…", "name": "…", "parentId": null, "group": "needs" } ],
   "tags": [], "merchants": [], "rules": [],
   "transactions": [ { "id": "…", "accountId": "…", "postedDate": "2026-10-01",
@@ -26,6 +27,7 @@
   "goalContributions": [ { "id": "…", "goalId": "…", "date": "2026-10-05", "amountMinor": 2000000, "note": null } ],
   "valuations": [ { "id": "…", "accountId": "…", "date": "2026-10-31", "valueMinor": 45945000, "note": null } ],
   "dismissedInsights": [ { "key": "category:cat_…:2026-10", "dismissedAt": "2026-11-09T10:00:00.000Z" } ],
+  "savedViews": [ { "id": "view_…", "name": "Food delivery", "query": "q=swiggy&range=this-month", "pinned": true } ],
   "importBatches": []
 }
 ```
@@ -38,3 +40,7 @@ increments `version` only if it changes meaning of existing fields (additive fie
 
 **Transactions CSV**: `date,account,amount,currency,payee,merchant,category,subcategory,tags,notes,
 kind,import_batch` with amounts as decimal major units (e.g. `-450.00`) for spreadsheet friendliness.
+
+**Added in Fin 2.1 (additive, still version 1)**: `statementDay` and `dueDaysAfter` on accounts (credit
+cards' billing cycle, otherwise `null`) and `savedViews` (Transactions filters as URL search
+parameters).

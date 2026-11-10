@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 
 use crate::db::backup::{self as backups, DEFAULT_KDF};
 use crate::db::{
-    DbResult, accounts, audit, categories, categorization, dashboard, export, forecast, imports, networth, patterns,
-    planning, settings, transactions,
+    DbResult, accounts, audit, calendar, categories, categorization, dashboard, export, forecast, imports, networth,
+    patterns, planning, settings, transactions, views,
 };
 use crate::error::{AppError, ErrorCode};
 
@@ -318,6 +318,11 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         "valuations.list" => networth::list_valuations(db, s(input, "accountId")).map(Value::Array),
         "valuations.upsert" => (|| networth::upsert_valuation(db, input, &today()?))(),
         "valuations.delete" => networth::delete_valuation(db, s(input, "id")),
+        "views.list" => views::list_views(db).map(Value::Array),
+        "views.create" => views::create_view(db, input),
+        "views.update" => views::update_view(db, s(input, "id"), &input["patch"]),
+        "views.delete" => views::delete_view(db, s(input, "id")),
+        "insights.calendar" => (|| calendar::spending_calendar(db, s(input, "month"), &today()?))(),
         "app.status" => status(app),
         _ => return None,
     };
