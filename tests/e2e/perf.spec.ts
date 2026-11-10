@@ -1,12 +1,8 @@
+import { spawnSync } from 'node:child_process'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
-import { openDatabase } from '../../src/db/connection'
-import { migrate } from '../../src/db/migrate'
-import { seedDefaultCategories } from '../../src/db/seed/categories'
-import { seedPerfData } from '../../src/db/seed/perf'
-import { todayIn } from '../../src/domain/dates'
 import { launchFin, type FinApp } from './app'
 
 /**
@@ -23,16 +19,13 @@ const LAUNCHES = 3
 test.beforeAll(async () => {
   test.setTimeout(120_000)
   const dir = mkdtempSync(join(tmpdir(), 'fin-perf-e2e-'))
-  const db = openDatabase(join(dir, 'fin.db'))
-  migrate(db)
-  seedDefaultCategories(db)
-  seedPerfData(db, todayIn('Asia/Kolkata'))
-  db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
-  db.close()
-  // Electron's own launch time varies by a few hundred ms, so take the median of a few launches.
+  // The same 50,000-transaction profile as `npm run seed:perf` (the script loads the seed via Vite).
+  const seeded = spawnSync(process.execPath, [join('scripts', 'seed-perf.mjs'), dir], { stdio: 'ignore' })
+  expect(seeded.status, 'seeding the performance profile').toBe(0)
+  // The app's own launch time varies by a few hundred ms, so take the median of a few launches.
   const starts: number[] = []
   for (let i = 0; i < LAUNCHES; i++) {
-    if (fin) await fin.app.close()
+    if (fin) await fin.stop()
     const start = performance.now()
     fin = await launchFin(dir)
     page = fin.page

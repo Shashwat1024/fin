@@ -1,0 +1,250 @@
+//! The cash-flow forecast and what-if scenarios over real data (`src/db/repos/insights.ts`).
+//! Both read only. The forecast uses the same recurring matching as the Recurring page, so an
+//! item shown as paid there is never counted again here.
+
+use std::collections::{HashMap, HashSet};
+
+use rusqlite::params_from_iter;
+use rusqlite::types::Value as Sql;
+use serde_json::{Value, json};
+
+use super::accounts::list_accounts;
+use super::networth::net_worth_now;
+use super::planning::{goal_amounts, goal_rows, list_occurrences, list_recurring};
+use super::settings::get_settings;
+use super::{Db, DbResult, placeholders};
+use crate::domain::dates::{add_days, day_month};
+use crate::domain::forecast::{BASELINE_DAYS, Event, Forecast, ForecastInput, OVERDUE_GRACE_DAYS, run_forecast};
+use crate::domain::scenarios::{Base, GoalBase, LoanBase, run_scenario};
+use crate::error::AppError;
+
+fn ad(d: &str, n: i64) -> String {
+    add_days(d, n).unwrap_or_else(|_| d.to_owned())
+}
+fn short_date(d: &str) -> String {
+    day_month(d).unwrap_or_default()
+}
+fn st<'a>(v: &'a Value, k: &str) -> &'a str {
+    v.get(k).and_then(Value::as_str).unwrap_or_default()
+}
+
+struct BaseParts {
+    input: ForecastInput,
+    liquid: Vec<Value>,
+    not_counted: HashSet<String>,
+    items: Vec<Value>,
+}
+
+/// Everything the projection is computed from, shared by the forecast and what-if scenarios.
+fn forecast_base(db: &Db, days: i64, today: &str, accounts: &[Value]) -> DbResult<BaseParts> {
+    let liquid: Vec<Value> = accounts.iter().filter(|a| a["isLiquid"] == true).cloned().collect();
+    let liquid_ids: HashSet<&str> = liquid.iter().map(|a| st(a, "id")).collect();
+    let start_minor: i64 = liquid.iter().map(|a| a["balanceMinor"].as_i64().unwrap_or(0)).sum();
+    let items = list_recurring(db, today)?;
+    let by_id: HashMap<&str, &Value> = items.iter().map(|i| (st(i, "id"), i)).collect();
+
+    // Recurring items still expected, as their effect on cash and bank (a card bill paid from the
+    // bank is money out; a transfer between two bank accounts nets to nothing).
+    let history_from = ad(today, -BASELINE_DAYS);
+    let occurrences = list_occurrences(db, &history_from, &ad(today, days), today)?;
+    let grace_from = ad(today, -OVERDUE_GRACE_DAYS);
+    let mut events = Vec::new();
+    let mut not_counted = HashSet::new();
+    for o in &occurrences {
+        let state = st(o, "state");
+        if state != "expected" && state != "overdue" {
+            continue;
+        }
+        let due = st(o, "dueDate");
+        if due < grace_from.as_str() {
+            continue;
+        }
+        let Some(item) = by_id.get(st(o, "itemId")) else { continue };
+        let expected = o["expectedMinor"].as_i64().unwrap_or(0);
+        let from_cash = if liquid_ids.contains(st(o, "accountId")) { expected } else { 0 };
+        let to_cash = if item["toAccountId"].as_str().is_some_and(|t| liquid_ids.contains(t)) { -expected } else { 0 };
+        let effect = from_cash + to_cash;
+        if effect == 0 {
+            not_counted.insert(st(item, "name").to_owned());
+            continue;
+        }
+        let overdue = state == "overdue";
+        events.push(Event {
+            item_id: st(o, "itemId").to_owned(),
+            name: st(o, "itemName").to_owned(),
+            due_date: due.to_owned(),
+            date: if overdue { today.to_owned() } else { due.to_owned() },
+            amount_minor: effect,
+            overdue,
+        });
+    }
+
+    // Everyday spending: money out of cash and bank that is neither a transfer nor recurring.
+    let recurring_txns: HashSet<&str> = occurrences.iter().filter_map(|o| o["matchedTxn"]["id"].as_str()).collect();
+    let mut daily_spending: HashMap<String, i64> = HashMap::new();
+    let mut history_start = None;
+    if !liquid.is_empty() {
+        let marks = placeholders(liquid.len());
+        let ids = || liquid.iter().map(|a| Sql::Text(st(a, "id").to_owned()));
+        let rows = db.query_map(
+            &format!(
+                "SELECT id, posted_date, amount_minor FROM transactions
+       WHERE deleted_at IS NULL AND kind = 'standard' AND amount_minor < 0 AND posted_date >= ? AND posted_date < ?
+         AND account_id IN ({marks})"
+            ),
+            params_from_iter([Sql::Text(history_from.clone()), Sql::Text(today.to_owned())].into_iter().chain(ids())),
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, i64>(2)?)),
+        )?;
+        for (id, date, amount) in rows {
+            if !recurring_txns.contains(id.as_str()) {
+                *daily_spending.entry(date).or_insert(0) -= amount;
+            }
+        }
+        history_start = db
+            .query_row(
+                &format!(
+                    "SELECT MIN(posted_date) FROM transactions WHERE deleted_at IS NULL AND account_id IN ({marks})"
+                ),
+                params_from_iter(ids()),
+                |r| r.get::<_, Option<String>>(0),
+            )?
+            .flatten();
+    }
+
+    let buffer_minor = get_settings(db)?["bufferMinor"].as_i64().unwrap_or(0);
+    let input = ForecastInput {
+        today: today.to_owned(),
+        days,
+        start_minor,
+        buffer_minor,
+        events,
+        daily_spending,
+        history_start,
+    };
+    drop(by_id);
+    Ok(BaseParts { input, liquid, not_counted, items })
+}
+
+/// Every input the forecast used, so each number on the line can be explained (FR-027).
+fn assumptions(f: &Forecast, liquid: &[Value], not_counted: &HashSet<String>) -> Vec<Value> {
+    let mut out: Vec<Value> = liquid
+        .iter()
+        .map(|a| {
+            let detail = match a["lastTxnDate"].as_str().filter(|d| !d.is_empty()) {
+                Some(d) => format!("Balance today; latest transaction {}", short_date(d)),
+                None => "Balance today (opening balance only)".to_owned(),
+            };
+            json!({ "kind": "start", "label": a["name"], "detail": detail, "amountMinor": a["balanceMinor"] })
+        })
+        .collect();
+    // One row per recurring item, in the order the items first appear.
+    let mut by_item: Vec<(&str, &str, i64, Vec<String>)> = Vec::new();
+    for e in &f.events {
+        let at = match by_item.iter().position(|r| r.0 == e.item_id) {
+            Some(i) => i,
+            None => {
+                by_item.push((&e.item_id, &e.name, 0, Vec::new()));
+                by_item.len() - 1
+            }
+        };
+        by_item[at].2 += e.amount_minor;
+        by_item[at].3.push(if e.overdue {
+            format!("{} (overdue, counted today)", short_date(&e.due_date))
+        } else {
+            short_date(&e.date)
+        });
+    }
+    for (_, name, amount, dates) in by_item {
+        let times = if dates.len() == 1 { "Once".to_owned() } else { format!("{} times", dates.len()) };
+        out.push(json!({ "kind": "recurring", "label": name, "detail": format!("{times}: {}", dates.join(", ")), "amountMinor": amount }));
+    }
+    let baseline = if f.baseline_days == 0 {
+        "No spending history yet, so none is assumed.".to_owned()
+    } else {
+        format!(
+            "The usual spending for each day of the week (the median over the last {} days), not counting recurring payments or transfers between your accounts.",
+            f.baseline_days
+        )
+    };
+    out.push(json!({ "kind": "baseline", "label": "Everyday spending", "detail": baseline, "amountMinor": -f.baseline_out_minor }));
+    let mut note = |label: String, detail: String| {
+        out.push(json!({ "kind": "note", "label": label, "detail": detail, "amountMinor": Value::Null }));
+    };
+    note(
+        "Only cash and bank accounts are projected".to_owned(),
+        "Credit-card spending counts on the day the card bill is paid, when that bill is set up as a recurring transfer."
+            .to_owned(),
+    );
+    if !not_counted.is_empty() {
+        let mut names: Vec<&String> = not_counted.iter().collect();
+        // Array.prototype.sort(): by UTF-16 code units.
+        names.sort_by(|a, b| a.encode_utf16().cmp(b.encode_utf16()));
+        note(
+            "Not counted: paid from a card or another non-cash account".to_owned(),
+            names.into_iter().cloned().collect::<Vec<_>>().join(", "),
+        );
+    }
+    note(
+        format!("Unpaid items more than {OVERDUE_GRACE_DAYS} days overdue are left out"),
+        "Skip them or link their payment on the Recurring page.".to_owned(),
+    );
+    out
+}
+
+/// The 30/60/90-day projection of cash and bank balances.
+pub fn forecast(db: &Db, days: i64, today: &str) -> DbResult<Value> {
+    let accounts = list_accounts(db, false)?;
+    let base = forecast_base(db, days, today, &accounts)?;
+    let f = run_forecast(&base.input);
+    let mut out = serde_json::to_value(&f).map_err(|_| AppError::internal())?;
+    out["assumptions"] = Value::Array(assumptions(&f, &base.liquid, &base.not_counted));
+    out["hasCashAccounts"] = json!(!base.liquid.is_empty());
+    Ok(out)
+}
+
+/// A scenario on top of the real forecast and goals. Nothing is written.
+pub fn what_if(db: &Db, days: i64, changes: &[Value], today: &str) -> DbResult<Value> {
+    let accounts = list_accounts(db, false)?;
+    let base = forecast_base(db, days, today, &accounts)?;
+    let liquid_ids: HashSet<&str> = accounts.iter().filter(|a| a["isLiquid"] == true).map(|a| st(a, "id")).collect();
+    let loans: Vec<LoanBase> = net_worth_now(db, today, &accounts)?
+        .values
+        .iter()
+        .filter(|(a, ..)| a["type"] == "loan")
+        .map(|(a, value, ..)| LoanBase {
+            id: st(a, "id").to_owned(),
+            name: st(a, "name").to_owned(),
+            owed_minor: *value,
+        })
+        .collect();
+    for c in changes {
+        if c["kind"] == "loan_prepayment" && !loans.iter().any(|l| l.id == st(c, "loanId")) {
+            return Err(AppError::invariant("Choose one of your loan accounts"));
+        }
+    }
+    let mut goals = Vec::new();
+    for g in goal_rows(db)? {
+        let (saved_minor, recent_minor) = goal_amounts(db, &g, today)?;
+        let linked = g.get("linked_account_id").and_then(Value::as_str);
+        goals.push(GoalBase {
+            id: g["id"].as_str().unwrap_or_default().to_owned(),
+            name: g["name"].as_str().unwrap_or_default().to_owned(),
+            target_minor: g["target_minor"].as_i64().unwrap_or(0),
+            target_date: g.get("target_date").and_then(Value::as_str).map(str::to_owned),
+            saved_minor,
+            recent_minor,
+            liquid: linked.is_some_and(|l| liquid_ids.contains(l)),
+        });
+    }
+    for c in changes {
+        if c["kind"] == "savings_change"
+            && let Some(id) = c.get("goalId").and_then(Value::as_str).filter(|i| !i.is_empty())
+            && !goals.iter().any(|g| g.id == id)
+        {
+            return Err(AppError::not_found("Goal"));
+        }
+    }
+    let income_item_ids: Vec<String> =
+        base.items.iter().filter(|i| i["kind"] == "income").map(|i| st(i, "id").to_owned()).collect();
+    Ok(run_scenario(&Base { forecast: base.input, income_item_ids, goals, loans }, changes))
+}

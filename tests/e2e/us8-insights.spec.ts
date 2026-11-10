@@ -76,9 +76,14 @@ test('US8: a what-if scenario shows its effect on the forecast and goals without
   await form.getByRole('button', { name: 'Add to scenario' }).click()
   const goalRow = result.getByRole('row').filter({ hasText: 'Emergency fund' })
   await expect(goalRow.getByRole('cell').nth(2)).toContainText('a month')
-  expect(await goalRow.getByRole('cell').nth(1).textContent()).not.toBe(
-    await goalRow.getByRole('cell').nth(2).textContent(),
-  )
+  // The scenario reruns after the change is added; wait for the "after" column to move.
+  await expect
+    .poll(
+      async () =>
+        (await goalRow.getByRole('cell').nth(1).textContent()) !==
+        (await goalRow.getByRole('cell').nth(2).textContent()),
+    )
+    .toBe(true)
   await expect(page.getByRole('region', { name: 'How this was worked out' })).toContainText(
     'Save for Emergency fund',
   )

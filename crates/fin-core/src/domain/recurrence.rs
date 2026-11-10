@@ -165,6 +165,117 @@ pub fn occurrence_state(due: &str, today: &str, matched: bool, skipped: bool) ->
     }
 }
 
+// ---- Detecting likely recurring payments (FR-022) -----------------------------------------------
+
+/// One past payment or receipt that might belong to a repeating series.
+#[derive(Debug, Clone)]
+pub struct PastPayment {
+    pub txn_id: String,
+    pub date: String,
+    /// Signed from the account's side.
+    pub amount_minor: i64,
+    pub account_id: String,
+    /// Groups payments to the same counterparty: the merchant key, or the normalised payee.
+    pub group_key: String,
+    pub name: String,
+    pub category_id: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Suggestion {
+    /// Stable for the series: `accountId:groupKey:direction`.
+    pub key: String,
+    pub name: String,
+    pub account_id: String,
+    pub category_id: Option<String>,
+    pub direction: &'static str,
+    /// Typical amount (median), positive.
+    pub amount_minor: i64,
+    pub frequency: &'static str,
+    /// The most recent payment: a schedule anchored here continues from it.
+    pub last_date: String,
+    pub next_date: String,
+    /// Smallest standard tolerance that covers every payment seen.
+    pub tolerance_bp: i64,
+    /// Payments in the series, newest first: (txn id, date, amount).
+    pub payments: Vec<(String, String, i64)>,
+}
+
+pub const DETECT_MIN_PAYMENTS: usize = 3;
+/// Only the last year or so of payments is looked at.
+pub const DETECT_LOOKBACK_DAYS: i64 = 400;
+/// (frequency, shortest gap, longest gap) in days.
+const PATTERNS: [(&str, i64, i64); 2] = [("monthly", 26, 35), ("weekly", 6, 8)];
+const TOLERANCES: [i64; 3] = [500, 1000, 2500];
+
+/// Series of payments to the same counterparty from the same account, at a steady weekly or
+/// monthly rhythm and a steady amount (within ±25%), that are still going. Suggestions only.
+pub fn detect_recurring(payments: &[PastPayment], today: &str) -> Vec<Suggestion> {
+    use crate::db::transactions::locale_compare;
+    use crate::domain::forecast::median;
+
+    let from = add_days(today, -DETECT_LOOKBACK_DAYS).unwrap_or_else(|_| today.to_owned());
+    let direction = |amount: i64| if amount < 0 { "out" } else { "in" };
+    let mut order: Vec<String> = Vec::new();
+    let mut groups: std::collections::HashMap<String, Vec<&PastPayment>> = std::collections::HashMap::new();
+    for p in payments {
+        if p.date.as_str() < from.as_str() || p.date.as_str() > today || p.group_key.is_empty() {
+            continue;
+        }
+        let key = format!("{}:{}:{}", p.account_id, p.group_key, direction(p.amount_minor));
+        groups
+            .entry(key.clone())
+            .or_insert_with(|| {
+                order.push(key);
+                Vec::new()
+            })
+            .push(p);
+    }
+    let mut out = Vec::new();
+    for key in &order {
+        let list = &groups[key];
+        if list.len() < DETECT_MIN_PAYMENTS {
+            continue;
+        }
+        let mut sorted: Vec<&PastPayment> = list.clone();
+        sorted.sort_by(|a, b| a.date.cmp(&b.date).then_with(|| locale_compare(&a.txn_id, &b.txn_id)));
+        let gaps: Vec<i64> = sorted.windows(2).map(|w| diff_days(&w[1].date, &w[0].date).unwrap_or(0)).collect();
+        let Some((frequency, _, _)) = PATTERNS.iter().find(|(_, min, max)| gaps.iter().all(|g| g >= min && g <= max))
+        else {
+            continue;
+        };
+        let amounts: Vec<i64> = sorted.iter().map(|p| p.amount_minor.abs()).collect();
+        let typical = median(&amounts);
+        let worst_bp = amounts
+            .iter()
+            .map(|a| (((a - typical).abs() * 10_000) as f64 / typical as f64).ceil())
+            .fold(f64::NEG_INFINITY, f64::max);
+        let Some(tolerance_bp) = TOLERANCES.iter().copied().find(|t| worst_bp <= *t as f64) else { continue };
+        let last = sorted[sorted.len() - 1];
+        let next = if *frequency == "monthly" { add_months(&last.date, 1, None) } else { add_days(&last.date, 7) };
+        let next_date = next.unwrap_or_else(|_| last.date.clone());
+        // Stopped: the next one is more than half a period overdue.
+        if diff_days(today, &next_date).unwrap_or(0) > if *frequency == "monthly" { 15 } else { 3 } {
+            continue;
+        }
+        out.push(Suggestion {
+            key: format!("{}:{}:{}", last.account_id, last.group_key, direction(last.amount_minor)),
+            name: last.name.clone(),
+            account_id: last.account_id.clone(),
+            category_id: sorted.iter().rev().find_map(|p| p.category_id.clone()),
+            direction: direction(last.amount_minor),
+            amount_minor: typical,
+            frequency,
+            last_date: last.date.clone(),
+            next_date,
+            tolerance_bp,
+            payments: sorted.iter().rev().map(|p| (p.txn_id.clone(), p.date.clone(), p.amount_minor)).collect(),
+        });
+    }
+    out.sort_by(|a, b| a.next_date.cmp(&b.next_date).then_with(|| locale_compare(&a.name, &b.name)));
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

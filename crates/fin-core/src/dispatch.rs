@@ -101,12 +101,28 @@ fn err(e: AppError) -> Value {
 /// across the boundary: every failure becomes an error result without financial details.
 pub fn dispatch(app: &mut App, channel: &str, input: Option<Value>) -> Value {
     match validate(channel, input) {
-        Err(e) => err(e),
+        Err(e) => {
+            let event = if e.message == "Unknown request" { "ipc.unknown_channel" } else { "ipc.invalid" };
+            crate::log::warn(event, &[("channel", crate::log::Ctx::Text(channel))]);
+            err(e)
+        }
         Ok(cleaned) => {
             let input = cleaned.unwrap_or(Value::Null);
             match crate::handlers::handle(app, channel, &input) {
                 Some(Ok(data)) => ok(data),
-                Some(Err(e)) => err(public(e)),
+                Some(Err(e)) => {
+                    if e.code == ErrorCode::Internal {
+                        crate::log::error("ipc.internal_error", &[("channel", crate::log::Ctx::Text(channel))]);
+                    } else {
+                        let code = serde_json::to_value(e.code).ok();
+                        let code = code.as_ref().and_then(Value::as_str).unwrap_or_default();
+                        crate::log::info(
+                            "ipc.app_error",
+                            &[("channel", crate::log::Ctx::Text(channel)), ("code", crate::log::Ctx::Text(code))],
+                        );
+                    }
+                    err(public(e))
+                }
                 None => err(crate::handlers::not_ported()),
             }
         }

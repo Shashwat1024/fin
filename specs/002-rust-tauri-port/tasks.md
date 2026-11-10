@@ -61,9 +61,14 @@ phase ends with tests, a commit and a push.
   onboarding, US1, US2, US3, US5 and US6 pass against the Tauri build (12/12)
 
 ## P5: Forecast and insights (US7, US8)
-- [ ] R501 forecast domain, forecast.run; networth and valuations
-- [ ] R502 insights detectors, dismiss/restore, recurring.detectCandidates, scenarios.run
-- [ ] R503 Parity and end-to-end tests for US7 and US8
+- [x] R501 forecast domain, forecast.run (assumptions, buffer ranges, confidence); networth and valuations (done in P3)
+- [x] R502 insights detectors, dismiss/restore, recurring.detectCandidates, scenarios.run; the log file
+  (same events and redaction as 1.x)
+- [x] R503 Parity (`insights.parity.test.ts`): a nine-month ledger that triggers every insight kind and
+  both suggestion rhythms, the demo household, and the clock moved forward three times; 233 + demo
+  steps match. All 76 channels now run in Rust. End-to-end on Tauri: 26/27 (the remaining one is
+  cold start on the debug build, measured on release in P6). Found and fixed a real race in 1.x: a
+  save finishing after Ctrl+N/Ctrl+T could close the dialog the shortcut had just opened.
 
 ## P6: Switch-over and release 2.0.0
 - [ ] R601 Full end-to-end suite, axe (both themes) and offline against the packaged Tauri app

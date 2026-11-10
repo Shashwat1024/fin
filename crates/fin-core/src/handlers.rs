@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 
 use crate::db::backup::{self as backups, DEFAULT_KDF};
 use crate::db::{
-    DbResult, accounts, audit, categories, categorization, dashboard, export, imports, networth, planning, settings,
-    transactions,
+    DbResult, accounts, audit, categories, categorization, dashboard, export, forecast, imports, networth, patterns,
+    planning, settings, transactions,
 };
 use crate::error::{AppError, ErrorCode};
 
@@ -300,6 +300,21 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         "goals.delete" => planning::delete_goal(db, s(input, "id")),
         "goals.contribute" => (|| planning::contribute(db, input, &today()?))(),
         "goals.deleteContribution" => planning::delete_contribution(db, s(input, "id")),
+        "forecast.run" => (|| forecast::forecast(db, input["days"].as_i64().unwrap_or(30), &today()?))(),
+        "scenarios.run" => (|| {
+            let changes = input["changes"].as_array().cloned().unwrap_or_default();
+            forecast::what_if(db, input["days"].as_i64().unwrap_or(30), &changes, &today()?)
+        })(),
+        "insights.list" => (|| {
+            patterns::list_insights(
+                db,
+                &today()?,
+                input.get("includeDismissed").and_then(Value::as_bool).unwrap_or(false),
+            )
+        })(),
+        "insights.dismiss" => patterns::dismiss_insight(db, s(input, "key")),
+        "insights.restore" => patterns::restore_insight(db, s(input, "key")),
+        "recurring.detectCandidates" => (|| patterns::recurring_suggestions(db, &today()?).map(Value::Array))(),
         "valuations.list" => networth::list_valuations(db, s(input, "accountId")).map(Value::Array),
         "valuations.upsert" => (|| networth::upsert_valuation(db, input, &today()?))(),
         "valuations.delete" => networth::delete_valuation(db, s(input, "id")),

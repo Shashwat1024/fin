@@ -1,11 +1,12 @@
 import { spawn, type ChildProcess } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import {
   _electron as electron,
   chromium,
   expect,
+  test,
   type Browser,
   type ElectronApplication,
   type Page,
@@ -17,6 +18,11 @@ export type FinApp = {
   page: Page
   requests: string[]
   dataDir: string
+  /** Answer the next native open/save/folder dialogs with this path (Playwright cannot click OS dialogs). */
+  answerDialogs: (path: string) => Promise<void>
+  /** Quit the app but keep its data folder (to launch again on the same data). */
+  stop: () => Promise<void>
+  /** Quit the app and remove its data folder. */
   close: () => Promise<void>
 }
 
@@ -24,11 +30,38 @@ export type FinApp = {
 export const isTauri = process.env.FIN_E2E_SHELL === 'tauri'
 
 let nextPort = 9400 + Math.floor(Math.random() * 400)
+let lastTauriPage: Page | undefined
+
+// Diagnostics: when a test fails on the Tauri build, record what dialogs and fields looked like.
+// Playwright needs the fixtures argument destructured even when no fixture is used.
+// eslint-disable-next-line no-empty-pattern
+test.afterEach(async ({}, info) => {
+  if (!isTauri || info.status === info.expectedStatus || !lastTauriPage || lastTauriPage.isClosed()) return
+  const state = await lastTauriPage
+    .evaluate(
+      `(() => ({
+        dialogs: [...document.querySelectorAll('[role=dialog],[role=alertdialog],[role=listbox]')].map((d) => ({
+          role: d.getAttribute('role'), state: d.getAttribute('data-state'), text: d.textContent.slice(0, 90),
+          opacity: getComputedStyle(d).opacity, animation: getComputedStyle(d).animationName,
+        })),
+        fields: [...document.querySelectorAll('input,button')].filter((e) => /amount|to account/i.test(e.getAttribute('aria-label') || (e.labels && e.labels[0] && e.labels[0].textContent) || '')).map((e) => ({
+          label: e.getAttribute('aria-label') || e.labels[0].textContent, disabled: e.disabled,
+          rect: [...Object.values(e.getBoundingClientRect().toJSON())].map(Math.round),
+        })),
+        active: document.activeElement && document.activeElement.outerHTML.slice(0, 140),
+        bodyPointer: getComputedStyle(document.body).pointerEvents,
+      }))()`,
+    )
+    .catch((e: Error) => ({ error: e.message }))
+  console.log(`[fin] state at failure: ${JSON.stringify(state)}`)
+})
 
 async function launchTauri(dataDir: string): Promise<FinApp> {
   const exe = process.env.FIN_TAURI_EXE ?? resolve('target', 'debug', 'fin.exe')
   const port = nextPort++
   const webviewDir = mkdtempSync(join(tmpdir(), 'fin-e2e-webview-'))
+  const answersDir = mkdtempSync(join(tmpdir(), 'fin-e2e-dialogs-'))
+  const answersFile = join(answersDir, 'answers.json')
   const proc: ChildProcess = spawn(exe, [], {
     env: {
       ...process.env,
@@ -36,6 +69,8 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
       // Test-only: lets Playwright drive WebView2, with a throwaway browser profile.
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}`,
       WEBVIEW2_USER_DATA_FOLDER: webviewDir,
+      // Test-only: the shell answers file dialogs from this file instead of showing them.
+      FIN_E2E_DIALOG_ANSWERS: answersFile,
     },
     stdio: 'ignore',
   })
@@ -53,24 +88,42 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
   await page.waitForLoadState('domcontentloaded')
   const requests: string[] = []
   page.on('request', (r) => requests.push(r.url()))
+  // Diagnostics for a run that hangs: did the app exit, or the page crash?
+  proc.on('exit', (code, signal) => {
+    if (!quitting) console.log(`[fin] app exited unexpectedly: code=${code} signal=${signal}`)
+  })
+  page.on('crash', () => console.log('[fin] page crashed'))
+  page.on('pageerror', (e) => console.log(`[fin] page error: ${e.message}`))
+  let quitting = false
   const connected = browser
+  lastTauriPage = page
+  const quit = async () => {
+    quitting = true
+    await connected.close().catch(() => undefined)
+    proc.kill()
+    await new Promise((r) => setTimeout(r, 300))
+  }
+  // WebView2 can hold its profile for a moment after exit; leftovers sit in the temp folder.
+  const remove = (dir: string) => {
+    try {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+    } catch {
+      // best effort
+    }
+  }
   return {
     app: undefined as unknown as ElectronApplication,
     page,
     requests,
     dataDir,
+    answerDialogs: async (path) => writeFileSync(answersFile, JSON.stringify({ path })),
+    stop: async () => {
+      await quit()
+      for (const dir of [webviewDir, answersDir]) remove(dir)
+    },
     close: async () => {
-      await connected.close().catch(() => undefined)
-      proc.kill()
-      await new Promise((r) => setTimeout(r, 300))
-      // WebView2 can hold its profile for a moment after exit; leftovers sit in the temp folder.
-      for (const dir of [dataDir, webviewDir]) {
-        try {
-          rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
-        } catch {
-          // best effort
-        }
-      }
+      await quit()
+      for (const dir of [dataDir, webviewDir, answersDir]) remove(dir)
     },
   }
 }
@@ -95,6 +148,18 @@ export async function launchFin(prepared?: string): Promise<FinApp> {
     page,
     requests,
     dataDir,
+    answerDialogs: (path) =>
+      app.evaluate(({ dialog }, file) => {
+        dialog.showOpenDialog = (async () => ({
+          canceled: false,
+          filePaths: [file],
+        })) as typeof dialog.showOpenDialog
+        dialog.showSaveDialog = (async () => ({
+          canceled: false,
+          filePath: file,
+        })) as typeof dialog.showSaveDialog
+      }, path),
+    stop: () => app.close(),
     close: async () => {
       await app.close()
       rmSync(dataDir, { recursive: true, force: true })

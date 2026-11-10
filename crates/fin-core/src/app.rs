@@ -12,6 +12,7 @@ use crate::db::backup::{
 };
 use crate::db::{Db, DbResult, categories, migrate, settings};
 use crate::error::{AppError, ErrorCode};
+use crate::log::{self, Ctx};
 
 #[derive(Debug, Clone)]
 pub struct AppPaths {
@@ -117,10 +118,20 @@ impl App {
     fn open_real(paths: &AppPaths) -> DbResult<Db> {
         let db = Db::open(&paths.db_file)?;
         let backup_dir = paths.backup_dir.clone();
-        let hook = move |d: &Db, from: i64| snapshot(d, &backup_dir, &format!("pre-upgrade-v{from}")).map(|_| ());
-        migrate::migrate(&db, Some(&hook))?;
+        let hook = move |d: &Db, from: i64| {
+            snapshot(d, &backup_dir, &format!("pre-upgrade-v{from}"))?;
+            log::info("db.pre_migration_backup", &[("version", Ctx::Num(from))]);
+            Ok(())
+        };
+        let r = migrate::migrate(&db, Some(&hook))?;
+        if !r.applied.is_empty() {
+            log::info("db.migrated", &[("from", Ctx::Num(r.from)), ("to", Ctx::Num(r.to))]);
+        }
         categories::seed_default_categories(&db)?;
-        categories::backfill_merchants(&db)?;
+        let learned = categories::backfill_merchants(&db)?;
+        if learned > 0 {
+            log::info("db.merchants_backfilled", &[("count", Ctx::Num(learned as i64))]);
+        }
         Ok(db)
     }
 
@@ -184,6 +195,7 @@ impl App {
                 return Err(AppError::invariant("That backup could not be opened, so your data was left as it was."));
             }
         }
+        log::info("backup.restored", &[]);
         Ok(json!({ "preRestoreBackup": pre_restore, "counts": count_data(&self.db)? }))
     }
 
@@ -211,6 +223,7 @@ impl App {
             Ok(db) => {
                 self.db = db;
                 self.demo = true;
+                log::info("demo.entered", &[]);
                 Ok(())
             }
             Err(e) => {
@@ -228,6 +241,7 @@ impl App {
         self.close_db()?;
         remove_db_files(&self.demo_file());
         self.demo = false;
+        log::info("demo.exited", &[]);
         self.db = Self::open_real(&self.paths)?;
         Ok(())
     }
@@ -242,8 +256,14 @@ impl App {
             dirs.push(self.paths.backup_dir.clone());
         }
         for dir in dirs {
-            if let Ok(made) = auto_backup_if_due(&self.db, &dir) {
-                return made;
+            match auto_backup_if_due(&self.db, &dir) {
+                Ok(made) => {
+                    if made.is_some() {
+                        log::info("backup.auto", &[]);
+                    }
+                    return made;
+                }
+                Err(_) => log::warn("backup.auto_failed", &[]),
             }
         }
         None

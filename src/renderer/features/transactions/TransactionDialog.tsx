@@ -56,7 +56,15 @@ export function TransactionDialogProvider({ children }: { children: ReactNode })
     <Ctx.Provider value={value}>
       {children}
       <Dialog open={state !== null} onOpenChange={(o) => !o && setState(null)}>
-        {state && <TransactionDialogBody key={state.nonce} args={state} onDone={() => setState(null)} />}
+        {state && (
+          <TransactionDialogBody
+            key={state.nonce}
+            args={state}
+            // Close only this dialog: a save that finishes after a shortcut has already opened the
+            // next one (Ctrl+N straight after Ctrl+Enter) must not close the new dialog.
+            onDone={() => setState((s) => (s?.nonce === state.nonce ? null : s))}
+          />
+        )}
       </Dialog>
     </Ctx.Provider>
   )

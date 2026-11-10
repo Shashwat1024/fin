@@ -23,7 +23,12 @@ export function AccountDialogProvider({ children }: { children: ReactNode }) {
       {children}
       <Dialog open={state !== null} onOpenChange={(o) => !o && setState(null)}>
         {state && (
-          <AccountDialogBody key={state.nonce} account={state.account} onDone={() => setState(null)} />
+          <AccountDialogBody
+            key={state.nonce}
+            account={state.account}
+            // Close only this dialog, never one opened after it while the save was finishing.
+            onDone={() => setState((s) => (s?.nonce === state.nonce ? null : s))}
+          />
         )}
       </Dialog>
     </Ctx.Provider>

@@ -19,3 +19,8 @@ serde_json.workspace = true
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+
+[target.'cfg(windows)'.dependencies]
+# The same versions wry uses, to reach WebView2 settings Tauri does not expose.
+webview2-com = "0.39.1"
+windows-core = "0.62.2"
