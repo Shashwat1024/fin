@@ -148,7 +148,9 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
             let paths = AppPaths::resolve(&app_data_dir());
-            let level = if cfg!(debug_assertions) { log::Level::Debug } else { log::Level::Info };
+            // FIN_LOG=debug also records each request's channel and duration (never its data).
+            let debug = cfg!(debug_assertions) || std::env::var("FIN_LOG").is_ok_and(|v| v == "debug");
+            let level = if debug { log::Level::Debug } else { log::Level::Info };
             log::init(paths.log_file.clone(), level);
             let opened = match App::open(paths, Box::new(NativeDialogs(handle.clone()))) {
                 Ok(app) => {
@@ -161,6 +163,14 @@ pub fn run() {
                 }
             };
             *app.state::<Backend>().0.lock().unwrap_or_else(|p| p.into_inner()) = opened;
+            // Warm the database while WebView2 starts (creating the window takes about a second),
+            // so the Overview's first requests find their data in memory.
+            let warm = handle.clone();
+            std::thread::spawn(move || {
+                if let Some(app) = warm.state::<Backend>().0.lock().ok().as_mut().and_then(|g| g.as_mut()) {
+                    app.warm_up();
+                }
+            });
             // Constitution I: the window can only ever show Fin's own pages.
             WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("Fin")
@@ -169,10 +179,13 @@ pub fn run() {
                 .on_navigation(is_app_url)
                 .build()?
                 .with_webview(disable_browser_shortcuts)?;
-            // The daily backup never delays startup.
+            // The daily backup never delays startup: the app is held only to read where to write
+            // it; the copy itself runs on its own connection while requests carry on.
             std::thread::spawn(move || {
-                if let Some(app) = handle.state::<Backend>().0.lock().ok().as_ref().and_then(|g| g.as_ref()) {
-                    app.daily_backup();
+                let plan =
+                    handle.state::<Backend>().0.lock().ok().and_then(|g| g.as_ref().and_then(App::daily_backup_plan));
+                if let Some(plan) = plan {
+                    plan.run();
                 }
             });
             Ok(())

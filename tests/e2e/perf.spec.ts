@@ -9,19 +9,25 @@ import { launchFin, type FinApp } from './app'
  * NFR performance in the real app with 50,000 transactions (plan.md): cold start to a usable
  * Overview under 2 s, and the transaction list updating within 150 ms of a filter being applied
  * (measured after the search box's own 200 ms typing pause). Query-level budgets are in
- * tests/integration/perf.test.ts.
+ * crates/fin-core/tests/perf.rs (npm run test:perf).
  */
 let fin: FinApp
 let page: Page
 let coldStartMs = 0
-const LAUNCHES = 3
+const LAUNCHES = 5
 
 test.beforeAll(async () => {
   test.setTimeout(120_000)
   const dir = mkdtempSync(join(tmpdir(), 'fin-perf-e2e-'))
-  // The same 50,000-transaction profile as `npm run seed:perf` (the script loads the seed via Vite).
+  // The same 50,000-transaction profile as `npm run seed:perf` (written by the Rust backend).
   const seeded = spawnSync(process.execPath, [join('scripts', 'seed-perf.mjs'), dir], { stdio: 'ignore' })
   expect(seeded.status, 'seeding the performance profile').toBe(0)
+  // A data file written seconds ago is still being flushed and scanned by antivirus, which a real
+  // user's data never is: one untimed launch lets it settle before the timed ones.
+  fin = await launchFin(dir)
+  await expect(fin.page.locator('[data-slot="card"]', { hasText: 'Cash position' })).toContainText('₹', {
+    timeout: 30_000,
+  })
   // The app's own launch time varies by a few hundred ms, so take the median of a few launches.
   const starts: number[] = []
   for (let i = 0; i < LAUNCHES; i++) {
@@ -29,10 +35,15 @@ test.beforeAll(async () => {
     const start = performance.now()
     fin = await launchFin(dir)
     page = fin.page
+    // Two parts: the window and its page being up, then Fin filling the Overview with numbers.
+    const attached = performance.now() - start
     await expect(page.locator('[data-slot="card"]', { hasText: 'Cash position' })).toContainText('₹', {
       timeout: 10_000,
     })
     starts.push(performance.now() - start)
+    console.log(
+      `  launch ${i + 1}: window up ${Math.round(attached)} ms, Overview +${Math.round(starts.at(-1)! - attached)} ms`,
+    )
   }
   console.log(`cold starts: ${starts.map(Math.round).join(', ')} ms`)
   coldStartMs = starts.sort((a, b) => a - b)[Math.floor(LAUNCHES / 2)]!

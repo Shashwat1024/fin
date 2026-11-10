@@ -93,6 +93,32 @@ fn snapshot(db: &Db, dir: &Path, reason: &str) -> DbResult<PathBuf> {
     Ok(file)
 }
 
+/// The once-a-day automatic backup, made on its own read connection so it never holds up
+/// requests: SQLite's WAL mode gives it a consistent snapshot while the app keeps working.
+pub struct DailyBackup {
+    db_file: PathBuf,
+    dirs: Vec<PathBuf>,
+}
+
+impl DailyBackup {
+    /// Make the backup if none exists today; falls back to the default folder if the chosen one fails.
+    pub fn run(self) -> Option<Value> {
+        let db = Db::open_read_only(&self.db_file).ok()?;
+        for dir in &self.dirs {
+            match auto_backup_if_due(&db, dir) {
+                Ok(made) => {
+                    if made.is_some() {
+                        log::info("backup.auto", &[]);
+                    }
+                    return made;
+                }
+                Err(_) => log::warn("backup.auto_failed", &[]),
+            }
+        }
+        None
+    }
+}
+
 pub struct App {
     pub paths: AppPaths,
     pub work_dir: PathBuf,
@@ -246,8 +272,9 @@ impl App {
         Ok(())
     }
 
-    /// Once per day on launch; falls back to the default folder if the chosen one fails.
-    pub fn daily_backup(&self) -> Option<Value> {
+    /// What the daily backup needs, read quickly while holding the app: the database file and the
+    /// folders to try (the chosen one, then the default). `None` in demo mode.
+    pub fn daily_backup_plan(&self) -> Option<DailyBackup> {
         if self.demo {
             return None;
         }
@@ -255,18 +282,37 @@ impl App {
         if dirs[0] != self.paths.backup_dir {
             dirs.push(self.paths.backup_dir.clone());
         }
-        for dir in dirs {
-            match auto_backup_if_due(&self.db, &dir) {
-                Ok(made) => {
-                    if made.is_some() {
-                        log::info("backup.auto", &[]);
-                    }
-                    return made;
-                }
-                Err(_) => log::warn("backup.auto_failed", &[]),
-            }
+        Some(DailyBackup { db_file: self.paths.db_file.clone(), dirs })
+    }
+
+    /// Read what the Overview needs once, so the database pages are in memory before the
+    /// interface asks. Run while the window is still starting (about a second on WebView2); the
+    /// answers are thrown away.
+    pub fn warm_up(&mut self) {
+        let started = std::time::Instant::now();
+        let today = crate::domain::dates::today_in(
+            settings::get_settings(&self.db)
+                .ok()
+                .and_then(|s| s["timezone"].as_str().map(str::to_owned))
+                .as_deref()
+                .unwrap_or("Asia/Kolkata"),
+        );
+        for (channel, input) in [
+            ("app.status", json!({})),
+            ("accounts.list", json!({})),
+            ("dashboard.summary", json!({})),
+            ("forecast.run", json!({ "days": 30 })),
+            ("budget.month", json!({ "month": &today[..7] })),
+            ("txns.query", json!({ "limit": 1 })),
+        ] {
+            let _ = crate::handlers::handle(self, channel, &input);
         }
-        None
+        log::debug("db.warmed", &[("ms", Ctx::Num(started.elapsed().as_millis() as i64))]);
+    }
+
+    /// Once per day on launch, on this thread (tests and tools).
+    pub fn daily_backup(&self) -> Option<Value> {
+        self.daily_backup_plan()?.run()
     }
 
     pub fn close(mut self) {

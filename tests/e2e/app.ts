@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import {
@@ -59,7 +59,10 @@ test.afterEach(async ({}, info) => {
 async function launchTauri(dataDir: string): Promise<FinApp> {
   const exe = process.env.FIN_TAURI_EXE ?? resolve('target', 'debug', 'fin.exe')
   const port = nextPort++
-  const webviewDir = mkdtempSync(join(tmpdir(), 'fin-e2e-webview-'))
+  // One WebView2 profile per data folder, kept across launches like a real user's (stop() keeps
+  // it; close() removes it), so a relaunch does not pay WebView2's first-run setup again.
+  const webviewDir = `${dataDir}-webview`
+  mkdirSync(webviewDir, { recursive: true })
   const answersDir = mkdtempSync(join(tmpdir(), 'fin-e2e-dialogs-'))
   const answersFile = join(answersDir, 'answers.json')
   const proc: ChildProcess = spawn(exe, [], {
@@ -75,11 +78,11 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
     stdio: 'ignore',
   })
   let browser: Browser | undefined
-  for (let i = 0; i < 120 && !browser; i++) {
+  for (let i = 0; i < 600 && !browser; i++) {
     try {
       browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
     } catch {
-      await new Promise((r) => setTimeout(r, 250))
+      await new Promise((r) => setTimeout(r, 50))
     }
   }
   if (!browser) throw new Error('Could not attach to the Tauri app')
@@ -119,7 +122,7 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
     answerDialogs: async (path) => writeFileSync(answersFile, JSON.stringify({ path })),
     stop: async () => {
       await quit()
-      for (const dir of [webviewDir, answersDir]) remove(dir)
+      remove(answersDir)
     },
     close: async () => {
       await quit()

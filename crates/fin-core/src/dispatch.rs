@@ -108,8 +108,16 @@ pub fn dispatch(app: &mut App, channel: &str, input: Option<Value>) -> Value {
         }
         Ok(cleaned) => {
             let input = cleaned.unwrap_or(Value::Null);
+            let started = std::time::Instant::now();
             match crate::handlers::handle(app, channel, &input) {
-                Some(Ok(data)) => ok(data),
+                Some(Ok(data)) => {
+                    let ms = started.elapsed().as_millis() as i64;
+                    crate::log::debug(
+                        "ipc.ok",
+                        &[("channel", crate::log::Ctx::Text(channel)), ("ms", crate::log::Ctx::Num(ms))],
+                    );
+                    ok(data)
+                }
                 Some(Err(e)) => {
                     if e.code == ErrorCode::Internal {
                         crate::log::error("ipc.internal_error", &[("channel", crate::log::Ctx::Text(channel))]);

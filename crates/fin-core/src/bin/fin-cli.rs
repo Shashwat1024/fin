@@ -12,6 +12,32 @@ fn main() {
         eprintln!("Set FIN_DATA_DIR to the data folder to use");
         std::process::exit(2);
     };
+    // `fin-cli --seed-perf`: write the 50,000-transaction performance profile into FIN_DATA_DIR.
+    if std::env::args().any(|a| a == "--seed-perf") {
+        let paths = AppPaths::in_dir(std::path::Path::new(&dir));
+        if paths.db_file.exists() {
+            eprintln!("{} already exists; choose an empty folder.", paths.db_file.display());
+            std::process::exit(1);
+        }
+        let started = std::time::Instant::now();
+        let app = App::open(paths, Box::new(PresetDialogs::default())).unwrap_or_else(|e| {
+            eprintln!("Cannot open the data folder: {e}");
+            std::process::exit(1)
+        });
+        let today = fin_core::domain::dates::today_in("Asia/Kolkata");
+        match fin_core::db::seed_perf::seed_perf_data(app.db(), &today, 50_000) {
+            Ok(n) => {
+                let _ = app.db().exec("PRAGMA wal_checkpoint(TRUNCATE)");
+                println!("Wrote {n} transactions in {} ms", started.elapsed().as_millis());
+            }
+            Err(e) => {
+                eprintln!("Seeding failed: {e}");
+                std::process::exit(1);
+            }
+        }
+        app.close();
+        return;
+    }
     let mut app = match App::open(AppPaths::in_dir(std::path::Path::new(&dir)), Box::new(PresetDialogs::default())) {
         Ok(app) => app,
         Err(e) => {

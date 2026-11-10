@@ -15,6 +15,7 @@ pub mod migrate;
 pub mod networth;
 pub mod patterns;
 pub mod planning;
+pub mod seed_perf;
 pub mod settings;
 pub mod transactions;
 
@@ -56,6 +57,14 @@ impl Db {
         )?;
         conn.pragma_update(None, "journal_mode", "WAL")?;
         Self::configure(conn)
+    }
+
+    /// A second, read-only connection to a live database (backups while the app keeps working).
+    pub fn open_read_only(path: &Path) -> DbResult<Db> {
+        let conn =
+            Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX)?;
+        conn.execute_batch("PRAGMA busy_timeout = 5000;")?;
+        Ok(Db { conn, depth: Cell::new(0) })
     }
 
     /// Wrap an already-open connection (used to inspect backups).
