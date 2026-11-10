@@ -7,10 +7,12 @@ pub mod backup;
 pub mod categories;
 pub mod categorization;
 pub mod dashboard;
+pub mod demo;
 pub mod export;
 pub mod imports;
 pub mod migrate;
 pub mod networth;
+pub mod planning;
 pub mod settings;
 pub mod transactions;
 

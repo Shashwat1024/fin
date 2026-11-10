@@ -71,6 +71,13 @@ impl Dialogs for PresetDialogs {
     fn open_folder(&self, _: &Path) {}
 }
 
+/// A database file and its WAL/journal companions.
+fn remove_db_files(file: &Path) {
+    for ext in ["", "-wal", "-shm", "-journal"] {
+        let _ = fs::remove_file(format!("{}{ext}", file.display()));
+    }
+}
+
 fn io(message: &str) -> AppError {
     AppError::new(ErrorCode::Io, message)
 }
@@ -99,6 +106,8 @@ impl App {
     pub fn open(paths: AppPaths, dialogs: Box<dyn Dialogs>) -> DbResult<App> {
         fs::create_dir_all(&paths.data_dir).map_err(|_| io("Fin cannot create its data folder"))?;
         let work_dir = paths.data_dir.join("tmp");
+        // A demo left open by a crash is thrown away, like scratch files.
+        remove_db_files(&paths.data_dir.join("demo.db"));
         let _ = fs::remove_dir_all(&work_dir);
         let _ = fs::create_dir_all(&work_dir);
         let db = Self::open_real(&paths)?;
@@ -176,6 +185,51 @@ impl App {
             }
         }
         Ok(json!({ "preRestoreBackup": pre_restore, "counts": count_data(&self.db)? }))
+    }
+
+    fn demo_file(&self) -> PathBuf {
+        self.paths.data_dir.join("demo.db")
+    }
+
+    /// Switch to a fresh demo database, seeded for today in the user's time zone.
+    pub fn enter_demo(&mut self) -> DbResult<()> {
+        if self.demo {
+            return Ok(());
+        }
+        let timezone = settings::get_settings(&self.db)?["timezone"].as_str().unwrap_or("Asia/Kolkata").to_owned();
+        self.close_db()?;
+        let opened = (|| -> DbResult<Db> {
+            let file = self.demo_file();
+            remove_db_files(&file);
+            let db = Db::open(&file)?;
+            migrate::migrate(&db, None)?;
+            categories::seed_default_categories(&db)?;
+            crate::db::demo::seed_demo_data(&db, &crate::domain::dates::today_in(&timezone))?;
+            Ok(db)
+        })();
+        match opened {
+            Ok(db) => {
+                self.db = db;
+                self.demo = true;
+                Ok(())
+            }
+            Err(e) => {
+                self.db = Self::open_real(&self.paths)?;
+                Err(e)
+            }
+        }
+    }
+
+    /// Leave the demo: its data is thrown away and the real data opens again.
+    pub fn exit_demo(&mut self) -> DbResult<()> {
+        if !self.demo {
+            return Ok(());
+        }
+        self.close_db()?;
+        remove_db_files(&self.demo_file());
+        self.demo = false;
+        self.db = Self::open_real(&self.paths)?;
+        Ok(())
     }
 
     /// Once per day on launch; falls back to the default folder if the chosen one fails.

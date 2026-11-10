@@ -8,7 +8,8 @@ use std::path::{Path, PathBuf};
 
 use crate::db::backup::{self as backups, DEFAULT_KDF};
 use crate::db::{
-    DbResult, accounts, audit, categories, categorization, dashboard, export, imports, networth, settings, transactions,
+    DbResult, accounts, audit, categories, categorization, dashboard, export, imports, networth, planning, settings,
+    transactions,
 };
 use crate::error::{AppError, ErrorCode};
 
@@ -39,11 +40,6 @@ pub fn count_data(db: &crate::db::Db) -> DbResult<Value> {
         "importBatches": if has_imports { count(db, "SELECT COUNT(*) FROM import_batches WHERE undone_at IS NULL")? } else { 0 },
         "latestTxnDate": db.query_row("SELECT MAX(posted_date) FROM transactions WHERE deleted_at IS NULL", [], |r| r.get::<_, Option<String>>(0))?.flatten(),
     }))
-}
-
-fn backup_dir_for(app: &App) -> DbResult<String> {
-    let s = settings::get_settings(app.db())?;
-    Ok(s["backupDir"].as_str().filter(|d| !d.is_empty()).map_or_else(|| app.default_backup_dir(), str::to_owned))
 }
 
 fn activity(app: &App, limit: i64) -> DbResult<Value> {
@@ -174,9 +170,21 @@ fn handle_files(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<
                 .map_err(|_| io("Fin could not write the export file."))?;
             Ok(json!({ "path": path_str(&path) }))
         })(),
+        "demo.enter" => app.enter_demo().and_then(|_| status(app)),
+        "demo.exit" => app.exit_demo().and_then(|_| status(app)),
         _ => return None,
     };
     Some(result)
+}
+
+fn status(app: &App) -> DbResult<Value> {
+    Ok(json!({
+        "demo": app.is_demo(),
+        "dataDir": app.paths.data_dir.to_string_lossy(),
+        "backupDir": path_str(&app.backup_dir()?),
+        "defaultBackupDir": app.default_backup_dir(),
+        "counts": count_data(app.db())?,
+    }))
 }
 
 /// `None` when the channel is not ported to Rust yet.
@@ -268,18 +276,34 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
                 input.get("to").and_then(Value::as_str),
             )
         })(),
+        "recurring.list" => (|| planning::list_recurring(db, &today()?).map(Value::Array))(),
+        "recurring.create" => (|| planning::create_recurring(db, input, &today()?))(),
+        "recurring.update" => (|| planning::update_recurring(db, s(input, "id"), &input["input"], &today()?))(),
+        "recurring.delete" => planning::delete_recurring(db, s(input, "id")),
+        "recurring.occurrences" => {
+            (|| planning::list_occurrences(db, s(input, "from"), s(input, "to"), &today()?).map(Value::Array))()
+        }
+        "recurring.candidates" => {
+            planning::occurrence_candidates(db, s(input, "itemId"), s(input, "dueDate")).map(Value::Array)
+        }
+        "recurring.setOccurrence" => planning::set_occurrence(db, input),
+        "budget.month" => planning::budget_month(db, s(input, "month")),
+        "budget.assign" => planning::assign_budget(
+            db,
+            s(input, "month"),
+            s(input, "categoryId"),
+            input["assignedMinor"].as_i64().unwrap_or(0),
+        ),
+        "goals.list" => (|| planning::list_goals(db, &today()?).map(Value::Array))(),
+        "goals.create" => (|| planning::create_goal(db, input, &today()?))(),
+        "goals.update" => (|| planning::update_goal(db, s(input, "id"), &input["input"], &today()?))(),
+        "goals.delete" => planning::delete_goal(db, s(input, "id")),
+        "goals.contribute" => (|| planning::contribute(db, input, &today()?))(),
+        "goals.deleteContribution" => planning::delete_contribution(db, s(input, "id")),
         "valuations.list" => networth::list_valuations(db, s(input, "accountId")).map(Value::Array),
         "valuations.upsert" => (|| networth::upsert_valuation(db, input, &today()?))(),
         "valuations.delete" => networth::delete_valuation(db, s(input, "id")),
-        "app.status" => (|| {
-            Ok(json!({
-                "demo": app.is_demo(),
-                "dataDir": app.paths.data_dir.to_string_lossy(),
-                "backupDir": backup_dir_for(app)?,
-                "defaultBackupDir": app.default_backup_dir(),
-                "counts": count_data(app.db())?,
-            }))
-        })(),
+        "app.status" => status(app),
         _ => return None,
     };
     Some(result)

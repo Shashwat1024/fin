@@ -165,7 +165,7 @@ function fileStep(channel: string, input: unknown): Reply {
   }
 }
 
-const ID = /\b([a-z]{3,4})_[0-9A-HJKMNP-TV-Z]{26}\b/g
+const ID = /\b([a-z]{2,4})_[0-9A-HJKMNP-TV-Z]{26}\b/g
 
 /** Replace generated ids by stable tokens and mask the data folder. */
 export function normalise(value: unknown, ids: Map<string, string>, dir: string): unknown {

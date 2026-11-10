@@ -51,13 +51,14 @@ phase ends with tests, a commit and a push.
   end-to-end suite passes against the Tauri build. Parity now runs as `npm run test:parity`.
 
 ## P4: Planning and categorisation (US5, US6)
-- [ ] R400 demo.enter/demo.exit and the demo seed (needs R401–R402)
-- [ ] R401 recurrence domain, recurring items, occurrences, candidates, setOccurrence
-- [ ] R402 budget month and assign; goals and contributions
+- [x] R400 demo.enter/demo.exit and the demo seed (same household, same pseudo-random amounts)
+- [x] R401 recurrence domain, recurring items, occurrences, candidates, setOccurrence
+- [x] R402 budget month and assign; goals and contributions
 - [x] R403 categories create/update/usage/delete; rules CRUD, preview and apply; suggestions
   (pulled into P2: import preview needs suggestions). Rule patterns use `fancy-regex` for
   JavaScript-like lookaround and backreferences.
-- [ ] R404 Parity and end-to-end tests for US5 and US6
+- [x] R404 Parity (`planning.parity.test.ts`, 110 steps incl. the whole demo household) and end-to-end:
+  onboarding, US1, US2, US3, US5 and US6 pass against the Tauri build (12/12)
 
 ## P5: Forecast and insights (US7, US8)
 - [ ] R501 forecast domain, forecast.run; networth and valuations
