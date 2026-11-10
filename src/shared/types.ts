@@ -1,0 +1,456 @@
+import type { Forecast } from '@domain/forecast'
+import type { Insight } from '@domain/insights'
+import type { ScenarioChange, ScenarioResult } from '@domain/scenarios'
+import type { GoalStatus } from '@domain/goals'
+import type { AccountGroup, AccountNature, AccountType } from '@domain/ledger'
+import type { NetWorthPoint } from '@domain/networth'
+import type { Frequency, OccurrenceState, RecurringSuggestion } from '@domain/recurrence'
+import type { RuleCondition } from '@domain/rules'
+
+export type { AccountGroup, Frequency, GoalStatus, OccurrenceState, RuleCondition, ScenarioChange }
+
+export type Theme = 'system' | 'light' | 'dark'
+
+export type Settings = {
+  currency: string
+  timezone: string
+  /** 1–12; India default 4 (April). */
+  fyStartMonth: number
+  /** 0 = Sunday … 6 = Saturday */
+  weekStart: number
+  locale: string
+  theme: Theme
+  /** Forecast warning threshold, minor units. */
+  bufferMinor: number
+  onboarded: boolean
+  backupDir: string | null
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  currency: 'INR',
+  timezone: 'Asia/Kolkata',
+  fyStartMonth: 4,
+  weekStart: 1,
+  locale: 'en-IN',
+  theme: 'system',
+  bufferMinor: 0,
+  onboarded: false,
+  backupDir: null,
+}
+
+export type AccountDto = {
+  id: string
+  name: string
+  type: AccountType
+  nature: AccountNature
+  isLiquid: boolean
+  currency: string
+  /** As the user enters it: amount owed for liabilities. */
+  openingBalanceMinor: number
+  openingDate: string
+  notes: string | null
+  archived: boolean
+  /** As displayed: amount owed for liabilities. */
+  balanceMinor: number
+  /** Signed ledger balance (inflow positive). */
+  ledgerBalanceMinor: number
+  txnCount: number
+  lastTxnDate: string | null
+  sortOrder: number
+}
+
+export type CategoryGroup = 'needs' | 'wants' | 'goals' | 'buffer' | 'income' | 'transfer'
+
+export type CategoryDto = {
+  id: string
+  name: string
+  parentId: string | null
+  group: CategoryGroup
+  isSystem: boolean
+  archived: boolean
+  /** "Parent › Child" or just "Name" */
+  path: string
+}
+
+export type TagDto = { id: string; name: string; usage: number }
+
+export type TxnKind = 'standard' | 'transfer'
+export type TxnStatus = 'cleared' | 'pending'
+
+export type TxnRow = {
+  id: string
+  accountId: string
+  accountName: string
+  accountType: AccountType
+  currency: string
+  postedDate: string
+  amountMinor: number
+  payee: string
+  /** Learned from the narration or payee; null when unknown. */
+  merchantName: string | null
+  notes: string | null
+  categoryId: string | null
+  categoryPath: string | null
+  splitCount: number
+  tags: string[]
+  kind: TxnKind
+  transferId: string | null
+  counterAccountId: string | null
+  counterAccountName: string | null
+  status: TxnStatus
+  importBatchId: string | null
+}
+
+export type SplitDto = {
+  id: string
+  categoryId: string
+  categoryPath: string
+  amountMinor: number
+  memo: string | null
+}
+
+export type TxnDetail = TxnRow & {
+  splits: SplitDto[]
+  tagIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type TxnTotals = { count: number; inMinor: number; outMinor: number; netMinor: number }
+
+export type TxnPage = { rows: TxnRow[]; nextCursor: string | null; totals: TxnTotals }
+
+export type PayeeSuggestion = { payee: string; categoryId: string | null; accountId: string; count: number }
+
+export type ActivityEntry = { id: string; at: string; label: string; undone: boolean; isUndo: boolean; canUndo: boolean }
+
+/** Every mutation returns the audit group id so the UI can offer a one-step undo. */
+export type Mutation<T> = T & { auditGroupId: string }
+
+// ---- CSV import -------------------------------------------------------------------------------
+
+export type ImportRowStatus = 'new' | 'duplicate' | 'possible_duplicate'
+
+export type ImportMatch = { id: string; postedDate: string; amountMinor: number; payee: string }
+
+export type ImportPreview = {
+  rows: {
+    rowNumber: number
+    status: ImportRowStatus
+    match: ImportMatch | null
+    /** Counterparty read from the narration, when recognisable (FR-017). */
+    merchant: string | null
+    suggestion: Suggestion | null
+  }[]
+  /** Set when a file with the same contents was imported before. */
+  sameFile: { batchId: string; importedAt: string; undone: boolean } | null
+  account: { ledgerBalanceMinor: number; balanceMinor: number; lastTxnDate: string | null }
+}
+
+export type ImportCounts = {
+  total: number
+  imported: number
+  duplicate: number
+  skipped: number
+  failed: number
+  ignored: number
+}
+
+export type ImportBatchDto = {
+  id: string
+  accountId: string
+  accountName: string
+  fileName: string
+  importedAt: string
+  counts: ImportCounts
+  statementClosing: { date: string; balanceMinor: number } | null
+  undone: boolean
+  /** Transactions from this batch still in the ledger. */
+  liveCount: number
+  /** Of those, how many were changed after import (e.g. recategorized). */
+  editedCount: number
+}
+
+export type ImportRowDto = { rowNumber: number; raw: string[]; outcome: string; message: string | null; transactionId: string | null }
+
+export type ReconcileResult = { statementBalanceMinor: number; computedBalanceMinor: number; differenceMinor: number; asOf: string }
+
+// ---- Dashboard (US3) --------------------------------------------------------------------------
+
+/** Where a metric's records live. Each metric equals the total shown at its drill-down (SC-005). */
+export type DrillTarget =
+  | { page: 'transactions'; from: string; to: string; direction?: 'in' | 'out'; kind?: 'standard' }
+  | { page: 'accounts'; group: AccountGroup }
+  | { page: 'networth' }
+  | { page: 'forecast' }
+
+export type MetricSource = {
+  accountId: string
+  accountName: string
+  /** Latest date this account's data covers: its last transaction, or its start date. */
+  lastDataDate: string
+  lastImport: { at: string; fileName: string } | null
+}
+
+export type Metric = {
+  valueMinor: number
+  /** The oldest "data covers up to" date among the sources: everything is known at least up to here. */
+  asOf: string | null
+  sources: MetricSource[]
+  drill: DrillTarget
+}
+
+export type MonthFlow = { month: string; from: string; to: string; inMinor: number; outMinor: number }
+
+export type DashboardSummary = {
+  today: string
+  cash: Metric
+  spent: Metric & { previousMinor: number; previousFrom: string; previousTo: string }
+  income: Metric
+  /** Whole percent of this month's income not spent (null without income); drills to this month's transactions. */
+  savingsRate: { percent: number | null; drill: DrillTarget }
+  cardDues: Metric & { cardCount: number }
+  netWorth: Metric & { assetsMinor: number; owedMinor: number }
+  /** Money in and out for the last six months, oldest first (spending as positive numbers). */
+  months: MonthFlow[]
+}
+
+// ---- Backups, export, demo (US4) --------------------------------------------------------------
+
+export type BackupKind = 'auto' | 'manual' | 'pre-restore' | 'pre-upgrade'
+
+export type BackupInfo = {
+  fileName: string
+  path: string
+  /** Local time the backup was made, 'YYYY-MM-DDTHH:mm:ss'. */
+  createdAt: string
+  kind: BackupKind
+  encrypted: boolean
+  sizeBytes: number
+}
+
+export type DataCounts = { accounts: number; transactions: number; importBatches: number; latestTxnDate: string | null }
+
+export type BackupProblem = 'NOT_FOUND' | 'NEEDS_PASSPHRASE' | 'WRONG_PASSPHRASE' | 'NOT_FIN' | 'DAMAGED' | 'TOO_NEW'
+
+export type BackupInspection =
+  | { valid: true; encrypted: boolean; schemaVersion: number; needsUpgrade: boolean; counts: DataCounts }
+  | { valid: false; reason: BackupProblem; message: string }
+
+export type AppStatus = {
+  demo: boolean
+  dataDir: string
+  backupDir: string
+  defaultBackupDir: string
+  counts: DataCounts
+}
+
+// ---- Planning: recurring items, budgets, goals (US5) ------------------------------------------
+
+export type RecurringKind = 'income' | 'bill' | 'subscription' | 'emi' | 'transfer' | 'savings'
+
+export type RecurringItemDto = {
+  id: string
+  name: string
+  kind: RecurringKind
+  accountId: string
+  accountName: string
+  toAccountId: string | null
+  toAccountName: string | null
+  categoryId: string | null
+  categoryPath: string | null
+  /** Expected amount as a positive number; `direction` says which way it moves. */
+  amountMinor: number
+  direction: 'in' | 'out'
+  toleranceBp: number
+  frequency: Frequency
+  interval: number
+  anchorDate: string
+  endDate: string | null
+  count: number | null
+  notes: string | null
+  active: boolean
+  /** "Every month on the 1st" */
+  scheduleText: string
+  /** Next occurrence on or after today, null once the schedule has ended. */
+  nextDue: string | null
+}
+
+export type OccurrenceDto = {
+  /** `${itemId}:${dueDate}` */
+  id: string
+  itemId: string
+  itemName: string
+  kind: RecurringKind
+  accountId: string
+  accountName: string
+  dueDate: string
+  /** Signed from the account's side: income positive, payments negative. */
+  expectedMinor: number
+  state: OccurrenceState
+  matchedTxn: { id: string; postedDate: string; amountMinor: number; payee: string } | null
+  /** Set by the user (a skip or a hand-linked payment) rather than matched automatically. */
+  manual: boolean
+}
+
+export type OccurrenceCandidate = { id: string; postedDate: string; amountMinor: number; payee: string; accountName: string }
+
+export type BudgetRowDto = {
+  categoryId: string
+  name: string
+  group: CategoryGroup
+  carryMinor: number
+  assignedMinor: number
+  spentMinor: number
+  availableMinor: number
+}
+
+export type BudgetGroupDto = {
+  /** The parent category. */
+  id: string
+  name: string
+  rows: BudgetRowDto[]
+  assignedMinor: number
+  spentMinor: number
+  availableMinor: number
+}
+
+export type BudgetMonthDto = {
+  month: string
+  from: string
+  to: string
+  incomeMinor: number
+  /** Last month's unassigned money brought forward (negative when it was over-assigned). */
+  leftoverMinor: number
+  /** Last month's overspending, taken from this month's To assign. */
+  overspentMinor: number
+  assignedMinor: number
+  toAssignMinor: number
+  spentMinor: number
+  availableMinor: number
+  /** Spending this month with no category, so not in any budget line. */
+  uncategorizedMinor: number
+  groups: BudgetGroupDto[]
+}
+
+export type GoalContributionDto = { id: string; date: string; amountMinor: number; note: string | null }
+
+export type GoalDto = {
+  id: string
+  name: string
+  targetMinor: number
+  targetDate: string | null
+  linkedAccountId: string | null
+  linkedAccountName: string | null
+  notes: string | null
+  savedMinor: number
+  remainingMinor: number
+  percent: number
+  monthsLeft: number | null
+  requiredMonthlyMinor: number | null
+  paceMonthlyMinor: number
+  projectedDate: string | null
+  status: GoalStatus
+  /** Newest first, at most 20. */
+  contributions: GoalContributionDto[]
+}
+
+// ---- Categorisation: categories, rules, suggestions (US6) -------------------------------------
+
+
+export type CategoryUsage = { transactions: number; splits: number; budgets: number; recurring: number; rules: number; children: number }
+
+export type RuleDto = {
+  id: string
+  name: string
+  priority: number
+  enabled: boolean
+  conditions: RuleCondition[]
+  categoryId: string
+  categoryPath: string
+}
+
+/** A category Fin proposes. Never applied until the user accepts it (FR-020). */
+export type Suggestion = {
+  categoryId: string
+  categoryPath: string
+  source: 'rule' | 'merchant'
+  /** "Rule: Food delivery" or "You chose this for Swiggy 4 times" */
+  reason: string
+  ruleId: string | null
+}
+
+export type TxnSuggestion = Suggestion & { txnId: string }
+
+export type RuleMatch = {
+  id: string
+  postedDate: string
+  amountMinor: number
+  payee: string
+  accountName: string
+  categoryPath: string | null
+}
+
+export type RulePreview = { count: number; matches: RuleMatch[] }
+
+// ---- Forecast and net worth (US7) ---------------------------------------------------------------
+
+export type { BufferRange, Confidence, ForecastEvent, ForecastPoint } from '@domain/forecast'
+export type { NetWorthPoint }
+
+/** One input the forecast used, listed so every number on the line can be explained (FR-027). */
+export type ForecastAssumption = {
+  kind: 'start' | 'recurring' | 'baseline' | 'note'
+  label: string
+  detail: string | null
+  amountMinor: number | null
+}
+
+export type ForecastDto = Forecast & { assumptions: ForecastAssumption[]; hasCashAccounts: boolean }
+
+export type ValuationDto = { id: string; accountId: string; date: string; valueMinor: number; note: string | null }
+
+export type NetWorthAccountRow = {
+  id: string
+  name: string
+  type: AccountType
+  nature: 'asset' | 'liability'
+  /** Value used for net worth today: positive worth, or positive amount owed. */
+  valueMinor: number
+  source: 'ledger' | 'valuation'
+  valuationDate: string | null
+  /** Balance from transactions, for comparison when a valuation is used. */
+  ledgerMinor: number
+  canValue: boolean
+}
+
+export type NetWorthDto = {
+  today: string
+  current: NetWorthPoint
+  /** Month ends, oldest first; the last point is today. */
+  points: NetWorthPoint[]
+  accounts: NetWorthAccountRow[]
+}
+
+// ---- Behaviour insights and what-if (US8, v1.1) -----------------------------------------------
+
+export type InsightDto = Insight & { dismissed: boolean }
+
+export type InsightsDto = {
+  today: string
+  /** Latest transaction date: insights cover data up to here (FR-026). */
+  asOf: string | null
+  historyStart: string | null
+  insights: InsightDto[]
+  dismissedCount: number
+}
+
+export type RecurringSuggestionDto = RecurringSuggestion & {
+  /** Pass to insights.dismiss to stop suggesting this series. */
+  dismissKey: string
+  accountName: string
+  categoryPath: string | null
+  suggestedKind: RecurringKind
+}
+
+export type ScenarioDto = ScenarioResult

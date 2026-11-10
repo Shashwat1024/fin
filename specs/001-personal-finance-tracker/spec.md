@@ -222,6 +222,9 @@ As the sole user, I want explainable insights (subscription creep, weekend/late-
 - **FR-027**: System MUST provide 30/60/90-day forecasts with lowest balance and date, buffer warning, confidence label, and an assumptions list.
 - **FR-028**: System MUST track net-worth history including manually valued assets and liabilities.
 - **FR-029** *(v1.1)*: System MUST provide behavior insights and what-if scenarios that cite their sources and never change stored data.
+  *As built*: insights are category/merchant changes, subscription price rises and creep, weekend
+  spending and unusual purchases. Time-of-day patterns are out of scope because statements record
+  dates only. Dismissing an insight is the one stored (and undoable) change.
 
 **Data & resilience**
 
