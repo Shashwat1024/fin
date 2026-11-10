@@ -5,6 +5,7 @@ pub mod accounts;
 pub mod audit;
 pub mod backup;
 pub mod calendar;
+pub mod cards;
 pub mod categories;
 pub mod categorization;
 pub mod dashboard;

@@ -20,11 +20,11 @@ unit tests, parity vectors, the phase's e2e spec).
 - [x] D203 `us12-calendar.spec.ts`; a11y
 
 ## D3: Card cycles (US10)
-- [ ] D301 `domain/card_cycle.rs` with unit tests first
-- [ ] D302 Account fields (create/update/DTO/export); `cards.cycles`; dashboard `nextDue`
-- [ ] D303 Forecast card-bill events and assumptions, no double counting; tests
-- [ ] D304 AccountForm fields, `CardCyclePanel`, Overview subtitle; demo card cycle
-- [ ] D305 `us10-cards.spec.ts`; a11y
+- [x] D301 `domain/card_cycle.rs` with unit tests first
+- [x] D302 Account fields (create/update/DTO/export); `cards.cycles`; dashboard `nextDue`
+- [x] D303 Forecast card-bill events and assumptions, no double counting; tests
+- [x] D304 AccountForm fields, `CardCyclePanel`, Overview subtitle; demo card cycle
+- [x] D305 `us10-cards.spec.ts`; a11y
 
 ## D4: Reminders, tray, start at login (US11)
 - [ ] D401 `domain/reminders.rs` with unit tests first; `App::take_due_reminders`; `reminders.preview`

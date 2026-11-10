@@ -148,6 +148,17 @@ function Assumptions({ f }: { f: ForecastDto }) {
               .
             </p>
           )}
+          {group('card').length > 0 && (
+            <>
+              <h3
+                id="fa-card"
+                className="mt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+              >
+                Card bills from statements
+              </h3>
+              <AssumptionRows rows={group('card')} />
+            </>
+          )}
         </section>
         <section aria-labelledby="fa-everyday">
           <h3 id="fa-everyday" className="text-xs font-medium tracking-wide text-muted-foreground uppercase">

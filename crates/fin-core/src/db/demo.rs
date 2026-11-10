@@ -53,6 +53,8 @@ pub fn seed_demo_data(db: &Db, today: &str) -> DbResult<()> {
     let bank = acct("Demo Savings Bank", "bank", 18_500_000)?;
     let wallet = acct("Wallet", "cash", 300_000)?;
     let card = acct("Demo Credit Card", "credit_card", 1_250_000)?;
+    // Statement on the 5th, due 20 days later: the 25th, when the recurring card bill is paid (US10).
+    super::accounts::update_account(db, &card, &json!({ "statementDay": 5, "dueDaysAfter": 20 }))?;
     let funds = acct("Index Fund SIP", "investment", 42_000_000)?;
 
     let mut rand = Rng(20_261_109);
