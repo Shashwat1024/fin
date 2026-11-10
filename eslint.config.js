@@ -4,7 +4,18 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import globals from 'globals'
 
 export default tseslint.config(
-  { ignores: ['out/', 'release/', 'node_modules/', 'coverage/', '.specify/', '.github/'] },
+  {
+    ignores: [
+      'target/**',
+      'src-tauri/gen/**',
+      'out/',
+      'release/',
+      'node_modules/',
+      'coverage/',
+      '.specify/',
+      '.github/',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -28,16 +39,7 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            'electron',
-            'node:sqlite',
-            'react',
-            'react-*',
-            '@db/*',
-            '../db/*',
-            '../main/*',
-            '../renderer/*',
-          ],
+          patterns: ['@tauri-apps/*', 'react', 'react-*', '../renderer/*'],
         },
       ],
     },
@@ -46,7 +48,7 @@ export default tseslint.config(
     // The renderer is untrusted and must not reach Node or storage directly.
     files: ['src/renderer/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-imports': ['error', { patterns: ['electron', 'node:*', '@db/*'] }],
+      'no-restricted-imports': ['error', { patterns: ['node:*'] }],
     },
   },
 )

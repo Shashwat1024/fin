@@ -1,0 +1,36 @@
+[workspace]
+members = ["crates/fin-core", "src-tauri"]
+resolver = "3"
+
+[workspace.package]
+version = "2.0.0-dev"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["preserve_order"] }
+thiserror = "2.0.21"
+chrono = { version = "0.4.45", default-features = false, features = ["std", "clock"] }
+chrono-tz = "0.10.4"
+regex = "1.13.1"
+fancy-regex = "0.20.1"
+rusqlite = { version = "0.41.1", features = ["bundled"] }
+ulid = "3.0.0"
+scrypt = { version = "0.12.0", default-features = false }
+aes-gcm = "0.11.1"
+getrandom = "0.4.3"
+unicode-normalization = "0.1.26"
+
+# Third-party crates are compiled with optimisation even in debug builds: scrypt (encrypted
+# backups) and SQLite are otherwise far too slow for the end-to-end and performance tests.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": { "lib": ["ES2023"], "types": ["node"] },
-  "include": ["src/main", "src/preload", "src/domain", "src/db", "src/shared", "tests", "*.config.ts"]
+  "include": ["src/domain", "src/shared", "tests", "scripts", "*.config.ts"]
 }

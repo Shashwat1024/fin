@@ -5,12 +5,6 @@ import { detectHeaderRow, normalizeHeader, parseTable } from '@domain/import/csv
 import { decodeBytes } from '@domain/import/decode'
 import { detectDateOrder, parseDateText } from '@domain/import/dates'
 import {
-  fingerprintKey,
-  isPossibleDuplicate,
-  normalizeDescription,
-  occurrenceIndexes,
-} from '@domain/import/fingerprint'
-import {
   applyMapping,
   closingBalance,
   suggestMapping,
@@ -187,25 +181,5 @@ describe('mapping without a preset', () => {
       applyMapping(table, { ...indicator, columns: { ...indicator.columns, indicator: 'Nope' } })
         .missingColumns,
     ).toEqual(['indicator'])
-  })
-})
-
-describe('fingerprints', () => {
-  it('normalises case and punctuation but keeps references', () => {
-    expect(normalizeDescription(' upi-Swiggy / order ')).toBe('UPI SWIGGY ORDER')
-    expect(fingerprintKey('2026-10-01', -45_000, 'UPI-SWIGGY-428812345678')).not.toBe(
-      fingerprintKey('2026-10-01', -45_000, 'UPI-SWIGGY-428812345679'),
-    )
-  })
-
-  it('numbers repeated identical lines', () => {
-    expect(occurrenceIndexes(['a', 'b', 'a', 'a'])).toEqual([0, 0, 1, 2])
-  })
-
-  it('flags same amount within two days as a possible duplicate', () => {
-    const a = { date: '2026-10-01', amountMinor: -500 }
-    expect(isPossibleDuplicate(a, { date: '2026-10-03', amountMinor: -500 })).toBe(true)
-    expect(isPossibleDuplicate(a, { date: '2026-10-04', amountMinor: -500 })).toBe(false)
-    expect(isPossibleDuplicate(a, { date: '2026-10-01', amountMinor: -501 })).toBe(false)
   })
 })

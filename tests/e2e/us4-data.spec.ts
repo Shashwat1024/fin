@@ -17,19 +17,8 @@ test.afterAll(async () => {
   rmSync(outDir, { recursive: true, force: true })
 })
 
-/** Answer the next native open/save dialog in the main process (Playwright cannot click OS dialogs). */
-async function answerDialogs(file: string) {
-  await fin.app.evaluate(({ dialog }, path) => {
-    dialog.showOpenDialog = (async () => ({
-      canceled: false,
-      filePaths: [path],
-    })) as typeof dialog.showOpenDialog
-    dialog.showSaveDialog = (async () => ({
-      canceled: false,
-      filePath: path,
-    })) as typeof dialog.showSaveDialog
-  }, file)
-}
+/** Answer the next native open/save dialog (Playwright cannot click OS dialogs). */
+const answerDialogs = (file: string) => fin.answerDialogs(file)
 
 async function addExpense(amount: string, payee: string) {
   await page.keyboard.press('Control+n')

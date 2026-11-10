@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Fin's window may only call Fin's own command. No shell, HTTP, file-system or other plugin access.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

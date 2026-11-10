@@ -5,21 +5,22 @@ How to run Fin locally and prove each user story works. Data shapes are defined 
 
 ## Prerequisites
 
-- Windows 10/11 x64, Node 24 LTS, npm, Git.
-- No native build tools are needed (storage uses Node's built-in `node:sqlite`).
-- VS Code terminals set `ELECTRON_RUN_AS_NODE=1`; the npm scripts and E2E fixtures strip it, so
-  `npm run dev` works from any terminal.
+- Windows 10/11 x64 (WebView2 is built in), Node 24 LTS, npm, Git.
+- Since 2.0: the Rust toolchain (`winget install Rustlang.Rustup`) and the Visual Studio C++ Build
+  Tools. The backend is `crates/fin-core`, hosted by the Tauri shell in `src-tauri`
+  ([002-rust-tauri-port](../002-rust-tauri-port/spec.md)).
 
 ## Setup
 
 ```powershell
 npm install
-npm run dev            # launches the app with hot reload
-npm run typecheck; npm run lint; npm test        # unit + integration
-npm run test:e2e       # builds, then runs Playwright against the real Electron app
+npm run dev            # launches the app with hot reload of the interface
+npm run typecheck; npm run lint; npm test        # interface and domain unit tests
+npm run test:rust      # Rust tests and the frozen 1.x parity vectors
+npm run test:e2e       # builds (debug), then runs Playwright against the real app over WebView2's CDP
 $env:SCREENSHOTS=1; npx playwright test screenshots   # optional: screenshots in test-results/screens
 npm run seed:perf      # optional: writes a 50k-transaction profile to a temp data dir
-npm run package        # NSIS installer in release/
+npm run package        # NSIS installer in target/release/bundle/nsis/
 ```
 
 The app stores data in `%APPDATA%/Fin/`. Set `FIN_DATA_DIR` to point at a throwaway folder when
@@ -68,12 +69,12 @@ Load demo data → every card shows a value, "as of" date, and drill-down whose 
 - Late-night spending is not detected: statements carry dates, not times of day.
 
 ### 6. Privacy check (Constitution I)
-Run `npm run test:e2e -- --grep offline`: the suite blocks all network via Electron session
-`webRequest`, asserts zero outbound requests across the core flows, and reads the log file to check
+Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
+request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check
 it contains no amounts, payees, account names or file names.
 
 ### 7. Performance (SC-007)
-Automated: `tests/integration/perf.test.ts` (query budgets on 50k transactions, part of `npm test`)
+Automated: `npm run test:perf` (`crates/fin-core/tests/perf.rs`, query budgets on 50k transactions)
 and `tests/e2e/perf.spec.ts` (cold start < 2 s and list filtering < 150 ms in the real app).
 By hand: `npm run seed:perf -- <empty folder>`, then `$env:FIN_DATA_DIR='<folder>'; npm run dev`.
 
@@ -82,5 +83,6 @@ By hand: `npm run seed:perf -- <empty folder>`, then `$env:FIN_DATA_DIR='<folder
 focus is visible and returns after dialogs. Press `?` in the app for every shortcut.
 
 ### 9. Packaged build
-`npm run package`, then `$env:FIN_E2E_EXE="$PWD\release\win-unpacked\Fin.exe"; npx playwright test`
-runs the whole suite against the packaged app. Results for 1.0: [checklists/release.md](./checklists/release.md).
+`npm run package`, then `$env:FIN_TAURI_EXE="$PWD\target\release\fin.exe"; npx playwright test`
+runs the whole suite against the release build (the same `fin.exe` the installer lays down).
+Results per release: [checklists/release.md](./checklists/release.md).

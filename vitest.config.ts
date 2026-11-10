@@ -6,11 +6,10 @@ export default defineConfig({
     alias: {
       '@domain': resolve('src/domain'),
       '@shared': resolve('src/shared'),
-      '@db': resolve('src/db'),
     },
   },
   test: {
-    include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts'],
+    include: ['tests/unit/**/*.test.ts'],
     environment: 'node',
     coverage: {
       provider: 'v8',

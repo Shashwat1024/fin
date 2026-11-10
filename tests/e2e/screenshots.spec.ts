@@ -1,19 +1,13 @@
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { _electron as electron, expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import { launchFin } from './app'
 
 // Visual review aid: SCREENSHOTS=1 npx playwright test screenshots
 test.skip(!process.env.SCREENSHOTS, 'Set SCREENSHOTS=1 to capture screenshots')
 
 test('capture main screens', async () => {
-  const dataDir = mkdtempSync(join(tmpdir(), 'fin-shots-'))
-  const { ELECTRON_RUN_AS_NODE: _ignored, ...env } = process.env
-  const app = await electron.launch({
-    args: ['.'],
-    env: { ...env, FIN_DATA_DIR: dataDir } as Record<string, string>,
-  })
-  const page = await app.firstWindow()
+  const fin = await launchFin()
+  const page = fin.page
   await page.setViewportSize({ width: 1320, height: 860 })
   page.on('pageerror', (e) =>
     console.log('PAGEERROR', e.message, e.stack?.split('\n').slice(0, 4).join(' | ')),
@@ -186,6 +180,5 @@ test('capture main screens', async () => {
   await page.keyboard.press('Control+1')
   await page.screenshot({ path: out('07-overview-dark') })
 
-  await app.close()
-  rmSync(dataDir, { recursive: true, force: true })
+  await fin.close()
 })

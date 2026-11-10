@@ -3,9 +3,12 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@renderer/components/ui/sonner'
 import { TooltipProvider } from '@renderer/components/ui/tooltip'
+import { installTauriBridge } from '@renderer/lib/bridge'
 import { ThemeProvider } from '@renderer/lib/theme'
 import { App } from './App'
 import './styles/globals.css'
+
+installTauriBridge()
 
 // Data is local; queries are invalidated explicitly after every change.
 const queryClient = new QueryClient({

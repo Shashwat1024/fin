@@ -7,3 +7,8 @@ specs
 docs
 # Markdown is hand-wrapped prose
 *.md
+
+# Rust build output, Tauri generated files and machine-written parity vectors
+target
+src-tauri/gen
+tests/parity/vectors
