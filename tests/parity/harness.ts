@@ -32,6 +32,7 @@ export type Reply = {
 }
 export type Step = {
   name: string
+  /** A request channel, or 'clock' to move both backends' clocks to `input` (an ISO instant). */
   channel: string
   /** A value, or a function of earlier replies (by step name) from the same backend. */
   input?:
@@ -77,9 +78,11 @@ class RustBackend {
     this.lines.on('line', (line) => this.pending.shift()?.(line))
   }
   call(channel: string, input: unknown): Promise<Reply> {
+    const message =
+      channel === 'clock' ? { setNow: input } : input === undefined ? { channel } : { channel, input }
     return new Promise((ok) => {
       this.pending.push((line) => ok(JSON.parse(line) as Reply))
-      this.proc.stdin.write(`${JSON.stringify(input === undefined ? { channel } : { channel, input })}\n`)
+      this.proc.stdin.write(`${JSON.stringify(message)}\n`)
     })
   }
   async close() {
@@ -97,6 +100,10 @@ class TsBackend {
     backfillMerchants(this.db)
   }
   async call(channel: string, input: unknown): Promise<Reply> {
+    if (channel === 'clock') {
+      vi.setSystemTime(new Date(input as string))
+      return { ok: true, data: null }
+    }
     // What crosses the Tauri bridge is JSON, so the TypeScript side sees the same values.
     const sent = input === undefined ? undefined : JSON.parse(JSON.stringify(input))
     const reply = await dispatch({ db: this.db, env: fakeEnv(this.dir) }, channel, sent)
@@ -104,7 +111,7 @@ class TsBackend {
   }
 }
 
-const ID = /\b([a-z]{3})_[0-9A-HJKMNP-TV-Z]{26}\b/g
+const ID = /\b([a-z]{3,4})_[0-9A-HJKMNP-TV-Z]{26}\b/g
 
 /** Replace generated ids by stable tokens and mask the data folder. */
 export function normalise(value: unknown, ids: Map<string, string>, dir: string): unknown {

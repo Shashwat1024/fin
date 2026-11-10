@@ -27,6 +27,12 @@ fn main() {
             continue;
         }
         let reply = match serde_json::from_str::<Value>(&line) {
+            // Test tooling: {"setNow": "<RFC 3339>"} moves the clock for the parity harness.
+            Ok(req) if req.get("setNow").is_some() => {
+                let at = req["setNow"].as_str().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok());
+                fin_core::clock::set_now(at.map(|d| d.with_timezone(&chrono::Utc)));
+                json!({ "ok": true, "data": null })
+            }
             Ok(req) => {
                 let channel = req.get("channel").and_then(Value::as_str).unwrap_or_default().to_owned();
                 fin_core::dispatch::dispatch(&mut app, &channel, req.get("input").cloned())

@@ -13,6 +13,7 @@ thiserror.workspace = true
 chrono.workspace = true
 chrono-tz.workspace = true
 regex.workspace = true
+fancy-regex.workspace = true
 rusqlite.workspace = true
 ulid.workspace = true
 

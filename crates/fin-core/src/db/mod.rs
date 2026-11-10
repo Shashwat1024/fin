@@ -4,6 +4,8 @@
 pub mod accounts;
 pub mod audit;
 pub mod categories;
+pub mod categorization;
+pub mod imports;
 pub mod migrate;
 pub mod settings;
 pub mod transactions;

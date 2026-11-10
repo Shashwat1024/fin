@@ -34,9 +34,12 @@ phase ends with tests, a commit and a push.
   Overview needs channels from P3–P5, so the end-to-end suite on Tauri is the P6 gate.
 
 ## P2: Import (US2)
-- [ ] R201 decode (UTF-8/UTF-16/Windows-1252), csv, dates, mapping, presets, fingerprint, narration
-- [ ] R202 import.preview/commit/batches/batchRows/undo/savePreset/presets
-- [ ] R203 Parity and end-to-end tests for US2
+- [x] R201 Fingerprints and built-in presets. Reading the file (decode, CSV, dates, mapping, preset
+  matching) runs in the interface, which stays TypeScript, so it is not ported.
+- [x] R202 import.preview/commit/batches/batchRows/undo/savePreset/presets
+- [x] R203 Parity (`tests/parity/import.parity.test.ts`): all six bank fixtures previewed and
+  imported, re-import as duplicates, possible duplicates kept and skipped, accepted suggestions,
+  presets, history, undo with edited rows. The harness can move the clock mid-script.
 
 ## P3: Overview, backup and data (US3, US4)
 - [ ] R301 dashboard.summary, app.status
@@ -47,7 +50,9 @@ phase ends with tests, a commit and a push.
 ## P4: Planning and categorisation (US5, US6)
 - [ ] R401 recurrence domain, recurring items, occurrences, candidates, setOccurrence
 - [ ] R402 budget month and assign; goals and contributions
-- [ ] R403 categories create/update/usage/delete; rules CRUD, preview and apply; suggestions; merchants
+- [x] R403 categories create/update/usage/delete; rules CRUD, preview and apply; suggestions
+  (pulled into P2: import preview needs suggestions). Rule patterns use `fancy-regex` for
+  JavaScript-like lookaround and backreferences.
 - [ ] R404 Parity and end-to-end tests for US5 and US6
 
 ## P5: Forecast and insights (US7, US8)

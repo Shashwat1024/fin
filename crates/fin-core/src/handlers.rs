@@ -4,7 +4,7 @@
 use serde_json::{Value, json};
 
 use crate::app::App;
-use crate::db::{DbResult, accounts, audit, categories, settings, transactions};
+use crate::db::{DbResult, accounts, audit, categories, categorization, imports, settings, transactions};
 use crate::error::{AppError, ErrorCode};
 
 fn s<'a>(v: &'a Value, k: &str) -> &'a str {
@@ -115,6 +115,37 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         "activity.list" => activity(app, input.get("limit").and_then(Value::as_i64).unwrap_or(50)),
         "undo.apply" => audit::undo_group(db, s(input, "auditGroupId"))
             .map(|r| json!({ "reverted": r.result, "auditGroupId": r.audit_group_id })),
+        "import.presets" => imports::list_presets(db).map(Value::Array),
+        "import.savePreset" => imports::save_preset(db, s(input, "name"), &input["mapping"]),
+        "import.preview" => imports::preview_import(db, input),
+        "import.commit" => imports::commit_import(db, input),
+        "import.batches" => imports::list_batches(db, 100).map(Value::Array),
+        "import.batchRows" => imports::batch_rows(db, s(input, "id")).map(Value::Array),
+        "import.undo" => {
+            imports::undo_import(db, s(input, "batchId"), input["includeEdited"].as_bool().unwrap_or(false))
+        }
+        "categories.create" => categorization::create_category(db, input),
+        "categories.update" => categorization::update_category(db, input),
+        "categories.usage" => categorization::category_usage(db, s(input, "id")),
+        "categories.delete" => {
+            categorization::delete_category(db, s(input, "id"), input.get("replacementId").and_then(Value::as_str))
+        }
+        "rules.list" => categorization::list_rules(db).map(Value::Array),
+        "rules.create" => categorization::create_rule(db, input),
+        "rules.update" => categorization::update_rule(db, s(input, "id"), &input["input"]),
+        "rules.delete" => categorization::delete_rule(db, s(input, "id")),
+        "rules.preview" => {
+            let only = input.get("onlyUncategorized").and_then(Value::as_bool).unwrap_or(true);
+            if let Some(id) = input.get("ruleId").and_then(Value::as_str) {
+                categorization::preview_saved_rule(db, id, only)
+            } else if let Some(rule) = input.get("rule") {
+                categorization::preview_rule(db, &categorization::draft_rule(rule), only)
+            } else {
+                Err(AppError::invariant("Choose a rule to preview"))
+            }
+        }
+        "rules.apply" => categorization::apply_rule(db, s(input, "ruleId"), &ids(input, "txnIds")),
+        "suggestions.forTxns" => categorization::suggest_for_txns(db, &ids(input, "txnIds")).map(Value::Array),
         "app.status" => (|| {
             Ok(json!({
                 "demo": app.is_demo(),
