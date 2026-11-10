@@ -16,7 +16,6 @@
     "paths": {
       "@domain/*": ["./src/domain/*"],
       "@shared/*": ["./src/shared/*"],
-      "@db/*": ["./src/db/*"],
       "@renderer/*": ["./src/renderer/*"]
     }
   }

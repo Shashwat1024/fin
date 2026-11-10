@@ -71,9 +71,9 @@ phase ends with tests, a commit and a push.
   save finishing after Ctrl+N/Ctrl+T could close the dialog the shortcut had just opened.
 
 ## P6: Switch-over and release 2.0.0
-- [ ] R601 Full end-to-end suite, axe (both themes) and offline against the packaged Tauri app
-- [ ] R602 Performance at 50,000 transactions (Rust benchmarks plus end-to-end timing)
-- [ ] R603 NSIS installer, size ≤ 20 MB, icon
-- [ ] R604 Remove Electron, `src/main`, `src/preload`, `src/db` and backend-only domain code; update
+- [x] R601 Full end-to-end suite, axe (both themes) and offline against the packaged Tauri app
+- [x] R602 Performance at 50,000 transactions (Rust benchmarks plus end-to-end timing)
+- [x] R603 NSIS installer, size ≤ 20 MB, icon
+- [x] R604 Remove Electron, `src/main`, `src/preload`, `src/db` and backend-only domain code; update
   README, quickstart and release checklist
 - [ ] R605 Version 2.0.0, PR, tag

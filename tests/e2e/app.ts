@@ -2,19 +2,9 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import {
-  _electron as electron,
-  chromium,
-  expect,
-  test,
-  type Browser,
-  type ElectronApplication,
-  type Page,
-} from '@playwright/test'
+import { chromium, expect, test, type Browser, type Page } from '@playwright/test'
 
 export type FinApp = {
-  /** The Electron application; not available when running against the Tauri build. */
-  app: ElectronApplication
   page: Page
   requests: string[]
   dataDir: string
@@ -26,18 +16,15 @@ export type FinApp = {
   close: () => Promise<void>
 }
 
-/** FIN_E2E_SHELL=tauri runs the suite against the Rust/Tauri build (specs/002-rust-tauri-port). */
-export const isTauri = process.env.FIN_E2E_SHELL === 'tauri'
-
 let nextPort = 9400 + Math.floor(Math.random() * 400)
-let lastTauriPage: Page | undefined
+let lastPage: Page | undefined
 
-// Diagnostics: when a test fails on the Tauri build, record what dialogs and fields looked like.
+// Diagnostics: when a test fails, record what dialogs and fields looked like.
 // Playwright needs the fixtures argument destructured even when no fixture is used.
 // eslint-disable-next-line no-empty-pattern
 test.afterEach(async ({}, info) => {
-  if (!isTauri || info.status === info.expectedStatus || !lastTauriPage || lastTauriPage.isClosed()) return
-  const state = await lastTauriPage
+  if (info.status === info.expectedStatus || !lastPage || lastPage.isClosed()) return
+  const state = await lastPage
     .evaluate(
       `(() => ({
         dialogs: [...document.querySelectorAll('[role=dialog],[role=alertdialog],[role=listbox]')].map((d) => ({
@@ -56,7 +43,13 @@ test.afterEach(async ({}, info) => {
   console.log(`[fin] state at failure: ${JSON.stringify(state)}`)
 })
 
-async function launchTauri(dataDir: string): Promise<FinApp> {
+/**
+ * Launch the built app against a throwaway data folder (or a prepared one, removed on close).
+ * FIN_TAURI_EXE picks the build; the default is the debug build that `npm run test:e2e` makes
+ * (use target/release/fin.exe for the release build).
+ */
+export async function launchFin(prepared?: string): Promise<FinApp> {
+  const dataDir = prepared ?? mkdtempSync(join(tmpdir(), 'fin-e2e-'))
   const exe = process.env.FIN_TAURI_EXE ?? resolve('target', 'debug', 'fin.exe')
   const port = nextPort++
   // One WebView2 profile per data folder, kept across launches like a real user's (stop() keeps
@@ -85,7 +78,7 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
       await new Promise((r) => setTimeout(r, 50))
     }
   }
-  if (!browser) throw new Error('Could not attach to the Tauri app')
+  if (!browser) throw new Error('Could not attach to the Fin window')
   const context = browser.contexts()[0]!
   const page = context.pages()[0] ?? (await context.waitForEvent('page'))
   await page.waitForLoadState('domcontentloaded')
@@ -99,7 +92,7 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
   page.on('pageerror', (e) => console.log(`[fin] page error: ${e.message}`))
   let quitting = false
   const connected = browser
-  lastTauriPage = page
+  lastPage = page
   const quit = async () => {
     quitting = true
     await connected.close().catch(() => undefined)
@@ -115,7 +108,6 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
     }
   }
   return {
-    app: undefined as unknown as ElectronApplication,
     page,
     requests,
     dataDir,
@@ -127,45 +119,6 @@ async function launchTauri(dataDir: string): Promise<FinApp> {
     close: async () => {
       await quit()
       for (const dir of [dataDir, webviewDir, answersDir]) remove(dir)
-    },
-  }
-}
-
-/** Launch the built app against a throwaway data folder (or a prepared one, removed on close). */
-export async function launchFin(prepared?: string): Promise<FinApp> {
-  const dataDir = prepared ?? mkdtempSync(join(tmpdir(), 'fin-e2e-'))
-  if (isTauri) return launchTauri(dataDir)
-  // Editors built on Electron (e.g. VS Code) set this for child processes; it would start Electron as plain Node.
-  const { ELECTRON_RUN_AS_NODE: _ignored, ...env } = process.env
-  // FIN_E2E_EXE runs the suite against a packaged build (e.g. release/win-unpacked/Fin.exe).
-  const exe = process.env.FIN_E2E_EXE
-  const app = await electron.launch({
-    ...(exe ? { executablePath: exe, args: [] } : { args: ['.'] }),
-    env: { ...env, FIN_DATA_DIR: dataDir } as Record<string, string>,
-  })
-  const page = await app.firstWindow()
-  const requests: string[] = []
-  page.on('request', (r) => requests.push(r.url()))
-  return {
-    app,
-    page,
-    requests,
-    dataDir,
-    answerDialogs: (path) =>
-      app.evaluate(({ dialog }, file) => {
-        dialog.showOpenDialog = (async () => ({
-          canceled: false,
-          filePaths: [file],
-        })) as typeof dialog.showOpenDialog
-        dialog.showSaveDialog = (async () => ({
-          canceled: false,
-          filePath: file,
-        })) as typeof dialog.showSaveDialog
-      }, path),
-    stop: () => app.close(),
-    close: async () => {
-      await app.close()
-      rmSync(dataDir, { recursive: true, force: true })
     },
   }
 }

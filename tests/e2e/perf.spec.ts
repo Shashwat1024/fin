@@ -51,6 +51,9 @@ test.beforeAll(async () => {
 test.afterAll(async () => fin?.close())
 
 test('cold start to a usable Overview in under 2 s', async () => {
+  // The budget is for what users run; the default debug build is unoptimised. Set FIN_TAURI_EXE to
+  // the release build (target/release/fin.exe) to check it.
+  test.skip(!/release/i.test(process.env.FIN_TAURI_EXE ?? ''), 'cold start is measured on the release build')
   console.log(`cold start: ${Math.round(coldStartMs)} ms`)
   expect(coldStartMs).toBeLessThan(2000)
   await expect(page.locator('[data-slot="card"]', { hasText: 'Lowest in 30 days' })).toContainText('₹')

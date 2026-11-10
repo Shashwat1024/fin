@@ -39,16 +39,7 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            'electron',
-            'node:sqlite',
-            'react',
-            'react-*',
-            '@db/*',
-            '../db/*',
-            '../main/*',
-            '../renderer/*',
-          ],
+          patterns: ['@tauri-apps/*', 'react', 'react-*', '../renderer/*'],
         },
       ],
     },
@@ -57,7 +48,7 @@ export default tseslint.config(
     // The renderer is untrusted and must not reach Node or storage directly.
     files: ['src/renderer/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-imports': ['error', { patterns: ['electron', 'node:*', '@db/*'] }],
+      'no-restricted-imports': ['error', { patterns: ['node:*'] }],
     },
   },
 )
