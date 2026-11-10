@@ -25,3 +25,19 @@ test('first-run setup previews the chosen appearance straight away and keeps it'
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
   await expect(html).toHaveClass(/\bdark\b/)
 })
+
+test('the sidebar has its own Settings button and a quick appearance switch', async () => {
+  const { page } = fin
+  const html = page.locator('html')
+  const sidebarTheme = page.getByRole('radiogroup', { name: 'Appearance' })
+  await sidebarTheme.getByRole('radio', { name: 'Light theme' }).click()
+  await expect(html).not.toHaveClass(/\bdark\b/)
+
+  await page.getByRole('navigation', { name: 'App' }).getByRole('link', { name: 'Settings' }).click()
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
+  // The Settings page shows the same choice, and changing it there updates the sidebar
+  await expect(page.getByRole('main').getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'true')
+  await page.getByRole('main').getByRole('radio', { name: 'Dark' }).click()
+  await expect(html).toHaveClass(/\bdark\b/)
+  await expect(sidebarTheme.getByRole('radio', { name: 'Dark theme' })).toHaveAttribute('aria-checked', 'true')
+})
