@@ -6,7 +6,9 @@ Thumbs.db
 # Dependencies and build output
 node_modules/
 dist/
-build/
+build/*
+!build/icon.ico
+!build/icon.png
 target/
 out/
 release/

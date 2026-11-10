@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, type WebContents } from 'electron'
 import { mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { IPC_CHANNEL } from '@shared/contract'
 import { dispatch } from './dispatch'
@@ -59,6 +60,8 @@ function createWindow(): void {
     title: 'Fin',
     backgroundColor: '#0b0d10',
     autoHideMenuBar: true,
+    // The packaged app takes its icon from Fin.exe; in development, show the same one.
+    ...(app.isPackaged ? {} : { icon: join(app.getAppPath(), 'build', 'icon.ico') }),
     webPreferences: {
       preload: fileURLToPath(new URL('../preload/index.cjs', import.meta.url)),
       sandbox: true,
