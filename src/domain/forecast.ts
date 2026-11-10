@@ -114,7 +114,10 @@ export function weekdayBaseline(
   return { byWeekday: buckets.map(median), days }
 }
 
-export function confidenceFor(historyDays: number, recurringShare: number): { confidence: Confidence; reason: string } {
+export function confidenceFor(
+  historyDays: number,
+  recurringShare: number,
+): { confidence: Confidence; reason: string } {
   if (historyDays < LOW_HISTORY_DAYS) {
     return {
       confidence: 'low',
@@ -126,7 +129,10 @@ export function confidenceFor(historyDays: number, recurringShare: number): { co
   }
   const pct = Math.round(recurringShare * 100)
   if (historyDays >= BASELINE_DAYS && recurringShare >= HIGH_RECURRING_SHARE) {
-    return { confidence: 'high', reason: `${pct}% of the money going out is from recurring items you set up, and there are at least ${BASELINE_DAYS} days of history.` }
+    return {
+      confidence: 'high',
+      reason: `${pct}% of the money going out is from recurring items you set up, and there are at least ${BASELINE_DAYS} days of history.`,
+    }
   }
   return {
     confidence: 'medium',
@@ -143,7 +149,9 @@ export function runForecast(input: ForecastInput): Forecast {
   const end = addDays(today, days)
   const events = input.events
     .filter((e) => compareDates(e.date, today) >= 0 && compareDates(e.date, end) <= 0)
-    .sort((a, b) => compareDates(a.date, b.date) || a.amountMinor - b.amountMinor || a.name.localeCompare(b.name))
+    .sort(
+      (a, b) => compareDates(a.date, b.date) || a.amountMinor - b.amountMinor || a.name.localeCompare(b.name),
+    )
   const byDate = new Map<CalendarDate, number>()
   for (const e of events) byDate.set(e.date, (byDate.get(e.date) ?? 0) + e.amountMinor)
 
@@ -193,7 +201,11 @@ export function runForecast(input: ForecastInput): Forecast {
 const MAX_CAUSES = 5
 
 /** Runs of days where the projected balance is below the buffer, with the payments that lead there. */
-export function bufferRanges(points: readonly ForecastPoint[], bufferMinor: number, events: readonly ForecastEvent[]): BufferRange[] {
+export function bufferRanges(
+  points: readonly ForecastPoint[],
+  bufferMinor: number,
+  events: readonly ForecastEvent[],
+): BufferRange[] {
   const ranges: BufferRange[] = []
   let open: BufferRange | null = null
   for (const p of points) {

@@ -23,7 +23,12 @@ test.beforeAll(async () => {
 })
 test.afterAll(async () => fin?.close())
 
-const SCREENS: { name: string; key?: string; hash?: string; ready: (p: Page) => ReturnType<Page['getByRole']> }[] = [
+const SCREENS: {
+  name: string
+  key?: string
+  hash?: string
+  ready: (p: Page) => ReturnType<Page['getByRole']>
+}[] = [
   { name: 'Overview', key: 'Control+1', ready: (p) => p.getByRole('heading', { name: 'Overview' }) },
   { name: 'Transactions', key: 'Control+2', ready: (p) => p.getByRole('row').nth(2) },
   { name: 'Accounts', key: 'Control+3', ready: (p) => p.getByRole('heading', { name: 'Accounts' }) },
@@ -31,12 +36,20 @@ const SCREENS: { name: string; key?: string; hash?: string; ready: (p: Page) => 
   { name: 'Recurring', key: 'Control+5', ready: (p) => p.getByText('All recurring items') },
   { name: 'Budget', key: 'Control+6', ready: (p) => p.getByTestId('to-assign') },
   { name: 'Goals', key: 'Control+7', ready: (p) => p.getByTestId('goal-status').first() },
-  { name: 'Categories', key: 'Control+8', ready: (p) => p.getByRole('region', { name: 'Food', exact: true }) },
+  {
+    name: 'Categories',
+    key: 'Control+8',
+    ready: (p) => p.getByRole('region', { name: 'Food', exact: true }),
+  },
   { name: 'Forecast', key: 'Control+9', ready: (p) => p.getByRole('region', { name: 'Assumptions' }) },
   { name: 'Net worth', key: 'Control+0', ready: (p) => p.getByRole('region', { name: 'Assets' }) },
   { name: 'Settings', key: 'Control+,', ready: (p) => p.getByRole('heading', { name: 'Settings' }) },
   { name: 'Insights', hash: '/insights', ready: (p) => p.getByRole('article').first() },
-  { name: 'What if', hash: '/insights?tab=what-if', ready: (p) => p.getByRole('region', { name: 'Scenario result' }) },
+  {
+    name: 'What if',
+    hash: '/insights?tab=what-if',
+    ready: (p) => p.getByRole('region', { name: 'Scenario result' }),
+  },
 ]
 
 async function audit(label: string) {

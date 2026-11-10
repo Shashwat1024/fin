@@ -61,7 +61,13 @@ export class AuditWriter {
     readonly groupId: string,
   ) {}
 
-  private log(action: 'insert' | 'update' | 'delete', entity: string, entityId: string, before?: Row, after?: Row) {
+  private log(
+    action: 'insert' | 'update' | 'delete',
+    entity: string,
+    entityId: string,
+    before?: Row,
+    after?: Row,
+  ) {
     run(
       this.db,
       'INSERT INTO audit_log (id, group_id, seq, action, entity, entity_id, before, after) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -118,7 +124,14 @@ export type Audited<T> = { result: T; auditGroupId: string }
 export function withAudit<T>(db: Db, label: string, fn: (a: AuditWriter) => T, undoOf?: string): Audited<T> {
   return transaction(db, () => {
     const groupId = newId('grp')
-    run(db, 'INSERT INTO audit_groups (id, at, label, undo_of) VALUES (?, ?, ?, ?)', groupId, nowIso(), label, undoOf ?? null)
+    run(
+      db,
+      'INSERT INTO audit_groups (id, at, label, undo_of) VALUES (?, ?, ?, ?)',
+      groupId,
+      nowIso(),
+      label,
+      undoOf ?? null,
+    )
     const result = fn(new AuditWriter(db, groupId))
     return { result, auditGroupId: groupId }
   })
@@ -177,7 +190,9 @@ export function undoGroup(db: Db, groupId: string): Audited<{ reverted: number }
   for (const [key, expected] of finalState) {
     const [entity, id] = key.split(':') as [string, string]
     if (!sameRow(readRow(db, entity, id), expected)) {
-      throw conflict('Some records were changed after this action, so it can no longer be undone automatically')
+      throw conflict(
+        'Some records were changed after this action, so it can no longer be undone automatically',
+      )
     }
   }
   return withAudit(
@@ -190,7 +205,13 @@ export function undoGroup(db: Db, groupId: string): Audited<{ reverted: number }
         else if (e.action === 'delete') a.insert(e.entity, before!)
         else a.update(e.entity, e.entity_id, before!)
       }
-      run(db, 'UPDATE audit_groups SET undone_at = ?, undone_by = ? WHERE id = ?', nowIso(), a.groupId, groupId)
+      run(
+        db,
+        'UPDATE audit_groups SET undone_at = ?, undone_by = ? WHERE id = ?',
+        nowIso(),
+        a.groupId,
+        groupId,
+      )
       return { reverted: entries.length }
     },
     groupId,

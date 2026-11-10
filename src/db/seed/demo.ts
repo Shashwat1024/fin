@@ -29,8 +29,11 @@ export function seedDemoData(db: Db, today: string): void {
     return id
   }
   const start = addMonths(startOfMonth(today), -3)
-  const acct = (name: string, type: Parameters<typeof createAccount>[1]['type'], openingBalanceMinor: number) =>
-    createAccount(db, { name, type, openingBalanceMinor, openingDate: start }).account.id
+  const acct = (
+    name: string,
+    type: Parameters<typeof createAccount>[1]['type'],
+    openingBalanceMinor: number,
+  ) => createAccount(db, { name, type, openingBalanceMinor, openingDate: start }).account.id
   const bank = acct('Demo Savings Bank', 'bank', 18_500_000)
   const wallet = acct('Wallet', 'cash', 300_000)
   const card = acct('Demo Credit Card', 'credit_card', 1_250_000)
@@ -38,7 +41,13 @@ export function seedDemoData(db: Db, today: string): void {
 
   const rand = rng(20261109)
   const between = (lo: number, hi: number) => Math.round((lo + rand() * (hi - lo)) / 100) * 100
-  const add = (accountId: string, postedDate: string, amountMinor: number, payee: string, categoryId: string) => {
+  const add = (
+    accountId: string,
+    postedDate: string,
+    amountMinor: number,
+    payee: string,
+    categoryId: string,
+  ) => {
     if (postedDate > today) return
     createTransaction(db, { accountId, postedDate, amountMinor, payee, categoryId })
   }
@@ -67,9 +76,27 @@ export function seedDemoData(db: Db, today: string): void {
     add(bank, day(20), -between(80_000, 250_000), 'Apollo Pharmacy', c('Health › Medicines'))
     // Card bill paid from the bank: a transfer, so not counted as spending twice.
     const bill = day(25)
-    if (bill <= today) createTransfer(db, { fromAccountId: bank, toAccountId: card, postedDate: bill, amountMinor: between(1_200_000, 1_800_000) })
-    if (day(16) <= today) createTransfer(db, { fromAccountId: bank, toAccountId: funds, postedDate: day(16), amountMinor: 1_000_000 })
-    if (day(9) <= today) createTransfer(db, { fromAccountId: bank, toAccountId: wallet, postedDate: day(9), amountMinor: 200_000 })
+    if (bill <= today)
+      createTransfer(db, {
+        fromAccountId: bank,
+        toAccountId: card,
+        postedDate: bill,
+        amountMinor: between(1_200_000, 1_800_000),
+      })
+    if (day(16) <= today)
+      createTransfer(db, {
+        fromAccountId: bank,
+        toAccountId: funds,
+        postedDate: day(16),
+        amountMinor: 1_000_000,
+      })
+    if (day(9) <= today)
+      createTransfer(db, {
+        fromAccountId: bank,
+        toAccountId: wallet,
+        postedDate: day(9),
+        amountMinor: 200_000,
+      })
   }
   // Eating out on Saturdays, on the card (a weekend pattern, US8).
   for (let d = start; d < today; d = addDays(d, 1)) {
@@ -78,7 +105,11 @@ export function seedDemoData(db: Db, today: string): void {
   seedPlanning(db, today, start, { bank, card, funds }, c)
 
   // Rules, and a few recent lines left uncategorised so suggestions can be tried (US6).
-  createRule(db, { name: 'Ride apps', conditions: [{ field: 'description', op: 'contains', value: 'uber' }], categoryId: c('Transport › Cab & auto') })
+  createRule(db, {
+    name: 'Ride apps',
+    conditions: [{ field: 'description', op: 'contains', value: 'uber' }],
+    categoryId: c('Transport › Cab & auto'),
+  })
   createRule(db, {
     name: 'Pharmacy',
     conditions: [{ field: 'description', op: 'regex', value: 'apollo|pharm|medplus' }],
@@ -97,7 +128,16 @@ export function seedDemoData(db: Db, today: string): void {
     const date = endOfMonth(addMonths(start, m))
     if (date > today) return
     const paidIn = 42_000_000 + (m + 1) * 1_000_000
-    upsertValuation(db, { accountId: funds, date, valueMinor: Math.round((paidIn * growth) / 100) * 100, note: 'Statement value' }, today)
+    upsertValuation(
+      db,
+      {
+        accountId: funds,
+        date,
+        valueMinor: Math.round((paidIn * growth) / 100) * 100,
+        note: 'Statement value',
+      },
+      today,
+    )
   })
   updateSettings(db, { onboarded: true, bufferMinor: 5_000_000 })
 }
@@ -111,17 +151,39 @@ function seedPlanning(
   c: (path: string) => string,
 ) {
   const day = (d: number) => addDays(start, d - 1)
-  const recurring = (name: string, kind: Parameters<typeof createRecurring>[1]['kind'], accountId: string, amountMinor: number, anchor: string, extra = {}) =>
-    createRecurring(db, { name, kind, accountId, amountMinor, frequency: 'monthly', anchorDate: anchor, ...extra }, today)
+  const recurring = (
+    name: string,
+    kind: Parameters<typeof createRecurring>[1]['kind'],
+    accountId: string,
+    amountMinor: number,
+    anchor: string,
+    extra = {},
+  ) =>
+    createRecurring(
+      db,
+      { name, kind, accountId, amountMinor, frequency: 'monthly', anchorDate: anchor, ...extra },
+      today,
+    )
   recurring('Salary', 'income', a.bank, 9_500_000, day(1), { categoryId: c('Income › Salary') })
   recurring('Rent', 'bill', a.bank, 2_200_000, day(3), { categoryId: c('Housing › Rent') })
-  recurring('Electricity', 'bill', a.bank, 200_000, day(5), { categoryId: c('Housing › Electricity'), toleranceBp: 4000 })
+  recurring('Electricity', 'bill', a.bank, 200_000, day(5), {
+    categoryId: c('Housing › Electricity'),
+    toleranceBp: 4000,
+  })
   recurring('Airtel fibre', 'bill', a.bank, 99_900, day(6), { categoryId: c('Housing › Internet') })
-  recurring('Netflix', 'subscription', a.card, 64_900, day(7), { categoryId: c('Entertainment › Subscriptions') })
-  recurring('Spotify', 'subscription', a.card, 13_900, day(12), { categoryId: c('Entertainment › Subscriptions'), toleranceBp: 2500 })
+  recurring('Netflix', 'subscription', a.card, 64_900, day(7), {
+    categoryId: c('Entertainment › Subscriptions'),
+  })
+  recurring('Spotify', 'subscription', a.card, 13_900, day(12), {
+    categoryId: c('Entertainment › Subscriptions'),
+    toleranceBp: 2500,
+  })
   recurring('Index fund SIP', 'savings', a.bank, 1_000_000, day(16), { toAccountId: a.funds })
   // The card bill varies, so it matches within ±50%; card purchases reach cash on this date (forecast).
-  recurring('Credit card bill', 'transfer', a.bank, 1_500_000, day(25), { toAccountId: a.card, toleranceBp: 5000 })
+  recurring('Credit card bill', 'transfer', a.bank, 1_500_000, day(25), {
+    toAccountId: a.card,
+    toleranceBp: 5000,
+  })
 
   const plan: [string, number][] = [
     ['Housing › Rent', 2_200_000],
@@ -146,11 +208,19 @@ function seedPlanning(
     for (const [path, amount] of plan) assignBudget(db, month, c(path), amount)
   }
 
-  const emergency = createGoal(db, { name: 'Emergency fund', targetMinor: 30_000_000, targetDate: addMonths(today, 14) }, today).goal.id
+  const emergency = createGoal(
+    db,
+    { name: 'Emergency fund', targetMinor: 30_000_000, targetDate: addMonths(today, 14) },
+    today,
+  ).goal.id
   contribute(db, { goalId: emergency, date: day(1), amountMinor: 6_000_000, note: 'Starting amount' }, today)
   for (let m = 0; m <= 3; m++) {
     const date = addDays(addMonths(start, m), 1)
     if (date <= today) contribute(db, { goalId: emergency, date, amountMinor: 1_500_000 }, today)
   }
-  createGoal(db, { name: 'Investments to ₹10 lakh', targetMinor: 100_000_000, linkedAccountId: a.funds }, today)
+  createGoal(
+    db,
+    { name: 'Investments to ₹10 lakh', targetMinor: 100_000_000, linkedAccountId: a.funds },
+    today,
+  )
 }

@@ -22,7 +22,10 @@ function isTimeZone(tz: string): boolean {
 export const empty = z.object({}).optional()
 
 export const settingsPatch = z.object({
-  currency: z.string().regex(/^[A-Z]{3}$/).optional(),
+  currency: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .optional(),
   timezone: z.string().refine(isTimeZone, 'Unknown time zone').optional(),
   fyStartMonth: z.number().int().min(1).max(12).optional(),
   weekStart: z.number().int().min(0).max(6).optional(),
@@ -42,7 +45,10 @@ export const accountInput = z.object({
   openingBalanceMinor: minor.optional(),
   openingDate: calendarDate,
   notes: notes.optional(),
-  currency: z.string().regex(/^[A-Z]{3}$/).optional(),
+  currency: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .optional(),
 })
 
 export const accountUpdate = z.object({ id, patch: accountInput.partial() })
@@ -104,7 +110,10 @@ export const txnFilter = z.object({
   limit: z.number().int().min(1).max(500).optional(),
 })
 
-export const payeeSuggestInput = z.object({ prefix: z.string().max(100), limit: z.number().int().min(1).max(20).optional() })
+export const payeeSuggestInput = z.object({
+  prefix: z.string().max(100),
+  limit: z.number().int().min(1).max(20).optional(),
+})
 export const undoInput = z.object({ auditGroupId: id })
 export const activityInput = z.object({ limit: z.number().int().min(1).max(200).optional() }).optional()
 
@@ -150,7 +159,9 @@ const importedLine = z.object({
 export const importPreviewInput = z.object({
   accountId: id,
   fileHash: z.string().max(128).nullable().optional(),
-  rows: z.array(importedLine.pick({ rowNumber: true, date: true, amountMinor: true, description: true })).max(MAX_IMPORT_ROWS),
+  rows: z
+    .array(importedLine.pick({ rowNumber: true, date: true, amountMinor: true, description: true }))
+    .max(MAX_IMPORT_ROWS),
 })
 
 export const importCommitInput = z.object({
@@ -160,18 +171,31 @@ export const importCommitInput = z.object({
   mapping: mappingSchema,
   rows: z.array(importedLine).max(MAX_IMPORT_ROWS),
   rejected: z
-    .array(z.object({ rowNumber: z.number().int().min(1), raw: rawCells, status: z.enum(['error', 'ignored']), message: z.string().max(500) }))
+    .array(
+      z.object({
+        rowNumber: z.number().int().min(1),
+        raw: rawCells,
+        status: z.enum(['error', 'ignored']),
+        message: z.string().max(500),
+      }),
+    )
     .max(MAX_IMPORT_ROWS),
   /** Choices for possible duplicates; anything not listed is skipped. */
   importPossibleDuplicates: z.array(z.number().int().min(1)).max(MAX_IMPORT_ROWS),
   statementClosing: z.object({ date: calendarDate, balanceMinor: minor }).nullable().optional(),
   /** Suggested categories the user accepted, by source line (FR-020). */
-  categories: z.array(z.object({ rowNumber: z.number().int().min(1), categoryId: id })).max(MAX_IMPORT_ROWS).optional(),
+  categories: z
+    .array(z.object({ rowNumber: z.number().int().min(1), categoryId: id }))
+    .max(MAX_IMPORT_ROWS)
+    .optional(),
   savePresetAs: z.string().trim().min(1).max(80).nullable().optional(),
 })
 
 export const importUndoInput = z.object({ batchId: id, includeEdited: z.boolean() })
-export const savePresetInput = z.object({ name: z.string().trim().min(1).max(80), mapping: mappingSchema.omit({ headerRow: true }) })
+export const savePresetInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  mapping: mappingSchema.omit({ headerRow: true }),
+})
 export const reconcileInput = z.object({ id, statementDate: calendarDate, statementBalanceMinor: minor })
 
 export type ImportPreviewInput = z.output<typeof importPreviewInput>
@@ -211,16 +235,31 @@ export const recurringInput = z
     notes: notes.optional(),
     active: z.boolean().optional(),
   })
-  .refine((v) => !v.endDate || v.endDate >= v.anchorDate, { message: 'The end date is before the first date', path: ['endDate'] })
-  .refine((v) => !v.toAccountId || v.toAccountId !== v.accountId, { message: 'Choose a different account', path: ['toAccountId'] })
+  .refine((v) => !v.endDate || v.endDate >= v.anchorDate, {
+    message: 'The end date is before the first date',
+    path: ['endDate'],
+  })
+  .refine((v) => !v.toAccountId || v.toAccountId !== v.accountId, {
+    message: 'Choose a different account',
+    path: ['toAccountId'],
+  })
 
 export const recurringUpdate = z.object({ id, input: recurringInput })
-export const occurrencesInput = z.object({ from: calendarDate, to: calendarDate }).refine((v) => v.from <= v.to, 'from must not be after to')
+export const occurrencesInput = z
+  .object({ from: calendarDate, to: calendarDate })
+  .refine((v) => v.from <= v.to, 'from must not be after to')
 export const occurrenceRef = z.object({ itemId: id, dueDate: calendarDate })
-export const occurrenceAction = occurrenceRef.extend({ action: z.enum(['skip', 'match', 'reset']), txnId: id.optional() })
+export const occurrenceAction = occurrenceRef.extend({
+  action: z.enum(['skip', 'match', 'reset']),
+  txnId: id.optional(),
+})
 
 export const budgetMonthInput = z.object({ month: monthKey })
-export const budgetAssignInput = z.object({ month: monthKey, categoryId: id, assignedMinor: minor.min(0, 'Assign zero or more') })
+export const budgetAssignInput = z.object({
+  month: monthKey,
+  categoryId: id,
+  assignedMinor: minor.min(0, 'Assign zero or more'),
+})
 
 export const goalInput = z.object({
   name,
@@ -243,7 +282,11 @@ export type GoalInput = z.output<typeof goalInput>
 // ---- Categorisation (US6) -----------------------------------------------------------------------
 
 const categoryGroup = z.enum(['needs', 'wants', 'goals', 'buffer', 'income', 'transfer'])
-export const categoryCreateInput = z.object({ name, parentId: id.nullable().optional(), group: categoryGroup.optional() })
+export const categoryCreateInput = z.object({
+  name,
+  parentId: id.nullable().optional(),
+  group: categoryGroup.optional(),
+})
 export const categoryUpdateInput = z.object({
   id,
   name: name.optional(),
@@ -254,9 +297,18 @@ export const categoryDeleteInput = z.object({ id, replacementId: id.nullable().o
 
 const ruleText = z.string().trim().min(1, 'Enter some text').max(200)
 export const ruleCondition = z.discriminatedUnion('field', [
-  z.object({ field: z.literal('description'), op: z.enum(['contains', 'equals', 'startsWith', 'regex']), value: ruleText }),
+  z.object({
+    field: z.literal('description'),
+    op: z.enum(['contains', 'equals', 'startsWith', 'regex']),
+    value: ruleText,
+  }),
   z.object({ field: z.literal('merchant'), op: z.enum(['equals', 'contains']), value: ruleText }),
-  z.object({ field: z.literal('amount'), op: z.literal('between'), min: minor.min(0).nullable().optional(), max: minor.min(0).nullable().optional() }),
+  z.object({
+    field: z.literal('amount'),
+    op: z.literal('between'),
+    min: minor.min(0).nullable().optional(),
+    max: minor.min(0).nullable().optional(),
+  }),
   z.object({ field: z.literal('direction'), op: z.literal('equals'), value: z.enum(['in', 'out']) }),
   z.object({ field: z.literal('account'), op: z.literal('equals'), value: id }),
 ])
@@ -282,7 +334,9 @@ export type RuleInput = z.output<typeof ruleInput>
 // ---- Forecast and net worth (US7) ---------------------------------------------------------------
 
 export const forecastInput = z.object({ days: z.union([z.literal(30), z.literal(60), z.literal(90)]) })
-export const networthInput = z.object({ from: calendarDate.optional(), to: calendarDate.optional() }).optional()
+export const networthInput = z
+  .object({ from: calendarDate.optional(), to: calendarDate.optional() })
+  .optional()
 export const valuationsListInput = z.object({ accountId: id })
 export const valuationInput = z.object({
   accountId: id,
@@ -301,11 +355,27 @@ export const insightKeyInput = z.object({ key: z.string().min(1).max(300) })
 const positiveAmount = minor.min(1, 'Enter an amount')
 const nonZeroAmount = minor.refine((v) => v !== 0, 'Enter an amount')
 export const scenarioChange = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('new_bill'), name, amountMinor: positiveAmount, frequency: z.enum(FREQUENCIES), startDate: calendarDate }),
+  z.object({
+    kind: z.literal('new_bill'),
+    name,
+    amountMinor: positiveAmount,
+    frequency: z.enum(FREQUENCIES),
+    startDate: calendarDate,
+  }),
   z.object({ kind: z.literal('income_change'), amountMinor: nonZeroAmount, fromDate: calendarDate }),
   z.object({ kind: z.literal('large_purchase'), name, amountMinor: positiveAmount, date: calendarDate }),
-  z.object({ kind: z.literal('loan_prepayment'), loanId: id, amountMinor: positiveAmount, date: calendarDate }),
-  z.object({ kind: z.literal('savings_change'), goalId: id.nullable(), amountMinor: nonZeroAmount, fromDate: calendarDate }),
+  z.object({
+    kind: z.literal('loan_prepayment'),
+    loanId: id,
+    amountMinor: positiveAmount,
+    date: calendarDate,
+  }),
+  z.object({
+    kind: z.literal('savings_change'),
+    goalId: id.nullable(),
+    amountMinor: nonZeroAmount,
+    fromDate: calendarDate,
+  }),
 ])
 export const scenarioInput = z.object({
   days: z.union([z.literal(30), z.literal(60), z.literal(90)]),

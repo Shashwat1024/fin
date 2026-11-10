@@ -13,7 +13,13 @@ import type { Handlers } from './handlers'
 export const backupDirFor = (db: Db, env: AppEnv) => getSettings(db).backupDir || env.defaultBackupDir
 
 function status(db: Db, env: AppEnv): AppStatus {
-  return { demo: env.isDemo(), dataDir: env.dataDir, backupDir: backupDirFor(db, env), defaultBackupDir: env.defaultBackupDir, counts: countData(db) }
+  return {
+    demo: env.isDemo(),
+    dataDir: env.dataDir,
+    backupDir: backupDirFor(db, env),
+    defaultBackupDir: env.defaultBackupDir,
+    counts: countData(db),
+  }
 }
 
 function noDemo(env: AppEnv, what: string) {
@@ -50,7 +56,8 @@ export const backupHandlers: Pick<Handlers, BackupChannels> = {
   'backup.list': ({ db, env }) => {
     // Safety copies made before upgrades always go to the default folder, so list both.
     const seen = new Map<string, BackupInfo>()
-    for (const b of [...listBackups(backupDirFor(db, env)), ...listBackups(env.defaultBackupDir)]) seen.set(b.path, b)
+    for (const b of [...listBackups(backupDirFor(db, env)), ...listBackups(env.defaultBackupDir)])
+      seen.set(b.path, b)
     return [...seen.values()].sort(newestFirst)
   },
   'backup.create': async ({ db, env }, input) => {
@@ -82,13 +89,21 @@ export const backupHandlers: Pick<Handlers, BackupChannels> = {
     return null
   },
   'export.json': async ({ db, env }) => {
-    const path = await env.chooseSavePath('Export all data', `fin-export-${localDate(new Date())}.json`, 'json')
+    const path = await env.chooseSavePath(
+      'Export all data',
+      `fin-export-${localDate(new Date())}.json`,
+      'json',
+    )
     if (!path) return null
     writeFileSync(path, `${JSON.stringify(exportJson(db), null, 2)}\n`)
     return { path }
   },
   'export.csv': async ({ db, env }) => {
-    const path = await env.chooseSavePath('Export transactions', `fin-transactions-${localDate(new Date())}.csv`, 'csv')
+    const path = await env.chooseSavePath(
+      'Export transactions',
+      `fin-transactions-${localDate(new Date())}.csv`,
+      'csv',
+    )
     if (!path) return null
     writeFileSync(path, exportTransactionsCsv(db))
     return { path }

@@ -122,7 +122,14 @@ export type TxnPage = { rows: TxnRow[]; nextCursor: string | null; totals: TxnTo
 
 export type PayeeSuggestion = { payee: string; categoryId: string | null; accountId: string; count: number }
 
-export type ActivityEntry = { id: string; at: string; label: string; undone: boolean; isUndo: boolean; canUndo: boolean }
+export type ActivityEntry = {
+  id: string
+  at: string
+  label: string
+  undone: boolean
+  isUndo: boolean
+  canUndo: boolean
+}
 
 /** Every mutation returns the audit group id so the UI can offer a one-step undo. */
 export type Mutation<T> = T & { auditGroupId: string }
@@ -171,9 +178,20 @@ export type ImportBatchDto = {
   editedCount: number
 }
 
-export type ImportRowDto = { rowNumber: number; raw: string[]; outcome: string; message: string | null; transactionId: string | null }
+export type ImportRowDto = {
+  rowNumber: number
+  raw: string[]
+  outcome: string
+  message: string | null
+  transactionId: string | null
+}
 
-export type ReconcileResult = { statementBalanceMinor: number; computedBalanceMinor: number; differenceMinor: number; asOf: string }
+export type ReconcileResult = {
+  statementBalanceMinor: number
+  computedBalanceMinor: number
+  differenceMinor: number
+  asOf: string
+}
 
 // ---- Dashboard (US3) --------------------------------------------------------------------------
 
@@ -229,9 +247,15 @@ export type BackupInfo = {
   sizeBytes: number
 }
 
-export type DataCounts = { accounts: number; transactions: number; importBatches: number; latestTxnDate: string | null }
+export type DataCounts = {
+  accounts: number
+  transactions: number
+  importBatches: number
+  latestTxnDate: string | null
+}
 
-export type BackupProblem = 'NOT_FOUND' | 'NEEDS_PASSPHRASE' | 'WRONG_PASSPHRASE' | 'NOT_FIN' | 'DAMAGED' | 'TOO_NEW'
+export type BackupProblem =
+  'NOT_FOUND' | 'NEEDS_PASSPHRASE' | 'WRONG_PASSPHRASE' | 'NOT_FIN' | 'DAMAGED' | 'TOO_NEW'
 
 export type BackupInspection =
   | { valid: true; encrypted: boolean; schemaVersion: number; needsUpgrade: boolean; counts: DataCounts }
@@ -293,7 +317,13 @@ export type OccurrenceDto = {
   manual: boolean
 }
 
-export type OccurrenceCandidate = { id: string; postedDate: string; amountMinor: number; payee: string; accountName: string }
+export type OccurrenceCandidate = {
+  id: string
+  postedDate: string
+  amountMinor: number
+  payee: string
+  accountName: string
+}
 
 export type BudgetRowDto = {
   categoryId: string
@@ -357,8 +387,14 @@ export type GoalDto = {
 
 // ---- Categorisation: categories, rules, suggestions (US6) -------------------------------------
 
-
-export type CategoryUsage = { transactions: number; splits: number; budgets: number; recurring: number; rules: number; children: number }
+export type CategoryUsage = {
+  transactions: number
+  splits: number
+  budgets: number
+  recurring: number
+  rules: number
+  children: number
+}
 
 export type RuleDto = {
   id: string
@@ -408,7 +444,13 @@ export type ForecastAssumption = {
 
 export type ForecastDto = Forecast & { assumptions: ForecastAssumption[]; hasCashAccounts: boolean }
 
-export type ValuationDto = { id: string; accountId: string; date: string; valueMinor: number; note: string | null }
+export type ValuationDto = {
+  id: string
+  accountId: string
+  date: string
+  valueMinor: number
+  note: string | null
+}
 
 export type NetWorthAccountRow = {
   id: string

@@ -14,7 +14,9 @@ describe('encrypted backup format', () => {
 
   it('fails cleanly with a wrong passphrase', async () => {
     const enc = await encryptBackup(data, 'correct horse battery', FAST)
-    await expect(decryptBackup(enc, 'Correct horse battery')).rejects.toMatchObject({ reason: 'WRONG_PASSPHRASE' })
+    await expect(decryptBackup(enc, 'Correct horse battery')).rejects.toMatchObject({
+      reason: 'WRONG_PASSPHRASE',
+    })
   })
 
   it('detects tampering with the ciphertext or the header', async () => {
@@ -36,6 +38,8 @@ describe('encrypted backup format', () => {
   it('rejects files that are not encrypted backups or are cut short', async () => {
     await expect(decryptBackup(data, 'x')).rejects.toMatchObject({ reason: 'NOT_ENCRYPTED' })
     const enc = await encryptBackup(data, 'passphrase!', FAST)
-    await expect(decryptBackup(enc.subarray(0, 30), 'passphrase!')).rejects.toMatchObject({ reason: 'CORRUPT' })
+    await expect(decryptBackup(enc.subarray(0, 30), 'passphrase!')).rejects.toMatchObject({
+      reason: 'CORRUPT',
+    })
   })
 })

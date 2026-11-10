@@ -9,7 +9,10 @@ import type { Db } from './connection'
  */
 export function snapshotDatabase(db: Db, dir: string, reason: string): string {
   mkdirSync(dir, { recursive: true })
-  const file = join(dir, `fin-${localStamp(new Date())}-${reason.replace(/[^a-z0-9-]/gi, '').toLowerCase()}.db`)
+  const file = join(
+    dir,
+    `fin-${localStamp(new Date())}-${reason.replace(/[^a-z0-9-]/gi, '').toLowerCase()}.db`,
+  )
   db.prepare('VACUUM INTO ?').run(file)
   return file
 }

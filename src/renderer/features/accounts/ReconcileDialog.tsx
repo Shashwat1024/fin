@@ -5,7 +5,14 @@ import { AmountInput, parseAmountText } from '@renderer/components/AmountInput'
 import { FormField } from '@renderer/components/layout'
 import { MoneyText } from '@renderer/components/MoneyText'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import { Input } from '@renderer/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@renderer/components/ui/toggle-group'
 import { call } from '@renderer/lib/ipc'
@@ -45,7 +52,13 @@ function ReconcileBody({ account, onDone }: { account: AccountDto; onDone: () =>
     if ('error' in parsed) return setError(parsed.error)
     setError(null)
     const signed = overdrawn === 'negative' ? -parsed.minor : parsed.minor
-    setResult(await call('accounts.reconcile', { id: account.id, statementDate: date, statementBalanceMinor: signed }))
+    setResult(
+      await call('accounts.reconcile', {
+        id: account.id,
+        statementDate: date,
+        statementBalanceMinor: signed,
+      }),
+    )
   }
 
   return (
@@ -65,11 +78,27 @@ function ReconcileBody({ account, onDone }: { account: AccountDto; onDone: () =>
           <FormField label="Statement date" htmlFor={`${id}-date`}>
             <Input id={`${id}-date`} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </FormField>
-          <FormField label={liability ? 'Amount owed' : 'Closing balance'} htmlFor={`${id}-amount`} error={error ?? undefined}>
-            <AmountInput id={`${id}-amount`} autoFocus value={amount} onChange={setAmount} invalid={Boolean(error)} />
+          <FormField
+            label={liability ? 'Amount owed' : 'Closing balance'}
+            htmlFor={`${id}-amount`}
+            error={error ?? undefined}
+          >
+            <AmountInput
+              id={`${id}-amount`}
+              autoFocus
+              value={amount}
+              onChange={setAmount}
+              invalid={Boolean(error)}
+            />
           </FormField>
         </div>
-        <ToggleGroup type="single" variant="outline" size="sm" value={overdrawn} onValueChange={(v) => v && setOverdrawn(v as 'normal' | 'negative')}>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={overdrawn}
+          onValueChange={(v) => v && setOverdrawn(v as 'normal' | 'negative')}
+        >
           <ToggleGroupItem value="normal">{liability ? 'Owed' : 'In credit'}</ToggleGroupItem>
           <ToggleGroupItem value="negative">{liability ? 'In credit' : 'Overdrawn'}</ToggleGroupItem>
         </ToggleGroup>
@@ -82,15 +111,22 @@ function ReconcileBody({ account, onDone }: { account: AccountDto; onDone: () =>
             ) : (
               <div className="flex flex-col gap-1">
                 <p>
-                  Fin shows <MoneyText minor={result.computedBalanceMinor} className="font-medium" /> on {formatDate(result.asOf)}.
+                  Fin shows <MoneyText minor={result.computedBalanceMinor} className="font-medium" /> on{' '}
+                  {formatDate(result.asOf)}.
                 </p>
                 <p className="font-medium text-warning">
                   Difference: <MoneyText minor={Math.abs(result.differenceMinor)} />{' '}
-                  {result.differenceMinor > 0 ? (liability ? 'more owed on the statement' : 'more on the statement') : liability ? 'less owed on the statement' : 'less on the statement'}
+                  {result.differenceMinor > 0
+                    ? liability
+                      ? 'more owed on the statement'
+                      : 'more on the statement'
+                    : liability
+                      ? 'less owed on the statement'
+                      : 'less on the statement'}
                 </p>
                 <p className="flex items-start gap-2 text-muted-foreground">
-                  <InfoIcon className="mt-0.5 size-4 shrink-0" /> Look for missing or duplicated transactions around this date, or adjust the
-                  starting balance.
+                  <InfoIcon className="mt-0.5 size-4 shrink-0" /> Look for missing or duplicated transactions
+                  around this date, or adjust the starting balance.
                 </p>
               </div>
             )}

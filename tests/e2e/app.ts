@@ -3,7 +3,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { _electron as electron, expect, type ElectronApplication, type Page } from '@playwright/test'
 
-export type FinApp = { app: ElectronApplication; page: Page; requests: string[]; dataDir: string; close: () => Promise<void> }
+export type FinApp = {
+  app: ElectronApplication
+  page: Page
+  requests: string[]
+  dataDir: string
+  close: () => Promise<void>
+}
 
 /** Launch the built app against a throwaway data folder (or a prepared one, removed on close). */
 export async function launchFin(prepared?: string): Promise<FinApp> {
@@ -43,9 +49,11 @@ export async function onboard(page: Page, name: string, opening: string, startDa
 }
 
 /** The newest toast containing `text` (older toasts may still be on screen). */
-export const toast = (page: Page, text: string) => page.locator('[data-sonner-toast]', { hasText: text }).last()
+export const toast = (page: Page, text: string) =>
+  page.locator('[data-sonner-toast]', { hasText: text }).last()
 
 export const fixture = (name: string) => join('tests', 'fixtures', 'csv', name)
 
 /** Requests that left the app (anything other than local files, data URLs and devtools). */
-export const externalRequests = (requests: readonly string[]) => requests.filter((u) => !/^(file|data|devtools):/.test(u))
+export const externalRequests = (requests: readonly string[]) =>
+  requests.filter((u) => !/^(file|data|devtools):/.test(u))

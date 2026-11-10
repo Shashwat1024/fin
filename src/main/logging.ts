@@ -24,7 +24,9 @@ export function formatLine(level: LogLevel, event: string, ctx: LogContext = {},
   for (const [k, v] of Object.entries(ctx)) {
     if (!ALLOWED_KEYS.has(k)) continue
     // Durations and counts are numbers we generate, not user data.
-    safe.push(`${k}=${typeof v === 'number' && (k === 'ms' || k === 'count' || k === 'version') ? v : redact(String(v))}`)
+    safe.push(
+      `${k}=${typeof v === 'number' && (k === 'ms' || k === 'count' || k === 'version') ? v : redact(String(v))}`,
+    )
   }
   return `${at.toISOString()} ${level.toUpperCase()} ${redact(event)}${safe.length ? ' ' + safe.join(' ') : ''}`
 }

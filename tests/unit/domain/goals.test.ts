@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { monthsBetween, projectGoal } from '@domain/goals'
 
-const base = { targetMinor: 30000000, targetDate: '2027-11-30', savedMinor: 0, recentMinor: 0, today: '2026-11-09' }
+const base = {
+  targetMinor: 30000000,
+  targetDate: '2027-11-30',
+  savedMinor: 0,
+  recentMinor: 0,
+  today: '2026-11-09',
+}
 
 describe('goals', () => {
   it('shows progress and the monthly amount needed to stay on track', () => {
@@ -30,8 +36,16 @@ describe('goals', () => {
   })
 
   it('needs recent contributions to project, and handles achieved and past targets', () => {
-    expect(projectGoal(base)).toMatchObject({ projectedDate: null, status: 'no_pace', requiredMonthlyMinor: 2500000 })
-    expect(projectGoal({ ...base, savedMinor: 31000000 })).toMatchObject({ percent: 100, remainingMinor: 0, status: 'achieved' })
+    expect(projectGoal(base)).toMatchObject({
+      projectedDate: null,
+      status: 'no_pace',
+      requiredMonthlyMinor: 2500000,
+    })
+    expect(projectGoal({ ...base, savedMinor: 31000000 })).toMatchObject({
+      percent: 100,
+      remainingMinor: 0,
+      status: 'achieved',
+    })
     expect(projectGoal({ ...base, targetDate: '2026-10-31', savedMinor: 100 })).toMatchObject({
       monthsLeft: null,
       requiredMonthlyMinor: null,
@@ -45,11 +59,18 @@ describe('goals', () => {
       status: 'on_track',
     })
     // ₹1 a month towards ₹3 lakh is not a projection worth showing.
-    expect(projectGoal({ ...base, recentMinor: 300 })).toMatchObject({ projectedDate: null, status: 'no_pace' })
+    expect(projectGoal({ ...base, recentMinor: 300 })).toMatchObject({
+      projectedDate: null,
+      status: 'no_pace',
+    })
   })
 
   it('never shows negative progress', () => {
-    expect(projectGoal({ ...base, savedMinor: -500, recentMinor: -500 })).toMatchObject({ percent: 0, paceMonthlyMinor: 0, status: 'no_pace' })
+    expect(projectGoal({ ...base, savedMinor: -500, recentMinor: -500 })).toMatchObject({
+      percent: 0,
+      paceMonthlyMinor: 0,
+      status: 'no_pace',
+    })
   })
 
   it('counts calendar months', () => {

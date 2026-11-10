@@ -138,7 +138,11 @@ function itemFields(db: Db, input: RecurringInput) {
   }
 }
 
-export function createRecurring(db: Db, input: RecurringInput, today: CalendarDate): Mutation<{ item: RecurringItemDto }> {
+export function createRecurring(
+  db: Db,
+  input: RecurringInput,
+  today: CalendarDate,
+): Mutation<{ item: RecurringItemDto }> {
   const fields = itemFields(db, input)
   const { result, auditGroupId } = withAudit(db, `Add recurring ${input.name}`, (a) => {
     const id = newId('rec')
@@ -150,7 +154,12 @@ export function createRecurring(db: Db, input: RecurringInput, today: CalendarDa
   return { item: itemDto(itemRow(db, result), today), auditGroupId }
 }
 
-export function updateRecurring(db: Db, id: string, input: RecurringInput, today: CalendarDate): Mutation<{ item: RecurringItemDto }> {
+export function updateRecurring(
+  db: Db,
+  id: string,
+  input: RecurringInput,
+  today: CalendarDate,
+): Mutation<{ item: RecurringItemDto }> {
   itemRow(db, id)
   const fields = itemFields(db, input)
   const { auditGroupId } = withAudit(db, `Edit recurring ${input.name}`, (a) => {
@@ -162,7 +171,8 @@ export function updateRecurring(db: Db, id: string, input: RecurringInput, today
 export function deleteRecurring(db: Db, id: string): Mutation<object> {
   const item = itemRow(db, id)
   const { auditGroupId } = withAudit(db, `Delete recurring ${item.name}`, (a) => {
-    for (const o of all<{ id: string }>(db, 'SELECT id FROM recurring_occurrences WHERE item_id = ?', id)) a.remove('recurring_occurrences', o.id)
+    for (const o of all<{ id: string }>(db, 'SELECT id FROM recurring_occurrences WHERE item_id = ?', id))
+      a.remove('recurring_occurrences', o.id)
     a.remove('recurring_items', id)
   })
   return { auditGroupId }
@@ -170,9 +180,22 @@ export function deleteRecurring(db: Db, id: string): Mutation<object> {
 
 // ---- Occurrences and matching (FR-021/022) -------------------------------------------------------
 
-type Decision = { id: string; item_id: string; due_date: string; state: 'paid' | 'skipped'; matched_txn_id: string | null }
+type Decision = {
+  id: string
+  item_id: string
+  due_date: string
+  state: 'paid' | 'skipped'
+  matched_txn_id: string | null
+}
 type TxnLite = MatchCandidate & { accountId: string; kind: string; payee: string }
-type TxnSql = { id: string; posted_date: string; amount_minor: number; account_id: string; kind: string; payee: string }
+type TxnSql = {
+  id: string
+  posted_date: string
+  amount_minor: number
+  account_id: string
+  kind: string
+  payee: string
+}
 
 const TXN_LITE = 'SELECT id, posted_date, amount_minor, account_id, kind, payee FROM transactions'
 const toLite = (t: TxnSql): TxnLite => ({
@@ -194,11 +217,19 @@ const LOOKBACK_DAYS = 40
  * Expected occurrences in [from, to] with their state. Payments are matched automatically
  * (same account, within tolerance, ±3 days) unless the user skipped or linked one by hand.
  */
-export function listOccurrences(db: Db, from: CalendarDate, to: CalendarDate, today: CalendarDate): OccurrenceDto[] {
+export function listOccurrences(
+  db: Db,
+  from: CalendarDate,
+  to: CalendarDate,
+  today: CalendarDate,
+): OccurrenceDto[] {
   const items = itemRows(db).filter((r) => r.active === 1)
   if (items.length === 0) return []
   const start = addDays(from, -LOOKBACK_DAYS)
-  const decisions = all<Decision>(db, 'SELECT id, item_id, due_date, state, matched_txn_id FROM recurring_occurrences')
+  const decisions = all<Decision>(
+    db,
+    'SELECT id, item_id, due_date, state, matched_txn_id FROM recurring_occurrences',
+  )
   const byKey = new Map(decisions.map((d) => [`${d.item_id}:${d.due_date}`, d]))
   const used = new Set(decisions.flatMap((d) => (d.matched_txn_id ? [d.matched_txn_id] : [])))
   const txns = all<TxnSql>(
@@ -256,7 +287,8 @@ export function listOccurrences(db: Db, from: CalendarDate, to: CalendarDate, to
 }
 
 function assertIsOccurrence(item: ItemRow, dueDate: CalendarDate) {
-  if (occurrencesBetween(schedule(item), dueDate, dueDate).length !== 1) throw invariant('That date is not on this schedule')
+  if (occurrencesBetween(schedule(item), dueDate, dueDate).length !== 1)
+    throw invariant('That date is not on this schedule')
 }
 
 /** Transactions that could be this payment: within 10 days, same direction, not already linked by hand. */
@@ -277,21 +309,37 @@ export function occurrenceCandidates(db: Db, itemId: string, dueDate: CalendarDa
     item.account_id,
     dueDate,
     item.amount_minor,
-  ).map((t) => ({ id: t.id, postedDate: t.posted_date, amountMinor: t.amount_minor, payee: t.payee, accountName: t.account_name }))
+  ).map((t) => ({
+    id: t.id,
+    postedDate: t.posted_date,
+    amountMinor: t.amount_minor,
+    payee: t.payee,
+    accountName: t.account_name,
+  }))
 }
 
 /** Skip an occurrence, link a payment to it by hand, or go back to automatic matching. */
 export function setOccurrence(
   db: Db,
-  input: { itemId: string; dueDate: CalendarDate; action: 'skip' | 'match' | 'reset'; txnId?: string | undefined },
+  input: {
+    itemId: string
+    dueDate: CalendarDate
+    action: 'skip' | 'match' | 'reset'
+    txnId?: string | undefined
+  },
 ): Mutation<object> {
   const item = itemRow(db, input.itemId)
   assertIsOccurrence(item, input.dueDate)
   if (input.action === 'match') {
     if (!input.txnId) throw invariant('Choose the transaction that paid this')
-    const t = get<{ amount_minor: number }>(db, 'SELECT amount_minor FROM transactions WHERE id = ? AND deleted_at IS NULL', input.txnId)
+    const t = get<{ amount_minor: number }>(
+      db,
+      'SELECT amount_minor FROM transactions WHERE id = ? AND deleted_at IS NULL',
+      input.txnId,
+    )
     if (!t) throw notFound('Transaction')
-    if (Math.sign(t.amount_minor) !== Math.sign(item.amount_minor)) throw invariant('That transaction goes the other way')
+    if (Math.sign(t.amount_minor) !== Math.sign(item.amount_minor))
+      throw invariant('That transaction goes the other way')
     const other = get<{ item_id: string; due_date: string }>(
       db,
       'SELECT item_id, due_date FROM recurring_occurrences WHERE matched_txn_id = ?',
@@ -313,9 +361,19 @@ export function setOccurrence(
       if (existing) a.remove('recurring_occurrences', existing.id)
       return
     }
-    const fields = { state: input.action === 'skip' ? 'skipped' : 'paid', matched_txn_id: input.action === 'match' ? input.txnId! : null }
+    const fields = {
+      state: input.action === 'skip' ? 'skipped' : 'paid',
+      matched_txn_id: input.action === 'match' ? input.txnId! : null,
+    }
     if (existing) a.update('recurring_occurrences', existing.id, fields)
-    else a.insert('recurring_occurrences', { id: newId('occ'), item_id: item.id, due_date: input.dueDate, ...fields, created_at: nowIso() })
+    else
+      a.insert('recurring_occurrences', {
+        id: newId('occ'),
+        item_id: item.id,
+        due_date: input.dueDate,
+        ...fields,
+        created_at: nowIso(),
+      })
   })
   return { auditGroupId }
 }
@@ -345,7 +403,10 @@ export function budgetMonth(db: Db, month: string): BudgetMonthDto {
     'SELECT month, category_id, assigned_minor FROM monthly_budgets WHERE month <= ?',
     month,
   )
-  const inputs = new Map<string, BudgetMonthInput & { assigned: Map<string, number>; spent: Map<string, number> }>()
+  const inputs = new Map<
+    string,
+    BudgetMonthInput & { assigned: Map<string, number>; spent: Map<string, number> }
+  >()
   const at = (m: string) => {
     let v = inputs.get(m)
     if (!v) inputs.set(m, (v = { month: m, incomeMinor: 0, assigned: new Map(), spent: new Map() }))
@@ -361,7 +422,9 @@ export function budgetMonth(db: Db, month: string): BudgetMonthDto {
   for (const r of assignedRows) at(r.month).assigned.set(r.category_id, r.assigned_minor)
 
   const first = [...inputs.keys(), month].sort()[0]!
-  const span = monthSpan(first, month).map((m) => inputs.get(m) ?? { month: m, incomeMinor: 0, assigned: new Map(), spent: new Map() })
+  const span = monthSpan(first, month).map(
+    (m) => inputs.get(m) ?? { month: m, incomeMinor: 0, assigned: new Map(), spent: new Map() },
+  )
   const budgetable = categories.filter((c) => BUDGET_GROUPS.has(c.group))
   const result = runBudget(
     span,
@@ -377,7 +440,9 @@ export function budgetMonth(db: Db, month: string): BudgetMonthDto {
     for (const c of members) {
       if (!BUDGET_GROUPS.has(c.group)) continue
       const l = lines.get(c.id)
-      const active = l !== undefined && (l.carryMinor !== 0 || l.assignedMinor !== 0 || l.spentMinor !== 0 || l.availableMinor !== 0)
+      const active =
+        l !== undefined &&
+        (l.carryMinor !== 0 || l.assignedMinor !== 0 || l.spentMinor !== 0 || l.availableMinor !== 0)
       // Leaves are always listed; a parent (or archived category) only when money sits on it.
       if (!active && (c.archived || hasChildren.has(c.id))) continue
       rows.push({
@@ -416,18 +481,34 @@ export function budgetMonth(db: Db, month: string): BudgetMonthDto {
   }
 }
 
-export function assignBudget(db: Db, month: string, categoryId: string, assignedMinor: number): Mutation<{ month: BudgetMonthDto }> {
+export function assignBudget(
+  db: Db,
+  month: string,
+  categoryId: string,
+  assignedMinor: number,
+): Mutation<{ month: BudgetMonthDto }> {
   const category = listCategories(db).find((c) => c.id === categoryId)
   if (!category) throw notFound('Category')
   if (!BUDGET_GROUPS.has(category.group)) throw invariant('Income and transfer categories are not budgeted')
-  const existing = get<{ id: string }>(db, 'SELECT id FROM monthly_budgets WHERE month = ? AND category_id = ?', month, categoryId)
+  const existing = get<{ id: string }>(
+    db,
+    'SELECT id FROM monthly_budgets WHERE month = ? AND category_id = ?',
+    month,
+    categoryId,
+  )
   const { auditGroupId } = withAudit(db, `Assign ${category.path} for ${month}`, (a) => {
     if (assignedMinor === 0) {
       if (existing) a.remove('monthly_budgets', existing.id)
     } else if (existing) {
       a.update('monthly_budgets', existing.id, { assigned_minor: assignedMinor, updated_at: nowIso() })
     } else {
-      a.insert('monthly_budgets', { id: newId('bud'), month, category_id: categoryId, assigned_minor: assignedMinor, updated_at: nowIso() })
+      a.insert('monthly_budgets', {
+        id: newId('bud'),
+        month,
+        category_id: categoryId,
+        assigned_minor: assignedMinor,
+        updated_at: nowIso(),
+      })
     }
   })
   return { month: budgetMonth(db, month), auditGroupId }
@@ -499,7 +580,13 @@ function goalDto(db: Db, g: GoalRow, today: CalendarDate): GoalDto {
     linkedAccountId: g.linked_account_id,
     linkedAccountName: g.linked_account_name,
     notes: g.notes,
-    ...projectGoal({ targetMinor: g.target_minor, targetDate: g.target_date, savedMinor, recentMinor, today }),
+    ...projectGoal({
+      targetMinor: g.target_minor,
+      targetDate: g.target_date,
+      savedMinor,
+      recentMinor,
+      today,
+    }),
     contributions,
   }
 }
@@ -512,7 +599,10 @@ function goalRow(db: Db, id: string): GoalRow {
 
 /** Each active goal as a what-if scenario needs it (FR-029). */
 export function goalBases(db: Db, today: CalendarDate) {
-  return all<GoalRow>(db, `${GOAL_SELECT} WHERE g.archived_at IS NULL ORDER BY g.sort_order, g.created_at`).map((g) => ({
+  return all<GoalRow>(
+    db,
+    `${GOAL_SELECT} WHERE g.archived_at IS NULL ORDER BY g.sort_order, g.created_at`,
+  ).map((g) => ({
     id: g.id,
     name: g.name,
     targetMinor: g.target_minor,
@@ -523,14 +613,22 @@ export function goalBases(db: Db, today: CalendarDate) {
 }
 
 export function listGoals(db: Db, today: CalendarDate): GoalDto[] {
-  return all<GoalRow>(db, `${GOAL_SELECT} WHERE g.archived_at IS NULL ORDER BY g.sort_order, g.created_at`).map((g) => goalDto(db, g, today))
+  return all<GoalRow>(
+    db,
+    `${GOAL_SELECT} WHERE g.archived_at IS NULL ORDER BY g.sort_order, g.created_at`,
+  ).map((g) => goalDto(db, g, today))
 }
 
 function goalFields(db: Db, input: GoalInput) {
   if (input.linkedAccountId) {
-    const a = get<{ type: AccountType; archived_at: string | null }>(db, 'SELECT type, archived_at FROM accounts WHERE id = ?', input.linkedAccountId)
+    const a = get<{ type: AccountType; archived_at: string | null }>(
+      db,
+      'SELECT type, archived_at FROM accounts WHERE id = ?',
+      input.linkedAccountId,
+    )
     if (!a) throw notFound('Account')
-    if (accountNature(a.type) !== 'asset') throw invariant('A goal can follow a savings or investment account, not a card or loan')
+    if (accountNature(a.type) !== 'asset')
+      throw invariant('A goal can follow a savings or investment account, not a card or loan')
   }
   return {
     name: input.name,
@@ -553,12 +651,18 @@ export function createGoal(db: Db, input: GoalInput, today: CalendarDate): Mutat
   return { goal: goalDto(db, goalRow(db, result), today), auditGroupId }
 }
 
-export function updateGoal(db: Db, id: string, input: GoalInput, today: CalendarDate): Mutation<{ goal: GoalDto }> {
+export function updateGoal(
+  db: Db,
+  id: string,
+  input: GoalInput,
+  today: CalendarDate,
+): Mutation<{ goal: GoalDto }> {
   const current = goalRow(db, id)
   const fields = goalFields(db, input)
   if (fields.linked_account_id && fields.linked_account_id !== current.linked_account_id) {
     const n = get<{ n: number }>(db, 'SELECT COUNT(*) AS n FROM goal_contributions WHERE goal_id = ?', id)!.n
-    if (n > 0) throw invariant('This goal has money added by hand. Remove those entries before following an account.')
+    if (n > 0)
+      throw invariant('This goal has money added by hand. Remove those entries before following an account.')
   }
   const { auditGroupId } = withAudit(db, `Edit goal ${input.name}`, (a) => {
     a.update('goals', id, { ...fields, updated_at: nowIso() })
@@ -569,7 +673,8 @@ export function updateGoal(db: Db, id: string, input: GoalInput, today: Calendar
 export function deleteGoal(db: Db, id: string): Mutation<object> {
   const g = goalRow(db, id)
   const { auditGroupId } = withAudit(db, `Delete goal ${g.name}`, (a) => {
-    for (const c of all<{ id: string }>(db, 'SELECT id FROM goal_contributions WHERE goal_id = ?', id)) a.remove('goal_contributions', c.id)
+    for (const c of all<{ id: string }>(db, 'SELECT id FROM goal_contributions WHERE goal_id = ?', id))
+      a.remove('goal_contributions', c.id)
     a.remove('goals', id)
   })
   return { auditGroupId }
@@ -581,17 +686,22 @@ export function contribute(
   today: CalendarDate,
 ): Mutation<{ goal: GoalDto }> {
   const g = goalRow(db, input.goalId)
-  if (g.linked_account_id) throw invariant(`This goal follows ${g.linked_account_name}. Its progress is that account's balance.`)
-  const { auditGroupId } = withAudit(db, `${input.amountMinor > 0 ? 'Add to' : 'Take from'} goal ${g.name}`, (a) => {
-    a.insert('goal_contributions', {
-      id: newId('gc'),
-      goal_id: g.id,
-      date: input.date,
-      amount_minor: input.amountMinor,
-      note: input.note || null,
-      created_at: nowIso(),
-    })
-  })
+  if (g.linked_account_id)
+    throw invariant(`This goal follows ${g.linked_account_name}. Its progress is that account's balance.`)
+  const { auditGroupId } = withAudit(
+    db,
+    `${input.amountMinor > 0 ? 'Add to' : 'Take from'} goal ${g.name}`,
+    (a) => {
+      a.insert('goal_contributions', {
+        id: newId('gc'),
+        goal_id: g.id,
+        date: input.date,
+        amount_minor: input.amountMinor,
+        note: input.note || null,
+        created_at: nowIso(),
+      })
+    },
+  )
   return { goal: goalDto(db, goalRow(db, g.id), today), auditGroupId }
 }
 
@@ -599,6 +709,8 @@ export function deleteContribution(db: Db, id: string): Mutation<object> {
   const c = get<{ goal_id: string }>(db, 'SELECT goal_id FROM goal_contributions WHERE id = ?', id)
   if (!c) throw notFound('Contribution')
   const g = goalRow(db, c.goal_id)
-  const { auditGroupId } = withAudit(db, `Remove entry from goal ${g.name}`, (a) => a.remove('goal_contributions', id))
+  const { auditGroupId } = withAudit(db, `Remove entry from goal ${g.name}`, (a) =>
+    a.remove('goal_contributions', id),
+  )
   return { auditGroupId }
 }

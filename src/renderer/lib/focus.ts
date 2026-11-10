@@ -6,7 +6,9 @@ import { useState } from 'react'
  * Call during the dialog content's first render, before it moves focus inside.
  */
 export function useReturnFocus() {
-  const [opener] = useState(() => (typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null)))
+  const [opener] = useState(() =>
+    typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null),
+  )
   return (e: Event) => {
     if (e.defaultPrevented || !opener || opener === document.body || !opener.isConnected) return
     e.preventDefault()

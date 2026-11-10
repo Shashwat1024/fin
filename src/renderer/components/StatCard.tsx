@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRightIcon } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
 import { cn } from '@renderer/lib/utils'
 
 type Props = {

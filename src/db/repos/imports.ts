@@ -22,7 +22,13 @@ import { suggestForLines } from './categorization'
 import { assertCategoryUsable, resolveMerchantId } from './categories'
 
 type Line = { rowNumber: number; date: CalendarDate; amountMinor: number; description: string }
-type Classified = { rowNumber: number; status: ImportRowStatus; match: ImportMatch | null; fingerprint: string; occurrence: number }
+type Classified = {
+  rowNumber: number
+  status: ImportRowStatus
+  match: ImportMatch | null
+  fingerprint: string
+  occurrence: number
+}
 
 /**
  * Compare statement lines with the ledger. Exact: same account, fingerprint and occurrence index.
@@ -35,7 +41,14 @@ export function classifyLines(db: Db, accountId: string, lines: readonly Line[])
   const dates = lines.map((l) => l.date).sort()
   const from = addDays(dates[0]!, -2)
   const to = addDays(dates[dates.length - 1]!, 2)
-  const existing = all<{ id: string; posted_date: string; amount_minor: number; payee: string; fingerprint: string | null; occurrence_index: number }>(
+  const existing = all<{
+    id: string
+    posted_date: string
+    amount_minor: number
+    payee: string
+    fingerprint: string | null
+    occurrence_index: number
+  }>(
     db,
     `SELECT id, posted_date, amount_minor, payee, fingerprint, occurrence_index FROM transactions
      WHERE account_id = ? AND deleted_at IS NULL AND posted_date BETWEEN ? AND ?`,
@@ -43,13 +56,17 @@ export function classifyLines(db: Db, accountId: string, lines: readonly Line[])
     from,
     to,
   )
-  const exact = new Map(existing.filter((e) => e.fingerprint).map((e) => [`${e.fingerprint}#${e.occurrence_index}`, e]))
+  const exact = new Map(
+    existing.filter((e) => e.fingerprint).map((e) => [`${e.fingerprint}#${e.occurrence_index}`, e]),
+  )
   const result: Classified[] = lines.map((l, i) => {
     const hit = exact.get(`${keys[i]}#${occ[i]}`)
     return {
       rowNumber: l.rowNumber,
       status: hit ? 'duplicate' : 'new',
-      match: hit ? { id: hit.id, postedDate: hit.posted_date, amountMinor: hit.amount_minor, payee: hit.payee } : null,
+      match: hit
+        ? { id: hit.id, postedDate: hit.posted_date, amountMinor: hit.amount_minor, payee: hit.payee }
+        : null,
       fingerprint: keys[i]!,
       occurrence: occ[i]!,
     }
@@ -70,7 +87,12 @@ export function classifyLines(db: Db, accountId: string, lines: readonly Line[])
     )
     if (near) {
       r.status = 'possible_duplicate'
-      r.match = { id: near.id, postedDate: near.posted_date, amountMinor: near.amount_minor, payee: near.payee }
+      r.match = {
+        id: near.id,
+        postedDate: near.posted_date,
+        amountMinor: near.amount_minor,
+        payee: near.payee,
+      }
     }
   })
   return result
@@ -114,7 +136,10 @@ export function previewImport(db: Db, input: ImportPreviewInput): ImportPreview 
  * Save one statement as an import batch: new lines (and possible duplicates the user chose) become
  * transactions; every source line is stored with its outcome. One audit group, so it can be undone.
  */
-export function commitImport(db: Db, input: ImportCommitInput): Mutation<{ batchId: string; counts: ImportCounts }> {
+export function commitImport(
+  db: Db,
+  input: ImportCommitInput,
+): Mutation<{ batchId: string; counts: ImportCounts }> {
   const rowNumbers = [...input.rows, ...input.rejected].map((r) => r.rowNumber)
   if (new Set(rowNumbers).size !== rowNumbers.length) throw invariant('Each source line can appear only once')
   if (input.rows.length === 0) throw invariant('There is nothing to import from this file')
@@ -151,7 +176,13 @@ export function commitImport(db: Db, input: ImportCommitInput): Mutation<{ batch
       statement_closing_minor: input.statementClosing?.balanceMinor ?? null,
       statement_closing_date: input.statementClosing?.date ?? null,
     })
-    const writeRow = (rowNumber: number, raw: string[], outcome: string, message: string | null, txnId: string | null) =>
+    const writeRow = (
+      rowNumber: number,
+      raw: string[],
+      outcome: string,
+      message: string | null,
+      txnId: string | null,
+    ) =>
       a.insert('import_rows', {
         id: newId('imr'),
         batch_id: batchId,
@@ -173,13 +204,33 @@ export function commitImport(db: Db, input: ImportCommitInput): Mutation<{ batch
         counts.skipped++
       } else {
         outcome = c.status === 'possible_duplicate' ? 'possible_duplicate_imported' : 'imported'
-        txnId = insertImportedTxn(db, a, input.accountId, batchId, line, c, now, accepted.get(line.rowNumber) ?? null)
+        txnId = insertImportedTxn(
+          db,
+          a,
+          input.accountId,
+          batchId,
+          line,
+          c,
+          now,
+          accepted.get(line.rowNumber) ?? null,
+        )
         counts.imported++
       }
-      writeRow(line.rowNumber, line.raw, outcome, c.match ? `Matches ${c.match.postedDate} ${c.match.payee}`.slice(0, 500) : null, txnId)
+      writeRow(
+        line.rowNumber,
+        line.raw,
+        outcome,
+        c.match ? `Matches ${c.match.postedDate} ${c.match.payee}`.slice(0, 500) : null,
+        txnId,
+      )
     })
-    for (const r of input.rejected) writeRow(r.rowNumber, r.raw, r.status === 'error' ? 'failed' : 'ignored', r.message, null)
-    a.update('import_batches', batchId, { rows_imported: counts.imported, rows_duplicate: counts.duplicate, rows_skipped: counts.skipped })
+    for (const r of input.rejected)
+      writeRow(r.rowNumber, r.raw, r.status === 'error' ? 'failed' : 'ignored', r.message, null)
+    a.update('import_batches', batchId, {
+      rows_imported: counts.imported,
+      rows_duplicate: counts.duplicate,
+      rows_skipped: counts.skipped,
+    })
     if (input.savePresetAs) savePresetWith(db, a, input.savePresetAs, input.mapping)
     return { batchId, counts }
   })
@@ -267,7 +318,13 @@ export function listBatches(db: Db, limit = 100): ImportBatchDto[] {
 }
 
 export function batchRows(db: Db, batchId: string): ImportRowDto[] {
-  return all<{ row_number: number; raw: string; outcome: string; message: string | null; transaction_id: string | null }>(
+  return all<{
+    row_number: number
+    raw: string
+    outcome: string
+    message: string | null
+    transaction_id: string | null
+  }>(
     db,
     'SELECT row_number, raw, outcome, message, transaction_id FROM import_rows WHERE batch_id = ? ORDER BY row_number',
     batchId,
@@ -284,8 +341,16 @@ export function batchRows(db: Db, batchId: string): ImportRowDto[] {
  * Remove the transactions an import created. Transactions edited after import are kept unless
  * `includeEdited`; nothing outside the batch is touched.
  */
-export function undoImport(db: Db, batchId: string, includeEdited: boolean): Mutation<{ removed: number; kept: number }> {
-  const batch = get<{ file_name: string; undone_at: string | null }>(db, 'SELECT file_name, undone_at FROM import_batches WHERE id = ?', batchId)
+export function undoImport(
+  db: Db,
+  batchId: string,
+  includeEdited: boolean,
+): Mutation<{ removed: number; kept: number }> {
+  const batch = get<{ file_name: string; undone_at: string | null }>(
+    db,
+    'SELECT file_name, undone_at FROM import_batches WHERE id = ?',
+    batchId,
+  )
   if (!batch) throw notFound('Import')
   if (batch.undone_at) throw conflict('This import was already undone')
   const { result, auditGroupId } = withAudit(db, `Undo import ${batch.file_name}`, (a) => {
@@ -314,16 +379,31 @@ export function undoImport(db: Db, batchId: string, includeEdited: boolean): Mut
 // ---- Presets ----------------------------------------------------------------------------------
 
 export function listPresets(db: Db): Preset[] {
-  const user = all<{ id: string; name: string; mapping: string }>(db, 'SELECT id, name, mapping FROM mapping_presets ORDER BY name COLLATE NOCASE').map(
-    (p) => ({ id: p.id, name: p.name, builtin: false, mapping: JSON.parse(p.mapping) as Preset['mapping'] }),
-  )
+  const user = all<{ id: string; name: string; mapping: string }>(
+    db,
+    'SELECT id, name, mapping FROM mapping_presets ORDER BY name COLLATE NOCASE',
+  ).map((p) => ({
+    id: p.id,
+    name: p.name,
+    builtin: false,
+    mapping: JSON.parse(p.mapping) as Preset['mapping'],
+  }))
   return [...user, ...BUILTIN_PRESETS]
 }
 
-function savePresetWith(db: Db, a: AuditWriter, name: string, mapping: Omit<Mapping, 'headerRow'> & { headerRow?: number }): Preset {
+function savePresetWith(
+  db: Db,
+  a: AuditWriter,
+  name: string,
+  mapping: Omit<Mapping, 'headerRow'> & { headerRow?: number },
+): Preset {
   const { headerRow: _h, ...rest } = mapping
   const now = nowIso()
-  const existing = get<{ id: string }>(db, 'SELECT id FROM mapping_presets WHERE name = ? COLLATE NOCASE', name)
+  const existing = get<{ id: string }>(
+    db,
+    'SELECT id FROM mapping_presets WHERE name = ? COLLATE NOCASE',
+    name,
+  )
   if (existing) {
     a.update('mapping_presets', existing.id, { mapping: JSON.stringify(rest), updated_at: now })
     return { id: existing.id, name, builtin: false, mapping: rest }
@@ -333,16 +413,31 @@ function savePresetWith(db: Db, a: AuditWriter, name: string, mapping: Omit<Mapp
   return { id, name, builtin: false, mapping: rest }
 }
 
-export function savePreset(db: Db, name: string, mapping: Omit<Mapping, 'headerRow'>): Mutation<{ preset: Preset }> {
-  const { result, auditGroupId } = withAudit(db, `Save import preset ${name}`, (a) => savePresetWith(db, a, name, mapping))
+export function savePreset(
+  db: Db,
+  name: string,
+  mapping: Omit<Mapping, 'headerRow'>,
+): Mutation<{ preset: Preset }> {
+  const { result, auditGroupId } = withAudit(db, `Save import preset ${name}`, (a) =>
+    savePresetWith(db, a, name, mapping),
+  )
   return { preset: result, auditGroupId }
 }
 
 // ---- Reconciliation ---------------------------------------------------------------------------
 
 /** Compare a statement balance with Fin's balance for the account at the end of that day. */
-export function reconcile(db: Db, accountId: string, statementDate: CalendarDate, statementBalanceMinor: number): ReconcileResult {
-  const a = get<{ type: AccountType; opening_balance_minor: number }>(db, 'SELECT type, opening_balance_minor FROM accounts WHERE id = ?', accountId)
+export function reconcile(
+  db: Db,
+  accountId: string,
+  statementDate: CalendarDate,
+  statementBalanceMinor: number,
+): ReconcileResult {
+  const a = get<{ type: AccountType; opening_balance_minor: number }>(
+    db,
+    'SELECT type, opening_balance_minor FROM accounts WHERE id = ?',
+    accountId,
+  )
   if (!a) throw notFound('Account')
   const sum =
     get<{ s: number | null }>(

@@ -9,7 +9,14 @@ import { Button } from '@renderer/components/ui/button'
 import { useFinMutation, useSettings, useSuggestions, useTxnPages } from '@renderer/lib/queries'
 import { BulkActionBar } from './BulkActionBar'
 import { useTransactionDialog } from './TransactionDialog'
-import { DEFAULT_FILTERS, isFiltered, rangeFromParams, toTxnFilter, TransactionFilters, type FilterState } from './TransactionFilters'
+import {
+  DEFAULT_FILTERS,
+  isFiltered,
+  rangeFromParams,
+  toTxnFilter,
+  TransactionFilters,
+  type FilterState,
+} from './TransactionFilters'
 import { TransactionList } from './TransactionList'
 
 const RANGES = ['this-month', 'last-month', 'last-30-days', 'last-90-days', 'this-fy'] as const
@@ -26,8 +33,13 @@ export function TransactionsPage() {
     importBatchId: params.get('batch'),
     customRange: rangeFromParams(params),
     kind: params.get('kind') === 'standard' ? 'standard' : null,
-    range: (RANGES as readonly string[]).includes(params.get('range') ?? '') ? (params.get('range') as FilterState['range']) : 'all',
-    direction: params.get('direction') === 'in' || params.get('direction') === 'out' ? (params.get('direction') as 'in' | 'out') : 'all',
+    range: (RANGES as readonly string[]).includes(params.get('range') ?? '')
+      ? (params.get('range') as FilterState['range'])
+      : 'all',
+    direction:
+      params.get('direction') === 'in' || params.get('direction') === 'out'
+        ? (params.get('direction') as 'in' | 'out')
+        : 'all',
   }))
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const today = todayIn(settings?.timezone ?? 'Asia/Kolkata')
@@ -38,7 +50,11 @@ export function TransactionsPage() {
   // Suggestions for uncategorised rows: shown, never applied until accepted (FR-020).
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const candidateIds = useMemo(
-    () => rows.filter((r) => r.kind === 'standard' && !r.categoryId && r.splitCount === 0).map((r) => r.id).slice(0, 1000),
+    () =>
+      rows
+        .filter((r) => r.kind === 'standard' && !r.categoryId && r.splitCount === 0)
+        .map((r) => r.id)
+        .slice(0, 1000),
     [rows],
   )
   const suggestions = useSuggestions(candidateIds)
@@ -67,8 +83,8 @@ export function TransactionsPage() {
         description={
           totals ? (
             <span className="tabular-nums">
-              {totals.count.toLocaleString('en-IN')} transactions · In <MoneyText minor={totals.inMinor} /> · Out{' '}
-              <MoneyText minor={Math.abs(totals.outMinor)} /> · Net <MoneyText minor={totals.netMinor} />
+              {totals.count.toLocaleString('en-IN')} transactions · In <MoneyText minor={totals.inMinor} /> ·
+              Out <MoneyText minor={Math.abs(totals.outMinor)} /> · Net <MoneyText minor={totals.netMinor} />
             </span>
           ) : (
             ' '
@@ -76,7 +92,11 @@ export function TransactionsPage() {
         }
         actions={
           <Button onClick={() => dialog.open({ mode: 'expense', accountId })}>
-            <PlusIcon /> Add transaction <ShortcutHint combo="mod+n" className="ml-1 *:bg-transparent *:text-primary-foreground *:ring-1 *:ring-primary-foreground/50" />
+            <PlusIcon /> Add transaction{' '}
+            <ShortcutHint
+              combo="mod+n"
+              className="ml-1 *:bg-transparent *:text-primary-foreground *:ring-1 *:ring-primary-foreground/50"
+            />
           </Button>
         }
       />

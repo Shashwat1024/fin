@@ -1,4 +1,10 @@
-import { createCipheriv, createDecipheriv, randomBytes, scrypt as scryptCb, type ScryptOptions } from 'node:crypto'
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  scrypt as scryptCb,
+  type ScryptOptions,
+} from 'node:crypto'
 
 /**
  * Encrypted backup file (`.finbackup`), research R15:
@@ -34,9 +40,14 @@ function deriveKey(passphrase: string, salt: Buffer, kdf: KdfParams): Promise<Bu
   )
 }
 
-export const isEncryptedBackup = (data: Uint8Array) => data.length >= MAGIC.length && Buffer.from(data.subarray(0, MAGIC.length)).equals(MAGIC)
+export const isEncryptedBackup = (data: Uint8Array) =>
+  data.length >= MAGIC.length && Buffer.from(data.subarray(0, MAGIC.length)).equals(MAGIC)
 
-export async function encryptBackup(plain: Uint8Array, passphrase: string, kdf: KdfParams = DEFAULT_KDF): Promise<Buffer> {
+export async function encryptBackup(
+  plain: Uint8Array,
+  passphrase: string,
+  kdf: KdfParams = DEFAULT_KDF,
+): Promise<Buffer> {
   const salt = randomBytes(16)
   const iv = randomBytes(12)
   const header = Buffer.concat([MAGIC, Buffer.from([kdf.logN, kdf.r, kdf.p]), salt, iv])
@@ -49,8 +60,10 @@ export async function encryptBackup(plain: Uint8Array, passphrase: string, kdf: 
 
 export async function decryptBackup(data: Uint8Array, passphrase: string): Promise<Buffer> {
   const buf = Buffer.from(data)
-  if (!isEncryptedBackup(buf)) throw new BackupCryptoError('NOT_ENCRYPTED', 'This is not an encrypted Fin backup')
-  if (buf.length < HEADER_LEN + TAG_LEN) throw new BackupCryptoError('CORRUPT', 'The backup file is incomplete')
+  if (!isEncryptedBackup(buf))
+    throw new BackupCryptoError('NOT_ENCRYPTED', 'This is not an encrypted Fin backup')
+  if (buf.length < HEADER_LEN + TAG_LEN)
+    throw new BackupCryptoError('CORRUPT', 'The backup file is incomplete')
   let o = MAGIC.length
   const kdf: KdfParams = { logN: buf[o]!, r: buf[o + 1]!, p: buf[o + 2]! }
   o += 3

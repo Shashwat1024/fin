@@ -5,7 +5,10 @@ export type Table = { rows: string[][]; lineNumbers: number[]; delimiter: string
 
 /** Parse CSV/TSV text into trimmed cells, guessing the delimiter. Blank lines are dropped. */
 export function parseTable(text: string): Table {
-  const result = Papa.parse<string[]>(text, { skipEmptyLines: false, delimitersToGuess: [',', ';', '\t', '|'] })
+  const result = Papa.parse<string[]>(text, {
+    skipEmptyLines: false,
+    delimitersToGuess: [',', ';', '\t', '|'],
+  })
   const rows: string[][] = []
   const lineNumbers: number[] = []
   result.data.forEach((row, i) => {
@@ -27,9 +30,30 @@ export function normalizeHeader(h: string): string {
 }
 
 const HEADER_WORDS = new Set([
-  'date', 'dt', 'narration', 'description', 'particulars', 'remarks', 'details', 'withdrawal', 'deposit',
-  'debit', 'credit', 'amount', 'amt', 'balance', 'bal', 'dr', 'cr', 'chq', 'cheque', 'ref', 'value', 'transaction',
-  'txn', 'tran',
+  'date',
+  'dt',
+  'narration',
+  'description',
+  'particulars',
+  'remarks',
+  'details',
+  'withdrawal',
+  'deposit',
+  'debit',
+  'credit',
+  'amount',
+  'amt',
+  'balance',
+  'bal',
+  'dr',
+  'cr',
+  'chq',
+  'cheque',
+  'ref',
+  'value',
+  'transaction',
+  'txn',
+  'tran',
 ])
 
 /**
@@ -39,7 +63,11 @@ const HEADER_WORDS = new Set([
 export function detectHeaderRow(rows: readonly string[][]): number {
   const limit = Math.min(rows.length, 30)
   for (let i = 0; i < limit; i++) {
-    const hits = rows[i]!.filter((cell) => normalizeHeader(cell).split(' ').some((w) => HEADER_WORDS.has(w))).length
+    const hits = rows[i]!.filter((cell) =>
+      normalizeHeader(cell)
+        .split(' ')
+        .some((w) => HEADER_WORDS.has(w)),
+    ).length
     if (hits >= 3) return i
   }
   return 0

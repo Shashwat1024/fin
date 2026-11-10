@@ -4,7 +4,15 @@ import { all, type Db } from '@db/connection'
 import { exportJson } from '@db/export'
 import { createAccount } from '@db/repos/accounts'
 import { forecast, whatIf } from '@db/repos/insights'
-import { cleanName, dismissInsight, listInsights, payeeKey, recurringSuggestions, restoreInsight, suggestionDismissKey } from '@db/repos/patterns'
+import {
+  cleanName,
+  dismissInsight,
+  listInsights,
+  payeeKey,
+  recurringSuggestions,
+  restoreInsight,
+  suggestionDismissKey,
+} from '@db/repos/patterns'
 import { contribute, createGoal, createRecurring } from '@db/repos/planning'
 import { createTransaction } from '@db/repos/transactions'
 import { addDays, weekday } from '@domain/dates'
@@ -38,17 +46,34 @@ beforeEach(() => {
     else spend(bank, d, -40_000, 'DMart', groceries)
   }
   // Food delivery jumps in October: four extra weekend orders.
-  for (const d of ['2026-10-03', '2026-10-10', '2026-10-17', '2026-10-24']) spend(card, d, -300_000, 'UPI-SWIGGY-SWIGGY@ICICI', delivery)
+  for (const d of ['2026-10-03', '2026-10-10', '2026-10-17', '2026-10-24'])
+    spend(card, d, -300_000, 'UPI-SWIGGY-SWIGGY@ICICI', delivery)
   // Household shopping: small Amazon orders, then one big purchase last week.
-  for (const d of ['2026-06-18', '2026-07-18', '2026-08-18', '2026-09-18', '2026-10-18']) spend(card, d, -120_000, 'Amazon', household)
+  for (const d of ['2026-06-18', '2026-07-18', '2026-08-18', '2026-09-18', '2026-10-18'])
+    spend(card, d, -120_000, 'Amazon', household)
   spend(card, '2026-11-02', -4_500_000, 'Croma', household)
   // Netflix went up from ₹499 to ₹649 in October.
-  for (const d of ['2026-06-07', '2026-07-07', '2026-08-07', '2026-09-07']) spend(card, d, -49_900, 'Netflix', subs)
+  for (const d of ['2026-06-07', '2026-07-07', '2026-08-07', '2026-09-07'])
+    spend(card, d, -49_900, 'Netflix', subs)
   for (const d of ['2026-10-07', '2026-11-07']) spend(card, d, -64_900, 'Netflix', subs)
-  createRecurring(db, { name: 'Netflix', kind: 'subscription', accountId: card, amountMinor: 64_900, frequency: 'monthly', anchorDate: '2026-06-07', categoryId: subs }, TODAY)
+  createRecurring(
+    db,
+    {
+      name: 'Netflix',
+      kind: 'subscription',
+      accountId: card,
+      amountMinor: 64_900,
+      frequency: 'monthly',
+      anchorDate: '2026-06-07',
+      categoryId: subs,
+    },
+    TODAY,
+  )
   // Salary (income: never counted as spending), and an Airtel bill nobody has set up as recurring yet.
-  for (const d of ['2026-06-30', '2026-07-31', '2026-08-31', '2026-09-30', '2026-10-31']) spend(bank, d, 12_000_000, 'ACME salary', salary)
-  for (const d of ['2026-07-06', '2026-08-06', '2026-09-06', '2026-10-06']) spend(bank, d, -99_900, 'AIRTEL FIBRE 1234567', categoryId(db, 'Housing › Internet'))
+  for (const d of ['2026-06-30', '2026-07-31', '2026-08-31', '2026-09-30', '2026-10-31'])
+    spend(bank, d, 12_000_000, 'ACME salary', salary)
+  for (const d of ['2026-07-06', '2026-08-06', '2026-09-06', '2026-10-06'])
+    spend(bank, d, -99_900, 'AIRTEL FIBRE 1234567', categoryId(db, 'Housing › Internet'))
 })
 
 describe('behaviour insights (US8 scenario 1)', () => {
@@ -63,10 +88,16 @@ describe('behaviour insights (US8 scenario 1)', () => {
     expect(price.comparisonMinor).toBe(49_900)
     expect(price.sources[0]).toMatchObject({ date: '2026-11-07', amountMinor: 64_900 })
 
-    const delivery = r.insights.find((i) => i.kind === 'category_change' && i.title.startsWith('Food › Food delivery'))!
+    const delivery = r.insights.find(
+      (i) => i.kind === 'category_change' && i.title.startsWith('Food › Food delivery'),
+    )!
     expect(delivery.direction).toBe('up')
     expect(delivery.comparison).toEqual({ label: 'Jul–Sept average', from: '2026-07-01', to: '2026-09-30' })
-    expect(delivery.filter).toEqual({ from: '2026-10-01', to: '2026-10-31', categoryId: categoryId(db, 'Food › Food delivery') })
+    expect(delivery.filter).toEqual({
+      from: '2026-10-01',
+      to: '2026-10-31',
+      categoryId: categoryId(db, 'Food › Food delivery'),
+    })
     expect(delivery.sourceCount).toBe(13) // 9 weekend days in October + 4 extra orders
     expect(delivery.sources[0]!.amountMinor).toBe(300_000)
 
@@ -123,7 +154,18 @@ describe('likely recurring payments (FR-022, P1)', () => {
       suggestedKind: 'bill',
       categoryPath: 'Housing › Internet',
     })
-    createRecurring(db, { name: 'Airtel', kind: 'bill', accountId: bank, amountMinor: 99_900, frequency: 'monthly', anchorDate: s!.lastDate }, TODAY)
+    createRecurring(
+      db,
+      {
+        name: 'Airtel',
+        kind: 'bill',
+        accountId: bank,
+        amountMinor: 99_900,
+        frequency: 'monthly',
+        anchorDate: s!.lastDate,
+      },
+      TODAY,
+    )
     expect(recurringSuggestions(db, TODAY).map((x) => x.name)).not.toContain('Airtel Fibre')
   })
 
@@ -137,12 +179,16 @@ describe('likely recurring payments (FR-022, P1)', () => {
 describe('what-if scenarios (US8 scenario 2)', () => {
   /** Every row of every table, so "nothing changed" means exactly that. */
   function everything(): string {
-    const tables = all<{ name: string }>(db, `SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '%fts%' ORDER BY name`)
+    const tables = all<{ name: string }>(
+      db,
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '%fts%' ORDER BY name`,
+    )
     return JSON.stringify(tables.map((t) => [t.name, all(db, `SELECT * FROM "${t.name}" ORDER BY rowid`)]))
   }
 
   it('shows the effect on forecast and goals and changes no stored data', () => {
-    const goal = createGoal(db, { name: 'Holiday', targetMinor: 20_000_000, targetDate: '2027-12-01' }, TODAY).goal.id
+    const goal = createGoal(db, { name: 'Holiday', targetMinor: 20_000_000, targetDate: '2027-12-01' }, TODAY)
+      .goal.id
     contribute(db, { goalId: goal, date: '2026-10-01', amountMinor: 3_000_000 }, TODAY)
     const before = everything()
     const r = whatIf(
@@ -150,7 +196,13 @@ describe('what-if scenarios (US8 scenario 2)', () => {
       90,
       [
         { kind: 'large_purchase', name: 'New laptop', amountMinor: 15_000_000, date: '2026-11-20' },
-        { kind: 'new_bill', name: 'Gym', amountMinor: 300_000, frequency: 'monthly', startDate: '2026-12-01' },
+        {
+          kind: 'new_bill',
+          name: 'Gym',
+          amountMinor: 300_000,
+          frequency: 'monthly',
+          startDate: '2026-12-01',
+        },
         { kind: 'loan_prepayment', loanId: loan, amountMinor: 5_000_000, date: '2026-12-15' },
         { kind: 'savings_change', goalId: goal, amountMinor: 1_000_000, fromDate: '2026-12-01' },
         { kind: 'income_change', amountMinor: 500_000, fromDate: '2026-12-01' },
@@ -161,7 +213,9 @@ describe('what-if scenarios (US8 scenario 2)', () => {
 
     expect(r.before).toEqual((({ assumptions: _a, hasCashAccounts: _h, ...f }) => f)(forecast(db, 90, TODAY)))
     // 15,000 + 3 × 3,000 gym + 5,000 prepayment + 3 × 10,000 saved − 3 × 5,000 pay rise (₹), in paise
-    expect(r.before.endMinor - r.after.endMinor).toBe(15_000_000 + 900_000 + 5_000_000 + 3_000_000 - 1_500_000)
+    expect(r.before.endMinor - r.after.endMinor).toBe(
+      15_000_000 + 900_000 + 5_000_000 + 3_000_000 - 1_500_000,
+    )
     expect(r.loans).toEqual([{ id: loan, name: 'Car loan', beforeMinor: 30_000_000, afterMinor: 25_000_000 }])
     const holiday = r.goals.find((g) => g.id === goal)!
     expect(holiday.after.paceMonthlyMinor).toBe(holiday.before.paceMonthlyMinor + 1_000_000)
@@ -169,8 +223,12 @@ describe('what-if scenarios (US8 scenario 2)', () => {
   })
 
   it('rejects a prepayment on something that is not a loan, or an unknown goal', () => {
-    expect(() => whatIf(db, 30, [{ kind: 'loan_prepayment', loanId: bank, amountMinor: 100, date: TODAY }], TODAY)).toThrow('loan')
-    expect(() => whatIf(db, 30, [{ kind: 'savings_change', goalId: 'nope', amountMinor: 100, fromDate: TODAY }], TODAY)).toThrow()
+    expect(() =>
+      whatIf(db, 30, [{ kind: 'loan_prepayment', loanId: bank, amountMinor: 100, date: TODAY }], TODAY),
+    ).toThrow('loan')
+    expect(() =>
+      whatIf(db, 30, [{ kind: 'savings_change', goalId: 'nope', amountMinor: 100, fromDate: TODAY }], TODAY),
+    ).toThrow()
   })
 })
 

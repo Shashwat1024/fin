@@ -8,14 +8,34 @@ export const DEFAULT_CATEGORIES: readonly Seed[] = [
   {
     name: 'Income',
     group: 'income',
-    children: [['Salary'], ['Business & freelance'], ['Interest'], ['Dividends'], ['Refunds & cashback'], ['Gifts received'], ['Other income']],
+    children: [
+      ['Salary'],
+      ['Business & freelance'],
+      ['Interest'],
+      ['Dividends'],
+      ['Refunds & cashback'],
+      ['Gifts received'],
+      ['Other income'],
+    ],
   },
   {
     name: 'Housing',
     group: 'needs',
-    children: [['Rent'], ['Maintenance'], ['Electricity'], ['Water'], ['Cooking gas'], ['Internet'], ['Repairs']],
+    children: [
+      ['Rent'],
+      ['Maintenance'],
+      ['Electricity'],
+      ['Water'],
+      ['Cooking gas'],
+      ['Internet'],
+      ['Repairs'],
+    ],
   },
-  { name: 'Food', group: 'needs', children: [['Groceries'], ['Dining out', 'wants'], ['Food delivery', 'wants']] },
+  {
+    name: 'Food',
+    group: 'needs',
+    children: [['Groceries'], ['Dining out', 'wants'], ['Food delivery', 'wants']],
+  },
   {
     name: 'Transport',
     group: 'needs',
@@ -31,7 +51,11 @@ export const DEFAULT_CATEGORIES: readonly Seed[] = [
   { name: 'Entertainment', group: 'wants', children: [['Subscriptions'], ['Movies & events'], ['Hobbies']] },
   { name: 'Travel', group: 'wants', children: [['Flights & trains'], ['Hotels'], ['Holiday spending']] },
   { name: 'Education', group: 'needs', children: [['Fees'], ['Books & courses']] },
-  { name: 'Family & giving', group: 'wants', children: [['Gifts given'], ['Donations'], ['Childcare', 'needs']] },
+  {
+    name: 'Family & giving',
+    group: 'wants',
+    children: [['Gifts given'], ['Donations'], ['Childcare', 'needs']],
+  },
   {
     name: 'Finance',
     group: 'needs',
@@ -40,7 +64,13 @@ export const DEFAULT_CATEGORIES: readonly Seed[] = [
   {
     name: 'Savings & investments',
     group: 'goals',
-    children: [['Mutual funds & SIP'], ['Fixed deposits'], ['Stocks'], ['PPF / EPF / NPS'], ['Emergency fund', 'buffer']],
+    children: [
+      ['Mutual funds & SIP'],
+      ['Fixed deposits'],
+      ['Stocks'],
+      ['PPF / EPF / NPS'],
+      ['Emergency fund', 'buffer'],
+    ],
   },
 ]
 

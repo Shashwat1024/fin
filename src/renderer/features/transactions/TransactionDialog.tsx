@@ -1,18 +1,40 @@
-import { createContext, useCallback, useContext, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { ArrowDownLeftIcon, ArrowLeftRightIcon, ArrowUpRightIcon, SplitIcon, Trash2Icon } from 'lucide-react'
 import { todayIn } from '@domain/dates'
 import { AmountInput, amountToText, parseAmountText } from '@renderer/components/AmountInput'
 import { FormField, LoadingState } from '@renderer/components/layout'
 import { AccountSelect, CategoryPicker } from '@renderer/components/pickers'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import { FieldGroup } from '@renderer/components/ui/field'
 import { Input } from '@renderer/components/ui/input'
 import { Textarea } from '@renderer/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@renderer/components/ui/toggle-group'
 import { useHotkey } from '@renderer/lib/hotkeys'
 import { fieldIssues } from '@renderer/lib/ipc'
-import { useAccounts, useFinMutation, usePayeeSuggestions, useSettings, useTransaction } from '@renderer/lib/queries'
+import {
+  useAccounts,
+  useFinMutation,
+  usePayeeSuggestions,
+  useSettings,
+  useTransaction,
+} from '@renderer/lib/queries'
 import type { TxnDetail } from '@shared/types'
 import { newSplitRow, SplitEditor, splitAllocated, type SplitRow } from './SplitEditor'
 
@@ -48,7 +70,9 @@ function TransactionDialogBody({ args, onDone }: { args: OpenArgs; onDone: () =>
       <DialogHeader>
         <DialogTitle>{editing ? 'Edit transaction' : 'Add transaction'}</DialogTitle>
         <DialogDescription>
-          {editing ? 'Changes can be undone from the confirmation message.' : 'Amounts are saved exactly, to the paisa.'}
+          {editing
+            ? 'Changes can be undone from the confirmation message.'
+            : 'Amounts are saved exactly, to the paisa.'}
         </DialogDescription>
       </DialogHeader>
       {editing && !detail.data ? (
@@ -78,7 +102,12 @@ type FormState = {
   notes: string
 }
 
-function initialState(args: OpenArgs, detail: TxnDetail | undefined, today: string, fallbackAccount: string | null): FormState {
+function initialState(
+  args: OpenArgs,
+  detail: TxnDetail | undefined,
+  today: string,
+  fallbackAccount: string | null,
+): FormState {
   if (detail) {
     const outflow = detail.amountMinor < 0
     const isTransfer = detail.kind === 'transfer'
@@ -113,16 +142,27 @@ function initialState(args: OpenArgs, detail: TxnDetail | undefined, today: stri
   }
 }
 
-function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: TxnDetail | undefined; onDone: () => void }) {
+function TransactionForm({
+  args,
+  detail,
+  onDone,
+}: {
+  args: OpenArgs
+  detail: TxnDetail | undefined
+  onDone: () => void
+}) {
   const id = useId()
   const { data: settings } = useSettings()
   const { data: accounts = [] } = useAccounts()
   const today = todayIn(settings?.timezone ?? 'Asia/Kolkata')
-  const [form, setForm] = useState<FormState>(() => initialState(args, detail, today, accounts[0]?.id ?? null))
+  const [form, setForm] = useState<FormState>(() =>
+    initialState(args, detail, today, accounts[0]?.id ?? null),
+  )
   const [submitted, setSubmitted] = useState(false)
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
   const amountRef = useRef<HTMLInputElement>(null)
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }))
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
 
   // The account list may still be loading when the dialog opens; default to the first account once it arrives.
   const [defaulted, setDefaulted] = useState(Boolean(form.accountId))
@@ -138,7 +178,8 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
   const suggestions = usePayeeSuggestions(isTransfer ? '' : form.payee)
 
   const errors: Record<string, string | undefined> = {
-    amount: 'error' in amount ? amount.error : serverErrors['amountMinor'] ?? serverErrors['patch.amountMinor'],
+    amount:
+      'error' in amount ? amount.error : (serverErrors['amountMinor'] ?? serverErrors['patch.amountMinor']),
     date: form.date ? undefined : 'Choose a date',
     account: form.accountId ? undefined : 'Choose an account',
     toAccount: !isTransfer
@@ -161,7 +202,11 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
 
   const onSaved = (another: boolean) => {
     if (another) {
-      setForm((f) => ({ ...initialState({ mode: f.mode }, undefined, f.date, f.accountId), date: f.date, toAccountId: f.toAccountId }))
+      setForm((f) => ({
+        ...initialState({ mode: f.mode }, undefined, f.date, f.accountId),
+        date: f.date,
+        toAccountId: f.toAccountId,
+      }))
       setSubmitted(false)
       amountRef.current?.focus()
     } else {
@@ -177,7 +222,8 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
     success: (r) => (r.count > 1 ? 'Transfer deleted' : 'Transaction deleted'),
     onSuccess: onDone,
   })
-  const pending = createTxn.isPending || updateTxn.isPending || createTransfer.isPending || updateTransfer.isPending
+  const pending =
+    createTxn.isPending || updateTxn.isPending || createTransfer.isPending || updateTransfer.isPending
 
   const submit = async (another = false) => {
     setSubmitted(true)
@@ -192,7 +238,8 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
           amountMinor: totalMinor,
           notes: form.notes.trim() || null,
         }
-        if (detail?.transferId) await updateTransfer.mutateAsync({ transferId: detail.transferId, patch: input })
+        if (detail?.transferId)
+          await updateTransfer.mutateAsync({ transferId: detail.transferId, patch: input })
         else await createTransfer.mutateAsync(input)
       } else {
         const sign = form.mode === 'expense' ? -1 : 1
@@ -206,7 +253,10 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
           splits: form.split
             ? form.parts.map((p) => {
                 const parsed = parseAmountText(p.amount)
-                return { categoryId: p.categoryId!, amountMinor: sign * ('minor' in parsed ? parsed.minor : 0) }
+                return {
+                  categoryId: p.categoryId!,
+                  amountMinor: sign * ('minor' in parsed ? parsed.minor : 0),
+                }
               })
             : [],
           tags: form.tags
@@ -281,13 +331,28 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
             />
           </FormField>
           <FormField label="Date" htmlFor={`${id}-date`} error={show('date')}>
-            <Input id={`${id}-date`} type="date" value={form.date} max="9999-12-31" onChange={(e) => set('date', e.target.value)} />
+            <Input
+              id={`${id}-date`}
+              type="date"
+              value={form.date}
+              max="9999-12-31"
+              onChange={(e) => set('date', e.target.value)}
+            />
           </FormField>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField label={isTransfer ? 'From account' : 'Account'} htmlFor={`${id}-account`} error={show('account')}>
-            <AccountSelect id={`${id}-account`} value={form.accountId} onChange={(v) => set('accountId', v)} invalid={Boolean(show('account'))} />
+          <FormField
+            label={isTransfer ? 'From account' : 'Account'}
+            htmlFor={`${id}-account`}
+            error={show('account')}
+          >
+            <AccountSelect
+              id={`${id}-account`}
+              value={form.accountId}
+              onChange={(v) => set('accountId', v)}
+              invalid={Boolean(show('account'))}
+            />
           </FormField>
           {isTransfer ? (
             <FormField label="To account" htmlFor={`${id}-to`} error={show('toAccount')}>
@@ -310,7 +375,9 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
                 onChange={(e) => onPayeeChange(e.target.value)}
               />
               <datalist id={`${id}-payees`}>
-                {suggestions.data?.map((s) => <option key={s.payee} value={s.payee} />)}
+                {suggestions.data?.map((s) => (
+                  <option key={s.payee} value={s.payee} />
+                ))}
               </datalist>
             </FormField>
           )}
@@ -321,7 +388,11 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
             <div className="flex items-end gap-2">
               {!form.split && (
                 <FormField label="Category" htmlFor={`${id}-category`} className="flex-1">
-                  <CategoryPicker id={`${id}-category`} value={form.categoryId} onChange={(v) => set('categoryId', v)} />
+                  <CategoryPicker
+                    id={`${id}-category`}
+                    value={form.categoryId}
+                    onChange={(v) => set('categoryId', v)}
+                  />
                 </FormField>
               )}
               <Button
@@ -335,7 +406,12 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
               </Button>
             </div>
             {form.split && (
-              <SplitEditor totalMinor={totalMinor} rows={form.parts} onChange={(parts) => set('parts', parts)} showErrors={submitted} />
+              <SplitEditor
+                totalMinor={totalMinor}
+                rows={form.parts}
+                onChange={(parts) => set('parts', parts)}
+                showErrors={submitted}
+              />
             )}
             {submitted && errors.split && <p className="text-sm text-destructive">{errors.split}</p>}
           </div>
@@ -343,18 +419,33 @@ function TransactionForm({ args, detail, onDone }: { args: OpenArgs; detail: Txn
 
         {!isTransfer && (
           <FormField label="Tags" htmlFor={`${id}-tags`} description="Separate tags with commas">
-            <Input id={`${id}-tags`} placeholder="e.g. weekend, trip" value={form.tags} onChange={(e) => set('tags', e.target.value)} />
+            <Input
+              id={`${id}-tags`}
+              placeholder="e.g. weekend, trip"
+              value={form.tags}
+              onChange={(e) => set('tags', e.target.value)}
+            />
           </FormField>
         )}
 
         <FormField label="Notes" htmlFor={`${id}-notes`}>
-          <Textarea id={`${id}-notes`} rows={2} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+          <Textarea
+            id={`${id}-notes`}
+            rows={2}
+            value={form.notes}
+            onChange={(e) => set('notes', e.target.value)}
+          />
         </FormField>
       </FieldGroup>
 
       <DialogFooter className="mt-6 items-center sm:justify-between">
         {editing && detail ? (
-          <Button type="button" variant="destructive" onClick={() => deleteTxn.mutate({ ids: [detail.id] })} disabled={deleteTxn.isPending}>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => deleteTxn.mutate({ ids: [detail.id] })}
+            disabled={deleteTxn.isPending}
+          >
             <Trash2Icon /> Delete
           </Button>
         ) : (

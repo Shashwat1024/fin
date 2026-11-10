@@ -7,7 +7,12 @@ import { addMonths, compareDates, endOfMonth, startOfMonth, type CalendarDate } 
 import { accountNature, displayBalance, type AccountType } from './ledger'
 
 /** Account types whose value is entered by hand rather than tracked transaction by transaction. */
-export const VALUED_TYPES: ReadonlySet<AccountType> = new Set(['investment', 'loan', 'other_asset', 'other_liability'])
+export const VALUED_TYPES: ReadonlySet<AccountType> = new Set([
+  'investment',
+  'loan',
+  'other_asset',
+  'other_liability',
+])
 export const canBeValued = (type: AccountType) => VALUED_TYPES.has(type)
 
 export type NetWorthAccount = {
@@ -29,10 +34,21 @@ export type AccountValue = {
   valuationDate: CalendarDate | null
 }
 
-export type NetWorthPoint = { date: CalendarDate; assetsMinor: number; liabilitiesMinor: number; netMinor: number }
+export type NetWorthPoint = {
+  date: CalendarDate
+  assetsMinor: number
+  liabilitiesMinor: number
+  netMinor: number
+}
 
 /** Prepared account: sorted, with running totals, for repeated lookups. */
-type Prepared = { a: NetWorthAccount; dates: CalendarDate[]; running: number[]; vals: { date: CalendarDate; valueMinor: number }[]; valDates: CalendarDate[] }
+type Prepared = {
+  a: NetWorthAccount
+  dates: CalendarDate[]
+  running: number[]
+  vals: { date: CalendarDate; valueMinor: number }[]
+  valDates: CalendarDate[]
+}
 
 function prepare(a: NetWorthAccount): Prepared {
   const byDate = new Map<CalendarDate, number>()
@@ -62,7 +78,8 @@ function lastAtOrBefore(sorted: readonly CalendarDate[], date: CalendarDate): nu
 function valueOf(p: Prepared, date: CalendarDate): AccountValue {
   if (canBeValued(p.a.type)) {
     const i = lastAtOrBefore(p.valDates, date)
-    if (i >= 0) return { valueMinor: p.vals[i]!.valueMinor, source: 'valuation', valuationDate: p.vals[i]!.date }
+    if (i >= 0)
+      return { valueMinor: p.vals[i]!.valueMinor, source: 'valuation', valuationDate: p.vals[i]!.date }
   }
   const i = lastAtOrBefore(p.dates, date)
   const opening = compareDates(p.a.openingDate, date) <= 0 ? p.a.openingMinor : 0
@@ -101,7 +118,11 @@ export function monthEnds(from: CalendarDate, to: CalendarDate): CalendarDate[] 
 }
 
 /** Net worth at each month end in [from, to]. */
-export function netWorthHistory(accounts: readonly NetWorthAccount[], from: CalendarDate, to: CalendarDate): NetWorthPoint[] {
+export function netWorthHistory(
+  accounts: readonly NetWorthAccount[],
+  from: CalendarDate,
+  to: CalendarDate,
+): NetWorthPoint[] {
   const prepared = accounts.map(prepare)
   return monthEnds(from, to).map((d) => pointFor(prepared, d))
 }

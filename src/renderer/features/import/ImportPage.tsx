@@ -3,7 +3,14 @@ import { CircleCheckIcon, FileUpIcon } from 'lucide-react'
 import { Page, PageHeader } from '@renderer/components/layout'
 import { StepIndicator } from '@renderer/components/StepIndicator'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { FileStep } from './FileStep'
 import { ImportHistory } from './ImportHistory'
@@ -23,13 +30,15 @@ function DoneStep({ wizard }: { wizard: ImportWizard }) {
           <CircleCheckIcon className="size-5 text-positive" /> Import complete
         </CardTitle>
         <CardDescription>
-          {d.imported} added · {d.duplicate} already in Fin{d.skipped ? ` · ${d.skipped} look-alikes skipped` : ''}
-          {d.failed ? ` · ${d.failed} lines with problems were not imported` : ''}. You can undo this import from History at
-          any time.
+          {d.imported} added · {d.duplicate} already in Fin
+          {d.skipped ? ` · ${d.skipped} look-alikes skipped` : ''}
+          {d.failed ? ` · ${d.failed} lines with problems were not imported` : ''}. You can undo this import
+          from History at any time.
         </CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
-        Imported transactions start uncategorized. Open them to set categories, or select several and assign one at once.
+        Imported transactions start uncategorized. Open them to set categories, or select several and assign
+        one at once.
       </CardContent>
       <CardFooter className="gap-2">
         <Button asChild>
@@ -45,10 +54,16 @@ function DoneStep({ wizard }: { wizard: ImportWizard }) {
 
 export function ImportPage() {
   const wizard = useImportWizard()
-  const stepIndex = wizard.step === 'done' ? STEPS.length : STEPS.findIndex((_, i) => ['file', 'map', 'review'][i] === wizard.step)
+  const stepIndex =
+    wizard.step === 'done'
+      ? STEPS.length
+      : STEPS.findIndex((_, i) => ['file', 'map', 'review'][i] === wizard.step)
   return (
     <Page className="max-w-7xl">
-      <PageHeader title="Import" description="Bring in bank and card statements. Duplicates are caught before anything is saved." />
+      <PageHeader
+        title="Import"
+        description="Bring in bank and card statements. Duplicates are caught before anything is saved."
+      />
       <Tabs defaultValue="new">
         <TabsList>
           <TabsTrigger value="new">

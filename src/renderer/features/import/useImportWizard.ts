@@ -2,7 +2,13 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { detectHeaderRow, parseTable, type Table } from '@domain/import/csv'
 import { decodeBytes, type Encoding } from '@domain/import/decode'
-import { applyMapping, closingBalance, suggestMapping, type Mapping, type ParsedRow } from '@domain/import/mapping'
+import {
+  applyMapping,
+  closingBalance,
+  suggestMapping,
+  type Mapping,
+  type ParsedRow,
+} from '@domain/import/mapping'
 import { matchPreset, type Preset } from '@domain/import/presets'
 import { call } from '@renderer/lib/ipc'
 import { useAccounts } from '@renderer/lib/queries'
@@ -22,7 +28,8 @@ async function sha256(bytes: ArrayBuffer): Promise<string | null> {
   }
 }
 
-export const usePresets = () => useQuery({ queryKey: ['import', 'presets'], queryFn: () => call('import.presets', undefined) })
+export const usePresets = () =>
+  useQuery({ queryKey: ['import', 'presets'], queryFn: () => call('import.presets', undefined) })
 
 /** All state for one import, kept in the renderer until the user confirms. */
 export function useImportWizard() {
@@ -39,7 +46,13 @@ export function useImportWizard() {
   const [edited, setEdited] = useState(false)
   const [importPossible, setImportPossible] = useState<Set<number>>(new Set())
   const [savePresetAs, setSavePresetAs] = useState('')
-  const [done, setDone] = useState<{ batchId: string; imported: number; duplicate: number; skipped: number; failed: number } | null>(null)
+  const [done, setDone] = useState<{
+    batchId: string
+    imported: number
+    duplicate: number
+    skipped: number
+    failed: number
+  } | null>(null)
 
   const result = useMemo(
     () => (file && mapping ? applyMapping(file.table.rows, mapping, file.table.lineNumbers) : null),
@@ -80,7 +93,9 @@ export function useImportWizard() {
   function applyPreset(p: Preset | null) {
     if (!file || !mapping) return
     setPreset(p)
-    setMappingState(p ? { ...p.mapping, headerRow: mapping.headerRow } : suggestMapping(file.table.rows, mapping.headerRow))
+    setMappingState(
+      p ? { ...p.mapping, headerRow: mapping.headerRow } : suggestMapping(file.table.rows, mapping.headerRow),
+    )
     setEdited(false)
   }
 

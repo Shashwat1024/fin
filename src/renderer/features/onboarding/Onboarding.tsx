@@ -1,11 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FlaskConicalIcon, LockIcon } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
 import { AccountFields, useAccountForm } from '@renderer/features/accounts/AccountForm'
 import { useDemoMode } from '@renderer/features/demo/useDemoMode'
 import { PreferenceFields } from '@renderer/features/settings/PreferenceFields'
 import { useFinMutation } from '@renderer/lib/queries'
+import { useTheme } from '@renderer/lib/theme'
 import type { Settings } from '@shared/types'
 
 /** First-run setup: confirm regional preferences, then add the first account (or skip). */
@@ -16,6 +24,10 @@ export function Onboarding({ settings }: { settings: Settings }) {
   const finish = () => save.mutate({ onboarded: true })
   const account = useAccountForm(undefined, finish)
   const demo = useDemoMode()
+  const { setPreview } = useTheme()
+  // Show the chosen appearance straight away; it is saved with the rest on Continue.
+  useEffect(() => setPreview(prefs.theme), [prefs.theme, setPreview])
+  useEffect(() => () => setPreview(null), [setPreview])
 
   return (
     <div className="flex h-full items-center justify-center overflow-auto bg-muted/40 p-8">
@@ -25,8 +37,8 @@ export function Onboarding({ settings }: { settings: Settings }) {
             <CardHeader>
               <CardTitle className="text-xl">Welcome to Fin</CardTitle>
               <CardDescription className="flex items-start gap-2">
-                <LockIcon className="mt-0.5 size-4 shrink-0" />
-                A private money tracker. Everything stays on this computer, with no account, bank login or internet needed.
+                <LockIcon className="mt-0.5 size-4 shrink-0" />A private money tracker. Everything stays on
+                this computer, with no account, bank login or internet needed.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -57,7 +69,9 @@ export function Onboarding({ settings }: { settings: Settings }) {
           >
             <CardHeader className="mb-4">
               <CardTitle className="text-xl">Add your first account</CardTitle>
-              <CardDescription>Your main bank account is a good start. Use today’s balance so totals match your bank.</CardDescription>
+              <CardDescription>
+                Your main bank account is a good start. Use today’s balance so totals match your bank.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <AccountFields form={account} />

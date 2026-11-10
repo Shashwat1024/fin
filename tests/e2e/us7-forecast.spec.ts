@@ -30,7 +30,9 @@ test('US7: forecast with buffer warning and assumptions, and net worth with a re
   // Forecast: the lowest point, an honest Low confidence label with little history
   await page.keyboard.press('Control+9')
   await expect(page.getByRole('heading', { name: 'Forecast' })).toBeVisible()
-  await expect(page.getByText('Lowest point').locator('xpath=ancestor::*[@data-slot="card"]')).toContainText('₹10,000.00')
+  await expect(page.getByText('Lowest point').locator('xpath=ancestor::*[@data-slot="card"]')).toContainText(
+    '₹10,000.00',
+  )
   await expect(page.getByText('Low confidence', { exact: true })).toBeVisible()
   await expect(page.getByText(/An estimate, not a guaranteed balance/)).toBeVisible()
 
@@ -51,7 +53,9 @@ test('US7: forecast with buffer warning and assumptions, and net worth with a re
   // 60 days, read as a table
   await page.getByRole('radio', { name: '60 days' }).click()
   await page.getByRole('radio', { name: 'Table' }).click()
-  await expect(page.getByRole('table', { name: 'Projected balance by day' }).locator('tbody tr')).toHaveCount(61)
+  await expect(page.getByRole('table', { name: 'Projected balance by day' }).locator('tbody tr')).toHaveCount(
+    61,
+  )
 
   // The dashboard shows the same low point
   await page.keyboard.press('Control+1')
@@ -81,7 +85,9 @@ test('US7: forecast with buffer warning and assumptions, and net worth with a re
   const saved = toast(page, 'Recorded the value of Index fund')
   await expect(saved).toBeVisible()
   await expect(assets.getByRole('listitem', { name: 'Index fund' })).toContainText('₹56,000.00')
-  await expect(page.getByText('Net worth today').locator('xpath=ancestor::*[@data-slot="card"]')).toContainText('₹1,56,000.00')
+  await expect(
+    page.getByText('Net worth today').locator('xpath=ancestor::*[@data-slot="card"]'),
+  ).toContainText('₹1,56,000.00')
 
   // One undo puts the ledger value back
   await saved.getByRole('button', { name: 'Undo' }).click()

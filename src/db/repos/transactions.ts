@@ -6,7 +6,13 @@ import type { Mutation, PayeeSuggestion, TxnDetail, TxnPage, TxnRow } from '@sha
 import { withAudit, type AuditWriter } from '../audit'
 import { all, get, newId, nowIso, type Db, type SqlParam } from '../connection'
 import { assertAccountUsable } from './accounts'
-import { assertCategoryUsable, expandCategoryIds, resolveMerchantId, resolveTagIds, UNCATEGORIZED } from './categories'
+import {
+  assertCategoryUsable,
+  expandCategoryIds,
+  resolveMerchantId,
+  resolveTagIds,
+  UNCATEGORIZED,
+} from './categories'
 
 type TxnRecord = {
   id: string
@@ -100,7 +106,13 @@ function loadLive(db: Db, id: string): TxnRecord {
 export function getTransaction(db: Db, id: string): TxnDetail {
   const r = get<RawRow>(db, `${ROW_SELECT} WHERE t.id = ? AND t.deleted_at IS NULL`, id)
   if (!r) throw notFound('Transaction')
-  const splits = all<{ id: string; category_id: string; category_path: string; amount_minor: number; memo: string | null }>(
+  const splits = all<{
+    id: string
+    category_id: string
+    category_path: string
+    amount_minor: number
+    memo: string | null
+  }>(
     db,
     `SELECT s.id, s.category_id, s.amount_minor, s.memo,
             CASE WHEN p.name IS NOT NULL THEN p.name || ' › ' || c.name ELSE c.name END AS category_path
@@ -108,7 +120,11 @@ export function getTransaction(db: Db, id: string): TxnDetail {
      WHERE s.transaction_id = ? ORDER BY s.sort_order`,
     id,
   )
-  const tagIds = all<{ tag_id: string }>(db, 'SELECT tag_id FROM transaction_tags WHERE transaction_id = ?', id)
+  const tagIds = all<{ tag_id: string }>(
+    db,
+    'SELECT tag_id FROM transaction_tags WHERE transaction_id = ?',
+    id,
+  )
   return {
     ...mapRow(r),
     splits: splits.map((s) => ({
@@ -166,7 +182,8 @@ function setTags(db: Db, a: AuditWriter, txnId: string, names: readonly string[]
     if (wanted.has(e.tag_id)) wanted.delete(e.tag_id)
     else a.remove('transaction_tags', e.id)
   }
-  for (const tagId of wanted) a.insert('transaction_tags', { id: newId('ttg'), transaction_id: txnId, tag_id: tagId })
+  for (const tagId of wanted)
+    a.insert('transaction_tags', { id: newId('ttg'), transaction_id: txnId, tag_id: tagId })
 }
 
 export function createTransaction(db: Db, input: TxnInput): Mutation<{ txn: TxnDetail }> {
@@ -199,13 +216,18 @@ export function createTransaction(db: Db, input: TxnInput): Mutation<{ txn: TxnD
 
 const TRANSFER_LOCKED = ['accountId', 'amountMinor', 'postedDate', 'categoryId', 'splits'] as const
 
-export function updateTransaction(db: Db, id: string, patch: Partial<TxnInput>): Mutation<{ txn: TxnDetail }> {
+export function updateTransaction(
+  db: Db,
+  id: string,
+  patch: Partial<TxnInput>,
+): Mutation<{ txn: TxnDetail }> {
   const { auditGroupId } = withAudit(db, 'Edit transaction', (a) => {
     const cur = loadLive(db, id)
     if (cur.kind === 'transfer' && TRANSFER_LOCKED.some((k) => patch[k] !== undefined)) {
       throw invariant('Change the amount, date or accounts of a transfer from the transfer form')
     }
-    if (patch.accountId !== undefined && patch.accountId !== cur.account_id) assertAccountUsable(db, patch.accountId)
+    if (patch.accountId !== undefined && patch.accountId !== cur.account_id)
+      assertAccountUsable(db, patch.accountId)
     const amount = patch.amountMinor ?? cur.amount_minor
     const existingSplits = all<{ category_id: string; amount_minor: number; memo: string | null }>(
       db,
@@ -218,7 +240,8 @@ export function updateTransaction(db: Db, id: string, patch: Partial<TxnInput>):
     if (patch.splits === undefined && patch.categoryId) splits = []
     const splitsChanged = patch.splits !== undefined || splits.length !== existingSplits.length
     if (splits.length > 0) checkSplits(db, amount, splits)
-    const categoryId = splits.length > 0 ? null : patch.categoryId !== undefined ? patch.categoryId : cur.category_id
+    const categoryId =
+      splits.length > 0 ? null : patch.categoryId !== undefined ? patch.categoryId : cur.category_id
     if (categoryId && categoryId !== cur.category_id) assertCategoryUsable(db, categoryId)
 
     const next = {
@@ -231,7 +254,10 @@ export function updateTransaction(db: Db, id: string, patch: Partial<TxnInput>):
       status: patch.status ?? cur.status,
     }
     const changed = (Object.keys(next) as (keyof typeof next)[]).some((k) => next[k] !== cur[k])
-    const merchant = next.payee !== cur.payee && cur.kind === 'standard' ? { merchant_id: resolveMerchantId(db, a, next.payee) } : {}
+    const merchant =
+      next.payee !== cur.payee && cur.kind === 'standard'
+        ? { merchant_id: resolveMerchantId(db, a, next.payee) }
+        : {}
     if (changed) a.update('transactions', id, { ...next, ...merchant, updated_at: nowIso() })
     if (splitsChanged) writeSplits(db, a, id, splits)
     if (patch.tags !== undefined) setTags(db, a, id, patch.tags)
@@ -333,8 +359,12 @@ function accountName(db: Db, id: string): string {
 }
 
 /** A transfer is two linked legs that are exact negatives of each other. */
-export function createTransfer(db: Db, input: TransferInput): Mutation<{ transferId: string; txnIds: string[] }> {
-  if (input.fromAccountId === input.toAccountId) throw invariant('Choose two different accounts for a transfer')
+export function createTransfer(
+  db: Db,
+  input: TransferInput,
+): Mutation<{ transferId: string; txnIds: string[] }> {
+  if (input.fromAccountId === input.toAccountId)
+    throw invariant('Choose two different accounts for a transfer')
   const { result, auditGroupId } = withAudit(db, 'Add transfer', (a) => {
     assertAccountUsable(db, input.fromAccountId)
     assertAccountUsable(db, input.toAccountId)
@@ -344,7 +374,12 @@ export function createTransfer(db: Db, input: TransferInput): Mutation<{ transfe
     const toId = newId('txn')
     const now = nowIso()
     a.insert('transfers', { id: transferId, from_txn_id: fromId, to_txn_id: toId, created_at: now })
-    const base = { posted_date: input.postedDate, kind: 'transfer', transfer_id: transferId, notes: input.notes ?? null }
+    const base = {
+      posted_date: input.postedDate,
+      kind: 'transfer',
+      transfer_id: transferId,
+      notes: input.notes ?? null,
+    }
     a.insert('transactions', {
       ...base,
       id: fromId,
@@ -570,7 +605,8 @@ export function suggestPayees(db: Db, prefix: string, limit = 8): PayeeSuggestio
   for (const r of rows) {
     const key = r.payee.toLowerCase()
     const cur = best.get(key)
-    if (!cur) best.set(key, { payee: r.payee, categoryId: r.category_id, accountId: r.account_id, count: r.n })
+    if (!cur)
+      best.set(key, { payee: r.payee, categoryId: r.category_id, accountId: r.account_id, count: r.n })
     else cur.count += r.n
   }
   return [...best.values()].sort((a, b) => b.count - a.count).slice(0, limit)

@@ -31,10 +31,17 @@ export const CHANGE_LABELS: Record<Kind, string> = {
   savings_change: 'Save more each month',
 }
 
-const FREQ_TEXT: Record<Frequency, string> = { weekly: 'every week', monthly: 'every month', yearly: 'every year' }
+const FREQ_TEXT: Record<Frequency, string> = {
+  weekly: 'every week',
+  monthly: 'every month',
+  yearly: 'every year',
+}
 const rupees = (minor: number) => formatMoney(money(Math.abs(minor)))
 
-function describe(c: ScenarioChange, names: { goals: Map<string, string>; loans: Map<string, string> }): string {
+function describe(
+  c: ScenarioChange,
+  names: { goals: Map<string, string>; loans: Map<string, string> },
+): string {
   switch (c.kind) {
     case 'new_bill':
       return `${c.name}: ${rupees(c.amountMinor)} ${FREQ_TEXT[c.frequency]} from ${formatDate(c.startDate)}`
@@ -72,7 +79,12 @@ function AddChange({ onAdd }: { onAdd: (c: ScenarioChange) => void }) {
     name: needsName && !name.trim() ? 'Give it a name' : undefined,
     amount: 'error' in parsed ? parsed.error : undefined,
     date: date ? undefined : 'Choose a date',
-    loan: kind === 'loan_prepayment' && !loanId ? (loans.length ? 'Choose a loan' : 'Add a loan account first') : undefined,
+    loan:
+      kind === 'loan_prepayment' && !loanId
+        ? loans.length
+          ? 'Choose a loan'
+          : 'Add a loan account first'
+        : undefined,
   }
   const shown: Partial<typeof errors> = submitted ? errors : {}
 
@@ -97,7 +109,12 @@ function AddChange({ onAdd }: { onAdd: (c: ScenarioChange) => void }) {
     setSubmitted(false)
   }
 
-  const dateLabel = kind === 'new_bill' ? 'First payment' : kind === 'large_purchase' || kind === 'loan_prepayment' ? 'Date' : 'From'
+  const dateLabel =
+    kind === 'new_bill'
+      ? 'First payment'
+      : kind === 'large_purchase' || kind === 'loan_prepayment'
+        ? 'Date'
+        : 'From'
   return (
     <form
       className="flex flex-col gap-4"
@@ -135,7 +152,13 @@ function AddChange({ onAdd }: { onAdd: (c: ScenarioChange) => void }) {
       )}
       {kind === 'income_change' && (
         <FormField label="Direction" htmlFor={`${id}-rise`}>
-          <ToggleGroup id={`${id}-rise`} type="single" variant="outline" value={rise} onValueChange={(v) => v && setRise(v as 'up' | 'down')}>
+          <ToggleGroup
+            id={`${id}-rise`}
+            type="single"
+            variant="outline"
+            value={rise}
+            onValueChange={(v) => v && setRise(v as 'up' | 'down')}
+          >
             <ToggleGroupItem value="up">Pay rise</ToggleGroupItem>
             <ToggleGroupItem value="down">Pay cut</ToggleGroupItem>
           </ToggleGroup>
@@ -180,10 +203,21 @@ function AddChange({ onAdd }: { onAdd: (c: ScenarioChange) => void }) {
           htmlFor={`${id}-amount`}
           error={shown.amount}
         >
-          <AmountInput id={`${id}-amount`} value={amount} onChange={setAmount} invalid={Boolean(shown.amount)} />
+          <AmountInput
+            id={`${id}-amount`}
+            value={amount}
+            onChange={setAmount}
+            invalid={Boolean(shown.amount)}
+          />
         </FormField>
         <FormField label={dateLabel} htmlFor={`${id}-date`} error={shown.date}>
-          <Input id={`${id}-date`} type="date" max="9999-12-31" value={date} onChange={(e) => setDate(e.target.value)} />
+          <Input
+            id={`${id}-date`}
+            type="date"
+            max="9999-12-31"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
         </FormField>
       </div>
       {kind === 'new_bill' && (
@@ -212,7 +246,12 @@ const COLUMNS: ChartColumn<Row>[] = [
   { key: 'date', header: 'Day', cell: (r) => dayLabel(r.date) },
   { key: 'before', header: 'As things are', numeric: true, cell: (r) => <MoneyText minor={r.before} /> },
   { key: 'after', header: 'With changes', numeric: true, cell: (r) => <MoneyText minor={r.after} /> },
-  { key: 'diff', header: 'Difference', numeric: true, cell: (r) => (r.after === r.before ? '—' : <MoneyText minor={r.after - r.before} showPlus />) },
+  {
+    key: 'diff',
+    header: 'Difference',
+    numeric: true,
+    cell: (r) => (r.after === r.before ? '—' : <MoneyText minor={r.after - r.before} showPlus />),
+  },
 ]
 
 /** "₹1,60,000.00 lower than the ₹3,41,489.00 forecast" */
@@ -220,14 +259,19 @@ function Delta({ before, after }: { before: number; after: number }) {
   if (before === after) return <>No change from the forecast</>
   return (
     <>
-      <MoneyText minor={Math.abs(after - before)} /> {after < before ? 'lower' : 'higher'} than the <MoneyText minor={before} /> forecast
+      <MoneyText minor={Math.abs(after - before)} /> {after < before ? 'lower' : 'higher'} than the{' '}
+      <MoneyText minor={before} /> forecast
     </>
   )
 }
 
 function Results({ r }: { r: ScenarioDto }) {
   const { before, after } = r
-  const rows: Row[] = after.points.map((p, i) => ({ date: p.date, before: before.points[i]!.balanceMinor, after: p.balanceMinor }))
+  const rows: Row[] = after.points.map((p, i) => ({
+    date: p.date,
+    before: before.points[i]!.balanceMinor,
+    after: p.balanceMinor,
+  }))
   const daysBelow = (f: typeof before) => f.points.filter((p) => p.balanceMinor < f.bufferMinor).length
   const changedGoals = r.goals.filter((g) => g.extraMonthlyMinor !== 0)
   return (
@@ -239,7 +283,8 @@ function Results({ r }: { r: ScenarioDto }) {
           value={<MoneyText minor={after.low.balanceMinor} />}
           detail={
             <>
-              On {dayLabel(after.low.date)} · <Delta before={before.low.balanceMinor} after={after.low.balanceMinor} />
+              On {dayLabel(after.low.date)} ·{' '}
+              <Delta before={before.low.balanceMinor} after={after.low.balanceMinor} />
             </>
           }
         />
@@ -253,7 +298,11 @@ function Results({ r }: { r: ScenarioDto }) {
           label="Days below your buffer"
           icon={<ArrowDownToLineIcon className="size-4" aria-hidden />}
           value={String(daysBelow(after))}
-          detail={after.bufferMinor > 0 ? `Buffer ${rupees(after.bufferMinor)} · ${daysBelow(before)} without these changes` : 'No buffer set'}
+          detail={
+            after.bufferMinor > 0
+              ? `Buffer ${rupees(after.bufferMinor)} · ${daysBelow(before)} without these changes`
+              : 'No buffer set'
+          }
         />
       </div>
       <ChartCard
@@ -264,7 +313,11 @@ function Results({ r }: { r: ScenarioDto }) {
               <span className="inline-block h-0.5 w-5 rounded bg-series-in" aria-hidden /> With changes
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block h-0 w-5 border-t-2 border-dashed border-muted-foreground/70" aria-hidden /> As things are
+              <span
+                className="inline-block h-0 w-5 border-t-2 border-dashed border-muted-foreground/70"
+                aria-hidden
+              />{' '}
+              As things are
             </span>
           </span>
         }
@@ -273,9 +326,16 @@ function Results({ r }: { r: ScenarioDto }) {
             label={`Projected cash and bank balance over ${after.days} days with the changes, compared with the forecast as things are`}
             points={after.points.map((p) => ({ date: p.date, valueMinor: p.balanceMinor }))}
             compare={before.points.map((p) => ({ date: p.date, valueMinor: p.balanceMinor }))}
-            reference={after.bufferMinor > 0 ? { valueMinor: after.bufferMinor, label: `Buffer ${rupees(after.bufferMinor)}` } : null}
+            reference={
+              after.bufferMinor > 0
+                ? { valueMinor: after.bufferMinor, label: `Buffer ${rupees(after.bufferMinor)}` }
+                : null
+            }
             ranges={after.belowBuffer}
-            marker={{ date: after.low.date, label: `Lowest ${formatMoney(money(after.low.balanceMinor), { compact: true })}` }}
+            marker={{
+              date: after.low.date,
+              label: `Lowest ${formatMoney(money(after.low.balanceMinor), { compact: true })}`,
+            }}
             tooltip={(i) => (
               <div className="flex flex-col gap-1">
                 <span className="font-medium">{dayLabel(rows[i]!.date)}</span>
@@ -288,7 +348,10 @@ function Results({ r }: { r: ScenarioDto }) {
                 {r.added
                   .filter((e) => e.date === rows[i]!.date)
                   .map((e) => (
-                    <span key={`${e.itemId}-${e.date}-${e.name}`} className="flex justify-between gap-4 text-muted-foreground">
+                    <span
+                      key={`${e.itemId}-${e.date}-${e.name}`}
+                      className="flex justify-between gap-4 text-muted-foreground"
+                    >
                       {e.name} <MoneyText minor={e.amountMinor} showPlus />
                     </span>
                   ))}
@@ -296,7 +359,14 @@ function Results({ r }: { r: ScenarioDto }) {
             )}
           />
         }
-        table={<ChartTable caption="Projected balance by day" columns={COLUMNS} rows={rows} rowKey={(row) => row.date} />}
+        table={
+          <ChartTable
+            caption="Projected balance by day"
+            columns={COLUMNS}
+            rows={rows}
+            rowKey={(row) => row.date}
+          />
+        }
       />
       {(r.goals.length > 0 || r.loans.length > 0) && (
         <Card>
@@ -322,7 +392,11 @@ function Results({ r }: { r: ScenarioDto }) {
                   <TableRow key={g.id}>
                     <TableCell className="font-medium whitespace-normal">{g.name}</TableCell>
                     <TableCell className="whitespace-normal">{goalText(g.before)}</TableCell>
-                    <TableCell className={g.extraMonthlyMinor ? 'font-medium whitespace-normal' : 'whitespace-normal'}>{goalText(g.after)}</TableCell>
+                    <TableCell
+                      className={g.extraMonthlyMinor ? 'font-medium whitespace-normal' : 'whitespace-normal'}
+                    >
+                      {goalText(g.after)}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {r.loans.map((l) => (
@@ -345,7 +419,9 @@ function Results({ r }: { r: ScenarioDto }) {
         <Card role="region" aria-label="How this was worked out">
           <CardHeader>
             <CardTitle>How this was worked out</CardTitle>
-            <CardDescription>On top of your forecast: the same balances, recurring items and everyday spending.</CardDescription>
+            <CardDescription>
+              On top of your forecast: the same balances, recurring items and everyday spending.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="list-disc space-y-1 pl-5 text-sm">
@@ -373,7 +449,10 @@ export function WhatIf() {
   const scenario = useScenario(days, changes)
   const { data: accounts = [] } = useAccounts()
   const { data: goals = [] } = useGoals()
-  const names = { goals: new Map(goals.map((g) => [g.id, g.name])), loans: new Map(accounts.map((a) => [a.id, a.name])) }
+  const names = {
+    goals: new Map(goals.map((g) => [g.id, g.name])),
+    loans: new Map(accounts.map((a) => [a.id, a.name])),
+  }
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_1fr]">
       <div className="flex flex-col gap-6">
@@ -389,7 +468,11 @@ export function WhatIf() {
         <Card role="region" aria-label="Changes in this scenario">
           <CardHeader>
             <CardTitle>In this scenario</CardTitle>
-            <CardDescription>{changes.length ? plural(changes.length, 'change') : 'No changes yet: both lines are your forecast as it is.'}</CardDescription>
+            <CardDescription>
+              {changes.length
+                ? plural(changes.length, 'change')
+                : 'No changes yet: both lines are your forecast as it is.'}
+            </CardDescription>
           </CardHeader>
           {changes.length > 0 && (
             <CardContent className="flex flex-col gap-3">
@@ -397,7 +480,12 @@ export function WhatIf() {
                 {changes.map((c, i) => (
                   <li key={`${c.kind}-${i}`} className="flex items-center gap-2 py-2">
                     <span className="min-w-0 flex-1">{describe(c, names)}</span>
-                    <Button variant="ghost" size="icon-sm" aria-label={`Remove: ${describe(c, names)}`} onClick={() => setChanges((list) => list.filter((_, j) => j !== i))}>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Remove: ${describe(c, names)}`}
+                      onClick={() => setChanges((list) => list.filter((_, j) => j !== i))}
+                    >
                       <Trash2Icon />
                     </Button>
                   </li>
@@ -415,9 +503,17 @@ export function WhatIf() {
           <Alert className="w-auto flex-1">
             <FlaskConicalIcon />
             <AlertTitle>A simulation</AlertTitle>
-            <AlertDescription>Nothing here is saved, and your real forecast, goals and accounts stay exactly as they are.</AlertDescription>
+            <AlertDescription>
+              Nothing here is saved, and your real forecast, goals and accounts stay exactly as they are.
+            </AlertDescription>
           </Alert>
-          <ToggleGroup type="single" variant="outline" value={String(days)} onValueChange={(v) => v && setDays(Number(v) as Days)} aria-label="Scenario length">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            value={String(days)}
+            onValueChange={(v) => v && setDays(Number(v) as Days)}
+            aria-label="Scenario length"
+          >
             {FORECAST_OPTIONS.map((d) => (
               <ToggleGroupItem key={d} value={String(d)}>
                 {d} days

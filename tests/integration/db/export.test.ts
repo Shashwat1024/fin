@@ -8,7 +8,12 @@ import { LATEST_SCHEMA_VERSION } from '@db/migrate'
 import { createAccount, listAccounts } from '@db/repos/accounts'
 import { dashboardSummary } from '@db/repos/dashboard'
 import { budgetMonth, listGoals, listOccurrences } from '@db/repos/planning'
-import { createTransaction, createTransfer, deleteTransactions, queryTransactions } from '@db/repos/transactions'
+import {
+  createTransaction,
+  createTransfer,
+  deleteTransactions,
+  queryTransactions,
+} from '@db/repos/transactions'
 import { seedDemoData } from '@db/seed/demo'
 import { forecast, netWorthHistoryFor } from '@db/repos/insights'
 import { dispatch } from '../../../src/main/dispatch'
@@ -22,8 +27,18 @@ let card: string
 beforeEach(() => {
   db = testDb()
   dir = mkdtempSync(join(tmpdir(), 'fin-export-'))
-  bank = createAccount(db, { name: 'HDFC, Savings', type: 'bank', openingBalanceMinor: 5_000_000, openingDate: '2026-10-01' }).account.id
-  card = createAccount(db, { name: 'Card', type: 'credit_card', openingBalanceMinor: 0, openingDate: '2026-10-01' }).account.id
+  bank = createAccount(db, {
+    name: 'HDFC, Savings',
+    type: 'bank',
+    openingBalanceMinor: 5_000_000,
+    openingDate: '2026-10-01',
+  }).account.id
+  card = createAccount(db, {
+    name: 'Card',
+    type: 'credit_card',
+    openingBalanceMinor: 0,
+    openingDate: '2026-10-01',
+  }).account.id
   createTransaction(db, {
     accountId: bank,
     postedDate: '2026-10-02',
@@ -43,10 +58,25 @@ beforeEach(() => {
       { categoryId: categoryId(db, 'Shopping › Household'), amountMinor: -90_000 },
     ],
   })
-  createTransaction(db, { accountId: bank, postedDate: '2026-10-04', amountMinor: -100, payee: '=HYPERLINK("http://x")' })
-  const gone = createTransaction(db, { accountId: bank, postedDate: '2026-10-05', amountMinor: -999, payee: 'Deleted' }).txn.id
+  createTransaction(db, {
+    accountId: bank,
+    postedDate: '2026-10-04',
+    amountMinor: -100,
+    payee: '=HYPERLINK("http://x")',
+  })
+  const gone = createTransaction(db, {
+    accountId: bank,
+    postedDate: '2026-10-05',
+    amountMinor: -999,
+    payee: 'Deleted',
+  }).txn.id
   deleteTransactions(db, [gone])
-  createTransfer(db, { fromAccountId: bank, toAccountId: card, postedDate: '2026-10-06', amountMinor: 100_000 })
+  createTransfer(db, {
+    fromAccountId: bank,
+    toAccountId: card,
+    postedDate: '2026-10-06',
+    amountMinor: 100_000,
+  })
 })
 
 afterEach(() => {
@@ -57,13 +87,39 @@ afterEach(() => {
 describe('JSON export v1', () => {
   it('has the documented shape, integer amounts and no deleted records', () => {
     const out = exportJson(db, new Date('2026-11-09T04:00:00Z'))
-    expect(out).toMatchObject({ format: 'fin-export', version: 1, exportedAt: '2026-11-09T04:00:00.000Z', appSchemaVersion: LATEST_SCHEMA_VERSION })
+    expect(out).toMatchObject({
+      format: 'fin-export',
+      version: 1,
+      exportedAt: '2026-11-09T04:00:00.000Z',
+      appSchemaVersion: LATEST_SCHEMA_VERSION,
+    })
     expect(Object.keys(out)).toEqual(
-      expect.arrayContaining(['settings', 'accounts', 'categories', 'tags', 'merchants', 'rules', 'transactions', 'transfers', 'recurringItems', 'budgets', 'goals', 'goalContributions', 'valuations', 'importBatches']),
+      expect.arrayContaining([
+        'settings',
+        'accounts',
+        'categories',
+        'tags',
+        'merchants',
+        'rules',
+        'transactions',
+        'transfers',
+        'recurringItems',
+        'budgets',
+        'goals',
+        'goalContributions',
+        'valuations',
+        'importBatches',
+      ]),
     )
     expect(out.settings).toMatchObject({ currency: 'INR', timezone: 'Asia/Kolkata', fyStartMonth: 4 })
     expect(out.settings).not.toHaveProperty('backupDir')
-    expect(out.accounts[0]).toMatchObject({ name: 'HDFC, Savings', type: 'bank', openingBalanceMinor: 5_000_000, openingDate: '2026-10-01', archivedAt: null })
+    expect(out.accounts[0]).toMatchObject({
+      name: 'HDFC, Savings',
+      type: 'bank',
+      openingBalanceMinor: 5_000_000,
+      openingDate: '2026-10-01',
+      archivedAt: null,
+    })
     expect(out.transactions.map((t) => t.payeeRaw)).not.toContain('Deleted')
     expect(out.transactions).toHaveLength(5) // 3 standard + 2 transfer legs
     const split = out.transactions.find((t) => t.payeeRaw === 'DMart')!
@@ -110,21 +166,36 @@ describe('transactions CSV', () => {
 
   it('exports through the IPC handler to the path the user chose, and does nothing when cancelled', async () => {
     const path = join(dir, 'out.csv')
-    expect(await dispatch({ db, env: fakeEnv(dir, { save: path }) }, 'export.csv', undefined)).toEqual({ ok: true, data: { path } })
+    expect(await dispatch({ db, env: fakeEnv(dir, { save: path }) }, 'export.csv', undefined)).toEqual({
+      ok: true,
+      data: { path },
+    })
     expect(readFileSync(path, 'utf8')).toBe(exportTransactionsCsv(db))
     const json = join(dir, 'out.json')
     await dispatch({ db, env: fakeEnv(dir, { save: json }) }, 'export.json', undefined)
     expect(JSON.parse(readFileSync(json, 'utf8'))).toMatchObject({ format: 'fin-export', version: 1 })
-    expect(await dispatch({ db, env: fakeEnv(dir, { save: null }) }, 'export.json', undefined)).toEqual({ ok: true, data: null })
+    expect(await dispatch({ db, env: fakeEnv(dir, { save: null }) }, 'export.json', undefined)).toEqual({
+      ok: true,
+      data: null,
+    })
   })
 
   it('creates and lists backups through IPC, validating the passphrase', async () => {
     const env = fakeEnv(dir)
     const made = await dispatch({ db, env }, 'backup.create', undefined)
     expect(made).toMatchObject({ ok: true, data: { kind: 'manual', encrypted: false } })
-    expect(await dispatch({ db, env }, 'backup.create', { passphrase: 'short' })).toMatchObject({ ok: false, error: { code: 'VALIDATION' } })
-    expect(await dispatch({ db, env }, 'backup.list', undefined)).toMatchObject({ ok: true, data: [{ kind: 'manual' }] })
-    expect(await dispatch({ db, env }, 'backup.restore', { path: 'x' })).toMatchObject({ ok: false, error: { code: 'VALIDATION' } })
+    expect(await dispatch({ db, env }, 'backup.create', { passphrase: 'short' })).toMatchObject({
+      ok: false,
+      error: { code: 'VALIDATION' },
+    })
+    expect(await dispatch({ db, env }, 'backup.list', undefined)).toMatchObject({
+      ok: true,
+      data: [{ kind: 'manual' }],
+    })
+    expect(await dispatch({ db, env }, 'backup.restore', { path: 'x' })).toMatchObject({
+      ok: false,
+      error: { code: 'VALIDATION' },
+    })
   })
 })
 
@@ -133,7 +204,12 @@ describe('demo data', () => {
     const demo = testDb()
     seedDemoData(demo, '2026-11-09')
     const accounts = listAccounts(demo)
-    expect(accounts.map((a) => a.name)).toEqual(['Demo Savings Bank', 'Wallet', 'Demo Credit Card', 'Index Fund SIP'])
+    expect(accounts.map((a) => a.name)).toEqual([
+      'Demo Savings Bank',
+      'Wallet',
+      'Demo Credit Card',
+      'Index Fund SIP',
+    ])
     expect(queryTransactions(demo, { from: '2026-11-10' }).totals.count).toBe(0)
     const s = dashboardSummary(demo, '2026-11-09')
     expect(s.income.valueMinor).toBe(9_500_000)
@@ -160,11 +236,21 @@ describe('demo data', () => {
     ])
     // Forecast and net worth (US7): a buffer to compare against, and month-end fund values.
     const f = forecast(demo, 30, '2026-11-09')
-    expect(f).toMatchObject({ hasCashAccounts: true, bufferMinor: 5_000_000, confidence: 'high', belowBuffer: [] })
-    expect(f.events.map((e) => e.name)).toEqual(expect.arrayContaining(['Salary', 'Rent', 'Credit card bill']))
+    expect(f).toMatchObject({
+      hasCashAccounts: true,
+      bufferMinor: 5_000_000,
+      confidence: 'high',
+      belowBuffer: [],
+    })
+    expect(f.events.map((e) => e.name)).toEqual(
+      expect.arrayContaining(['Salary', 'Rent', 'Credit card bill']),
+    )
     const nw = netWorthHistoryFor(demo, '2026-11-09')
     expect(nw.points.map((p) => p.date)).toEqual(['2026-08-31', '2026-09-30', '2026-10-31', '2026-11-09'])
-    expect(nw.accounts.find((a) => a.name === 'Index Fund SIP')).toMatchObject({ source: 'valuation', valuationDate: '2026-10-31' })
+    expect(nw.accounts.find((a) => a.name === 'Index Fund SIP')).toMatchObject({
+      source: 'valuation',
+      valuationDate: '2026-10-31',
+    })
     demo.close()
   })
 })

@@ -57,98 +57,112 @@ export function CommandPalette() {
   }
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen} title="Command palette" description="Search for a page or action">
+    <CommandDialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Command palette"
+      description="Search for a page or action"
+    >
       <Command>
-      <CommandInput placeholder="Type a command or search…" />
-      <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Add">
-          <CommandItem onSelect={run(() => txn.open({ mode: 'expense' }))}>
-            <ArrowUpRightIcon /> Add expense
-            <CommandShortcut>
-              <ShortcutHint combo="mod+n" />
-            </CommandShortcut>
-          </CommandItem>
-          <CommandItem onSelect={run(() => txn.open({ mode: 'income' }))}>
-            <ArrowDownLeftIcon /> Add income
-            <CommandShortcut>
-              <ShortcutHint combo="mod+i" />
-            </CommandShortcut>
-          </CommandItem>
-          <CommandItem onSelect={run(() => txn.open({ mode: 'transfer' }))}>
-            <ArrowLeftRightIcon /> Add transfer
-            <CommandShortcut>
-              <ShortcutHint combo="mod+t" />
-            </CommandShortcut>
-          </CommandItem>
-          <CommandItem onSelect={run(() => accountDialog.open())}>
-            <PlusIcon /> New account
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/import'))}>
-            <FileUpIcon /> Import a bank statement
-          </CommandItem>
-        </CommandGroup>
-        <CommandGroup heading="Go to">
-          <CommandItem onSelect={run(() => navigate('/'))}>
-            <LayoutDashboardIcon /> Overview
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/transactions'))}>
-            <ReceiptTextIcon /> Transactions
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/accounts'))}>
-            <LandmarkIcon /> Accounts
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/recurring'))}>
-            <RepeatIcon /> Recurring
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/budget'))}>
-            <PieChartIcon /> Budget
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/goals'))}>
-            <TargetIcon /> Goals
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/categories'))}>
-            <TagsIcon /> Categories
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/categories?tab=rules'))}>
-            <WandSparklesIcon /> Rules
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/forecast'))}>
-            <LineChartIcon /> Forecast
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/net-worth'))}>
-            <ScaleIcon /> Net worth
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/insights'))}>
-            <LightbulbIcon /> Insights
-          </CommandItem>
-          <CommandItem value="what if simulator scenario" onSelect={run(() => navigate('/insights?tab=what-if'))}>
-            <FlaskConicalIcon /> What if… (simulator)
-          </CommandItem>
-          <CommandItem onSelect={run(() => navigate('/settings'))}>
-            <SettingsIcon /> Settings
-          </CommandItem>
-        </CommandGroup>
-        {accounts.length > 0 && (
-          <>
-            <CommandGroup heading="Accounts">
-              {accounts.map((a) => (
-                <CommandItem key={a.id} value={`account ${a.name}`} onSelect={run(() => navigate(`/transactions?account=${a.id}`))}>
-                  <WalletIcon /> {a.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </>
-        )}
-        <CommandGroup heading="Preferences">
-          <CommandItem onSelect={run(() => settings.mutate({ theme: resolved === 'dark' ? 'light' : 'dark' }))}>
-            <MoonIcon /> Switch to {resolved === 'dark' ? 'light' : 'dark'} theme
-          </CommandItem>
-          <CommandItem onSelect={run(showShortcuts)}>
-            <KeyboardIcon /> Keyboard shortcuts
-          </CommandItem>
-        </CommandGroup>
-      </CommandList>
+        <CommandInput placeholder="Type a command or search…" />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="Add">
+            <CommandItem onSelect={run(() => txn.open({ mode: 'expense' }))}>
+              <ArrowUpRightIcon /> Add expense
+              <CommandShortcut>
+                <ShortcutHint combo="mod+n" />
+              </CommandShortcut>
+            </CommandItem>
+            <CommandItem onSelect={run(() => txn.open({ mode: 'income' }))}>
+              <ArrowDownLeftIcon /> Add income
+              <CommandShortcut>
+                <ShortcutHint combo="mod+i" />
+              </CommandShortcut>
+            </CommandItem>
+            <CommandItem onSelect={run(() => txn.open({ mode: 'transfer' }))}>
+              <ArrowLeftRightIcon /> Add transfer
+              <CommandShortcut>
+                <ShortcutHint combo="mod+t" />
+              </CommandShortcut>
+            </CommandItem>
+            <CommandItem onSelect={run(() => accountDialog.open())}>
+              <PlusIcon /> New account
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/import'))}>
+              <FileUpIcon /> Import a bank statement
+            </CommandItem>
+          </CommandGroup>
+          <CommandGroup heading="Go to">
+            <CommandItem onSelect={run(() => navigate('/'))}>
+              <LayoutDashboardIcon /> Overview
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/transactions'))}>
+              <ReceiptTextIcon /> Transactions
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/accounts'))}>
+              <LandmarkIcon /> Accounts
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/recurring'))}>
+              <RepeatIcon /> Recurring
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/budget'))}>
+              <PieChartIcon /> Budget
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/goals'))}>
+              <TargetIcon /> Goals
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/categories'))}>
+              <TagsIcon /> Categories
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/categories?tab=rules'))}>
+              <WandSparklesIcon /> Rules
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/forecast'))}>
+              <LineChartIcon /> Forecast
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/net-worth'))}>
+              <ScaleIcon /> Net worth
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/insights'))}>
+              <LightbulbIcon /> Insights
+            </CommandItem>
+            <CommandItem
+              value="what if simulator scenario"
+              onSelect={run(() => navigate('/insights?tab=what-if'))}
+            >
+              <FlaskConicalIcon /> What if… (simulator)
+            </CommandItem>
+            <CommandItem onSelect={run(() => navigate('/settings'))}>
+              <SettingsIcon /> Settings
+            </CommandItem>
+          </CommandGroup>
+          {accounts.length > 0 && (
+            <>
+              <CommandGroup heading="Accounts">
+                {accounts.map((a) => (
+                  <CommandItem
+                    key={a.id}
+                    value={`account ${a.name}`}
+                    onSelect={run(() => navigate(`/transactions?account=${a.id}`))}
+                  >
+                    <WalletIcon /> {a.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          )}
+          <CommandGroup heading="Preferences">
+            <CommandItem
+              onSelect={run(() => settings.mutate({ theme: resolved === 'dark' ? 'light' : 'dark' }))}
+            >
+              <MoonIcon /> Switch to {resolved === 'dark' ? 'light' : 'dark'} theme
+            </CommandItem>
+            <CommandItem onSelect={run(showShortcuts)}>
+              <KeyboardIcon /> Keyboard shortcuts
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
       </Command>
     </CommandDialog>
   )

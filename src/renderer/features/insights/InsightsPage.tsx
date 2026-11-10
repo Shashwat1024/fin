@@ -20,7 +20,9 @@ function Feed() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
         <p data-testid="insights-as-of">
-          {asOf ? `Based on your transactions up to ${formatDate(asOf)}, compared with your own history.` : 'No transactions yet.'}
+          {asOf
+            ? `Based on your transactions up to ${formatDate(asOf)}, compared with your own history.`
+            : 'No transactions yet.'}
         </p>
         {(dismissedCount > 0 || showDismissed) && (
           <div className="flex items-center gap-2">
@@ -56,8 +58,14 @@ export function InsightsPage() {
   const tab = params.get('tab') === 'what-if' ? 'what-if' : 'insights'
   return (
     <Page>
-      <PageHeader title="Insights" description="Patterns in your spending, and what would happen if something changed." />
-      <Tabs value={tab} onValueChange={(t) => setParams(t === 'insights' ? {} : { tab: t }, { replace: true })}>
+      <PageHeader
+        title="Insights"
+        description="Patterns in your spending, and what would happen if something changed."
+      />
+      <Tabs
+        value={tab}
+        onValueChange={(t) => setParams(t === 'insights' ? {} : { tab: t }, { replace: true })}
+      >
         <TabsList className="mb-4">
           <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="what-if">What if</TabsTrigger>

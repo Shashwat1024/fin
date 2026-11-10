@@ -25,12 +25,18 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
   }))
   const [submitted, setSubmitted] = useState(false)
   const [server, setServer] = useState<Record<string, string>>({})
-  const create = useFinMutation('accounts.create', { success: (r) => `Added ${r.account.name}`, toastErrors: false })
-  const update = useFinMutation('accounts.update', { success: (r) => `Saved ${r.account.name}`, toastErrors: false })
+  const create = useFinMutation('accounts.create', {
+    success: (r) => `Added ${r.account.name}`,
+    toastErrors: false,
+  })
+  const update = useFinMutation('accounts.update', {
+    success: (r) => `Saved ${r.account.name}`,
+    toastErrors: false,
+  })
 
   const opening = values.opening.trim() ? parseAmountText(values.opening, { allowZero: true }) : { minor: 0 }
   const errors = {
-    name: values.name.trim() ? server['name'] ?? server['patch.name'] : 'Give the account a name',
+    name: values.name.trim() ? (server['name'] ?? server['patch.name']) : 'Give the account a name',
     opening: 'error' in opening ? opening.error : undefined,
     openingDate: values.openingDate ? undefined : 'Choose a date',
     form: server['_form'],
@@ -48,12 +54,18 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
       notes: values.notes.trim() || null,
     }
     try {
-      const r = account ? await update.mutateAsync({ id: account.id, patch: input }) : await create.mutateAsync(input)
+      const r = account
+        ? await update.mutateAsync({ id: account.id, patch: input })
+        : await create.mutateAsync(input)
       onSaved(r.account)
       return true
     } catch (err) {
       const issues = fieldIssues(err)
-      setServer(Object.keys(issues).length ? issues : { _form: err instanceof Error ? err.message : 'Could not save' })
+      setServer(
+        Object.keys(issues).length
+          ? issues
+          : { _form: err instanceof Error ? err.message : 'Could not save' },
+      )
       return false
     }
   }
@@ -61,7 +73,9 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
   return {
     values,
     set: <K extends keyof Values>(k: K, v: Values[K]) => setValues((s) => ({ ...s, [k]: v })),
-    errors: submitted ? errors : { name: undefined, opening: undefined, openingDate: undefined, form: errors.form },
+    errors: submitted
+      ? errors
+      : { name: undefined, opening: undefined, openingDate: undefined, form: errors.form },
     submit,
     pending: create.isPending || update.isPending,
   }
@@ -75,7 +89,13 @@ export function AccountFields({ form }: { form: ReturnType<typeof useAccountForm
     <FieldGroup className="gap-4">
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Name" htmlFor={`${id}-name`} error={errors.name}>
-          <Input id={`${id}-name`} autoFocus placeholder="e.g. HDFC Savings" value={values.name} onChange={(e) => set('name', e.target.value)} />
+          <Input
+            id={`${id}-name`}
+            autoFocus
+            placeholder="e.g. HDFC Savings"
+            value={values.name}
+            onChange={(e) => set('name', e.target.value)}
+          />
         </FormField>
         <FormField label="Type" htmlFor={`${id}-type`}>
           <Select value={values.type} onValueChange={(v) => set('type', v as AccountType)}>
@@ -99,14 +119,29 @@ export function AccountFields({ form }: { form: ReturnType<typeof useAccountForm
           error={errors.opening}
           description={liability ? 'What you owed when you start tracking' : 'Leave blank for ₹0'}
         >
-          <AmountInput id={`${id}-opening`} value={values.opening} onChange={(v) => set('opening', v)} invalid={Boolean(errors.opening)} />
+          <AmountInput
+            id={`${id}-opening`}
+            value={values.opening}
+            onChange={(v) => set('opening', v)}
+            invalid={Boolean(errors.opening)}
+          />
         </FormField>
         <FormField label="Start date" htmlFor={`${id}-date`} error={errors.openingDate}>
-          <Input id={`${id}-date`} type="date" value={values.openingDate} onChange={(e) => set('openingDate', e.target.value)} />
+          <Input
+            id={`${id}-date`}
+            type="date"
+            value={values.openingDate}
+            onChange={(e) => set('openingDate', e.target.value)}
+          />
         </FormField>
       </div>
       <FormField label="Notes" htmlFor={`${id}-notes`}>
-        <Textarea id={`${id}-notes`} rows={2} value={values.notes} onChange={(e) => set('notes', e.target.value)} />
+        <Textarea
+          id={`${id}-notes`}
+          rows={2}
+          value={values.notes}
+          onChange={(e) => set('notes', e.target.value)}
+        />
       </FormField>
       {errors.form && <p className="text-sm text-destructive">{errors.form}</p>}
     </FieldGroup>

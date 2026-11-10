@@ -1,9 +1,25 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { randomBytes } from 'node:crypto'
 import { basename, join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import type { BackupInfo, BackupInspection, BackupKind, DataCounts } from '@shared/types'
-import { decryptBackup, encryptBackup, BackupCryptoError, isEncryptedBackup, type KdfParams } from './backupCrypto'
+import {
+  decryptBackup,
+  encryptBackup,
+  BackupCryptoError,
+  isEncryptedBackup,
+  type KdfParams,
+} from './backupCrypto'
 import { APP_ID, get, type Db } from './connection'
 import { currentSchemaVersion, LATEST_SCHEMA_VERSION } from './migrate'
 
@@ -22,7 +38,9 @@ function kindOf(token: string): BackupKind {
   return token === 'auto' || token === 'pre-restore' ? token : 'manual'
 }
 
-export function parseBackupName(fileName: string): Pick<BackupInfo, 'createdAt' | 'kind' | 'encrypted'> | null {
+export function parseBackupName(
+  fileName: string,
+): Pick<BackupInfo, 'createdAt' | 'kind' | 'encrypted'> | null {
   const m = FILE_RE.exec(fileName)
   if (!m) return null
   const [, y, mo, d, h, mi, s, kind, ext] = m
@@ -36,7 +54,8 @@ function info(path: string): BackupInfo | null {
 }
 
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
-export const newestFirst = (a: BackupInfo, b: BackupInfo) => cmp(b.createdAt, a.createdAt) || cmp(b.fileName, a.fileName)
+export const newestFirst = (a: BackupInfo, b: BackupInfo) =>
+  cmp(b.createdAt, a.createdAt) || cmp(b.fileName, a.fileName)
 
 /** Backups in a folder, newest first. Unrelated files are ignored. */
 export function listBackups(dir: string): BackupInfo[] {
@@ -60,7 +79,12 @@ export type BackupOptions = { passphrase?: string; now?: Date; kdf?: KdfParams }
  * A consistent copy of the live database (VACUUM INTO is transactional), optionally encrypted.
  * Written to a temporary name and renamed, so a half-written file never looks like a backup.
  */
-export async function createBackup(db: Db, dir: string, kind: BackupKind, opts: BackupOptions = {}): Promise<BackupInfo> {
+export async function createBackup(
+  db: Db,
+  dir: string,
+  kind: BackupKind,
+  opts: BackupOptions = {},
+): Promise<BackupInfo> {
   mkdirSync(dir, { recursive: true })
   const final = freeName(dir, localStamp(opts.now ?? new Date()), kind, opts.passphrase ? 'finbackup' : 'db')
   const tmp = `${final}.tmp`
@@ -110,7 +134,9 @@ export function countData(db: Db): DataCounts {
     importBatches: get(db, "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'import_batches'")
       ? n('SELECT COUNT(*) AS n FROM import_batches WHERE undone_at IS NULL')
       : 0,
-    latestTxnDate: get<{ d: string | null }>(db, 'SELECT MAX(posted_date) AS d FROM transactions WHERE deleted_at IS NULL')?.d ?? null,
+    latestTxnDate:
+      get<{ d: string | null }>(db, 'SELECT MAX(posted_date) AS d FROM transactions WHERE deleted_at IS NULL')
+        ?.d ?? null,
   }
 }
 
@@ -125,8 +151,13 @@ const fail = (reason: Extract<BackupInspection, { valid: false }>['reason'], mes
  * Copy (or decrypt) a backup into `workDir` and check it is a healthy Fin database this app can open.
  * The returned working file is what a restore puts in place; callers delete it when done.
  */
-export async function prepareBackup(path: string, passphrase: string | undefined, workDir: string): Promise<Prepared> {
-  if (!existsSync(path) || !statSync(path).isFile()) return fail('NOT_FOUND', 'The backup file could not be found.')
+export async function prepareBackup(
+  path: string,
+  passphrase: string | undefined,
+  workDir: string,
+): Promise<Prepared> {
+  if (!existsSync(path) || !statSync(path).isFile())
+    return fail('NOT_FOUND', 'The backup file could not be found.')
   mkdirSync(workDir, { recursive: true })
   const file = join(workDir, `candidate-${randomBytes(6).toString('hex')}.db`)
   const raw = readFileSync(path)
@@ -136,7 +167,8 @@ export async function prepareBackup(path: string, passphrase: string | undefined
     try {
       writeFileSync(file, await decryptBackup(raw, passphrase))
     } catch (err) {
-      if (err instanceof BackupCryptoError && err.reason === 'WRONG_PASSPHRASE') return fail('WRONG_PASSPHRASE', `${err.message}.`)
+      if (err instanceof BackupCryptoError && err.reason === 'WRONG_PASSPHRASE')
+        return fail('WRONG_PASSPHRASE', `${err.message}.`)
       return fail('DAMAGED', 'The backup file is damaged.')
     }
   } else {
@@ -163,7 +195,16 @@ function checkCandidate(file: string, encrypted: boolean): Prepared {
     // Restore expects a self-contained file.
     probe.exec('PRAGMA journal_mode = DELETE')
     const counts = countData(probe)
-    return { inspection: { valid: true, encrypted, schemaVersion, needsUpgrade: schemaVersion < LATEST_SCHEMA_VERSION, counts }, file }
+    return {
+      inspection: {
+        valid: true,
+        encrypted,
+        schemaVersion,
+        needsUpgrade: schemaVersion < LATEST_SCHEMA_VERSION,
+        counts,
+      },
+      file,
+    }
   } catch {
     return fail('NOT_FIN', 'This file is not a Fin backup.')
   } finally {
@@ -172,7 +213,11 @@ function checkCandidate(file: string, encrypted: boolean): Prepared {
 }
 
 /** Check a backup without changing anything. */
-export async function inspectBackup(path: string, passphrase: string | undefined, workDir: string): Promise<BackupInspection> {
+export async function inspectBackup(
+  path: string,
+  passphrase: string | undefined,
+  workDir: string,
+): Promise<BackupInspection> {
   const { inspection, file } = await prepareBackup(path, passphrase, workDir)
   if (file) rmSync(file, { force: true })
   return inspection

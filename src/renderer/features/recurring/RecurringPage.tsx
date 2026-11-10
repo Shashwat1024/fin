@@ -8,7 +8,13 @@ import { MoneyText } from '@renderer/components/MoneyText'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@renderer/components/ui/card'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@renderer/components/ui/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@renderer/components/ui/dropdown-menu'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@renderer/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useFinMutation, useOccurrences, useRecurring, useToday } from '@renderer/lib/queries'
@@ -41,16 +47,22 @@ function PendingSummary({ items }: { items: OccurrenceDto[] }) {
 export function RecurringPage() {
   const today = useToday()
   const [params, setParams] = useSearchParams()
-  const view: View = (VIEWS as readonly string[]).includes(params.get('view') ?? '') ? (params.get('view') as View) : 'next14'
+  const view: View = (VIEWS as readonly string[]).includes(params.get('view') ?? '')
+    ? (params.get('view') as View)
+    : 'next14'
   const items = useRecurring()
   const occurrences = useOccurrences(addDays(today, -60), addDays(today, 59))
   const [editing, setEditing] = useState<{ item?: RecurringItemDto; draft?: RecurringDraft } | null>(null)
   const [deleting, setDeleting] = useState<RecurringItemDto | null>(null)
-  const remove = useFinMutation('recurring.delete', { success: 'Recurring item deleted', onSuccess: () => setDeleting(null) })
+  const remove = useFinMutation('recurring.delete', {
+    success: 'Recurring item deleted',
+    onSuccess: () => setDeleting(null),
+  })
 
   if (items.isPending || occurrences.isPending) return <LoadingState />
   if (items.isError) return <ErrorState error={items.error} onRetry={() => void items.refetch()} />
-  if (occurrences.isError) return <ErrorState error={occurrences.error} onRetry={() => void occurrences.refetch()} />
+  if (occurrences.isError)
+    return <ErrorState error={occurrences.error} onRetry={() => void occurrences.refetch()} />
 
   const all = occurrences.data
   const overdue = all.filter((o) => o.state === 'overdue')
@@ -66,7 +78,11 @@ export function RecurringPage() {
 
   return (
     <Page>
-      <PageHeader title="Recurring" description="Income, bills, subscriptions and EMIs that repeat. Payments are matched automatically." actions={newButton} />
+      <PageHeader
+        title="Recurring"
+        description="Income, bills, subscriptions and EMIs that repeat. Payments are matched automatically."
+        actions={newButton}
+      />
       <div className="mb-6 empty:hidden">
         <RecurringSuggestions onSetUp={(draft) => setEditing({ draft })} />
       </div>
@@ -84,8 +100,8 @@ export function RecurringPage() {
               <CardHeader>
                 <CardTitle>Needs a look</CardTitle>
                 <CardDescription>
-                  {plural(overdue.length, 'payment')} from the last 60 days with no matching transaction yet. Import the statement, link
-                  the payment, or skip it.
+                  {plural(overdue.length, 'payment')} from the last 60 days with no matching transaction yet.
+                  Import the statement, link the payment, or skip it.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -95,7 +111,10 @@ export function RecurringPage() {
           )}
 
           <Card>
-            <Tabs value={view} onValueChange={(v) => setParams(v === 'next14' ? {} : { view: v }, { replace: true })}>
+            <Tabs
+              value={view}
+              onValueChange={(v) => setParams(v === 'next14' ? {} : { view: v }, { replace: true })}
+            >
               <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
                 <CardTitle>Schedule</CardTitle>
                 <TabsList>
@@ -148,12 +167,22 @@ export function RecurringPage() {
                       </TableCell>
                       <TableCell className="whitespace-normal">
                         {r.scheduleText}
-                        {r.count && <span className="block text-xs text-muted-foreground">{plural(r.count, 'time')} in total</span>}
-                        {r.endDate && <span className="block text-xs text-muted-foreground">until {formatDate(r.endDate)}</span>}
+                        {r.count && (
+                          <span className="block text-xs text-muted-foreground">
+                            {plural(r.count, 'time')} in total
+                          </span>
+                        )}
+                        {r.endDate && (
+                          <span className="block text-xs text-muted-foreground">
+                            until {formatDate(r.endDate)}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {r.accountName}
-                        {r.toAccountName && <span className="text-muted-foreground"> → {r.toAccountName}</span>}
+                        {r.toAccountName && (
+                          <span className="text-muted-foreground"> → {r.toAccountName}</span>
+                        )}
                       </TableCell>
                       <TableCell className="tabular-nums">
                         {!r.active ? (
@@ -167,8 +196,17 @@ export function RecurringPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <MoneyText minor={r.direction === 'in' ? r.amountMinor : -r.amountMinor} tone="auto" showPlus className="font-medium" />
-                        {r.toleranceBp > 0 && <span className="block text-xs text-muted-foreground">± {r.toleranceBp / 100}%</span>}
+                        <MoneyText
+                          minor={r.direction === 'in' ? r.amountMinor : -r.amountMinor}
+                          tone="auto"
+                          showPlus
+                          className="font-medium"
+                        />
+                        {r.toleranceBp > 0 && (
+                          <span className="block text-xs text-muted-foreground">
+                            ± {r.toleranceBp / 100}%
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -196,7 +234,12 @@ export function RecurringPage() {
           </Card>
         </div>
       )}
-      <RecurringDialog open={editing !== null} item={editing?.item} draft={editing?.draft} onOpenChange={(o) => !o && setEditing(null)} />
+      <RecurringDialog
+        open={editing !== null}
+        item={editing?.item}
+        draft={editing?.draft}
+        onOpenChange={(o) => !o && setEditing(null)}
+      />
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(o) => !o && setDeleting(null)}

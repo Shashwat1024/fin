@@ -3,7 +3,12 @@
  * the ledger every time; only the keys of dismissed ones are stored.
  */
 import { addDays, compareDates, type CalendarDate } from '@domain/dates'
-import { detectInsights, type SpendLine, type SubscriptionItem, type SubscriptionPayment } from '@domain/insights'
+import {
+  detectInsights,
+  type SpendLine,
+  type SubscriptionItem,
+  type SubscriptionPayment,
+} from '@domain/insights'
 import { detectRecurring, type PastPayment } from '@domain/recurrence'
 import { invariant, notFound } from '@shared/errors'
 import type { InsightsDto, Mutation, RecurringKind, RecurringSuggestionDto } from '@shared/types'
@@ -52,7 +57,11 @@ export const payeeKey = (payee: string) =>
     .trim()
 
 /** A name fit to show: reference numbers (four or more digits) removed. */
-export const cleanName = (name: string) => name.replace(/\S*\d{4,}\S*/g, ' ').replace(/\s+/g, ' ').trim() || name.trim()
+export const cleanName = (name: string) =>
+  name
+    .replace(/\S*\d{4,}\S*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() || name.trim()
 
 /** Transactions matched to a recurring item (automatically or by hand) in [from, to]. */
 function recurringMatches(db: Db, from: CalendarDate, to: CalendarDate, today: CalendarDate) {
@@ -93,9 +102,16 @@ export function listInsights(db: Db, today: CalendarDate, includeDismissed = fal
     })
   }
   const historyStart =
-    get<{ d: string | null }>(db, `SELECT MIN(posted_date) AS d FROM transactions WHERE deleted_at IS NULL AND kind = 'standard'`)?.d ?? null
+    get<{ d: string | null }>(
+      db,
+      `SELECT MIN(posted_date) AS d FROM transactions WHERE deleted_at IS NULL AND kind = 'standard'`,
+    )?.d ?? null
   const asOf =
-    get<{ d: string | null }>(db, 'SELECT MAX(posted_date) AS d FROM transactions WHERE deleted_at IS NULL AND posted_date <= ?', today)?.d ?? null
+    get<{ d: string | null }>(
+      db,
+      'SELECT MAX(posted_date) AS d FROM transactions WHERE deleted_at IS NULL AND posted_date <= ?',
+      today,
+    )?.d ?? null
 
   // Subscriptions: what each one charged, from its matched payments and any other payments to the
   // same merchant from the same account (a price rise can fall outside the matching tolerance).
@@ -105,7 +121,9 @@ export function listInsights(db: Db, today: CalendarDate, includeDismissed = fal
   if (items.length > 0) {
     const byId = new Map(lines.map((l) => [l.txnId, l]))
     for (const item of items) {
-      const matched = occurrences.filter((o) => o.itemId === item.id && o.matchedTxn).map((o) => o.matchedTxn!)
+      const matched = occurrences
+        .filter((o) => o.itemId === item.id && o.matchedTxn)
+        .map((o) => o.matchedTxn!)
       const merchants = new Set(matched.flatMap((m) => byId.get(m.id)?.merchantKey ?? []))
       const payees = new Set(matched.map((m) => payeeKey(m.payee)))
       const seen = new Set<string>()
@@ -117,9 +135,12 @@ export function listInsights(db: Db, today: CalendarDate, includeDismissed = fal
       for (const m of matched) add(m.id, m.postedDate, -m.amountMinor)
       for (const r of rows) {
         if (r.account_id !== item.accountId || r.amount_minor >= 0) continue
-        if ((r.mkey && merchants.has(r.mkey)) || payees.has(payeeKey(r.payee))) add(r.id, r.posted_date, -r.amount_minor)
+        if ((r.mkey && merchants.has(r.mkey)) || payees.has(payeeKey(r.payee)))
+          add(r.id, r.posted_date, -r.amount_minor)
       }
-      const first = subscriptionPayments.filter((p) => p.itemId === item.id).reduce<string>((m, p) => (compareDates(p.date, m) < 0 ? p.date : m), item.anchorDate)
+      const first = subscriptionPayments
+        .filter((p) => p.itemId === item.id)
+        .reduce<string>((m, p) => (compareDates(p.date, m) < 0 ? p.date : m), item.anchorDate)
       subscriptions.push({
         itemId: item.id,
         name: item.name,
@@ -134,7 +155,9 @@ export function listInsights(db: Db, today: CalendarDate, includeDismissed = fal
   }
 
   const dismissed = dismissedKeys(db)
-  const all_ = detectInsights({ today, historyStart, lines, subscriptions, subscriptionPayments }).map((i) => ({ ...i, dismissed: dismissed.has(i.key) }))
+  const all_ = detectInsights({ today, historyStart, lines, subscriptions, subscriptionPayments }).map(
+    (i) => ({ ...i, dismissed: dismissed.has(i.key) }),
+  )
   return {
     today,
     asOf,
@@ -145,7 +168,8 @@ export function listInsights(db: Db, today: CalendarDate, includeDismissed = fal
 }
 
 export function dismissInsight(db: Db, key: string): Mutation<object> {
-  if (get(db, 'SELECT 1 AS x FROM dismissed_insights WHERE key = ?', key)) throw invariant('This is already dismissed')
+  if (get(db, 'SELECT 1 AS x FROM dismissed_insights WHERE key = ?', key))
+    throw invariant('This is already dismissed')
   const { auditGroupId } = withAudit(db, 'Dismiss insight', (a) => {
     a.insert('dismissed_insights', { id: newId('dis'), key, dismissed_at: nowIso() })
   })
@@ -164,7 +188,11 @@ export function restoreInsight(db: Db, key: string): Mutation<object> {
 const SUGGESTION_PREFIX = 'recurring:'
 export const suggestionDismissKey = (key: string) => `${SUGGESTION_PREFIX}${key}`
 
-function guessKind(direction: 'in' | 'out', categoryPath: string | null, categoryGroup: string | null): RecurringKind {
+function guessKind(
+  direction: 'in' | 'out',
+  categoryPath: string | null,
+  categoryGroup: string | null,
+): RecurringKind {
   if (direction === 'in') return 'income'
   if (categoryPath && /subscri/i.test(categoryPath)) return 'subscription'
   if (categoryPath && /loan|emi/i.test(categoryPath)) return 'emi'
@@ -179,7 +207,9 @@ function guessKind(direction: 'in' | 'out', categoryPath: string | null, categor
 export function recurringSuggestions(db: Db, today: CalendarDate): RecurringSuggestionDto[] {
   const from = addDays(today, -LOOKBACK_DAYS)
   const { txnIds: matched } = recurringMatches(db, from, today, today)
-  const existing = new Set(listRecurring(db, today).map((i) => `${i.accountId}:${i.name.trim().toLowerCase()}`))
+  const existing = new Set(
+    listRecurring(db, today).map((i) => `${i.accountId}:${i.name.trim().toLowerCase()}`),
+  )
   const accounts = new Map(listAccounts(db).map((a) => [a.id, a]))
   const categories = new Map(listCategories(db).map((c) => [c.id, c]))
   // Splits are one payment: take each transaction once, with its own category (null when split).
@@ -206,7 +236,11 @@ export function recurringSuggestions(db: Db, today: CalendarDate): RecurringSugg
   }
   const dismissed = dismissedKeys(db)
   return detectRecurring(payments, today)
-    .filter((s) => !dismissed.has(suggestionDismissKey(s.key)) && !existing.has(`${s.accountId}:${s.name.trim().toLowerCase()}`))
+    .filter(
+      (s) =>
+        !dismissed.has(suggestionDismissKey(s.key)) &&
+        !existing.has(`${s.accountId}:${s.name.trim().toLowerCase()}`),
+    )
     .map((s) => {
       const c = s.categoryId ? categories.get(s.categoryId) : undefined
       return {

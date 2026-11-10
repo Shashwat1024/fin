@@ -1,6 +1,12 @@
 import { Fragment, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { AlertTriangleIcon, CheckCircle2Icon, ChevronLeftIcon, ChevronRightIcon, InfoIcon } from 'lucide-react'
+import {
+  AlertTriangleIcon,
+  CheckCircle2Icon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  InfoIcon,
+} from 'lucide-react'
 import { nextMonth, previousMonth } from '@domain/budget'
 import { monthKey } from '@domain/dates'
 import { formatMoney, money, parseAmount } from '@domain/money'
@@ -8,7 +14,15 @@ import { ErrorState, LoadingState, Page, PageHeader } from '@renderer/components
 import { MoneyText } from '@renderer/components/MoneyText'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent } from '@renderer/components/ui/card'
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@renderer/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@renderer/components/ui/table'
 import { useHotkey } from '@renderer/lib/hotkeys'
 import { useBudgetMonth, useFinMutation, useToday } from '@renderer/lib/queries'
 import { cn } from '@renderer/lib/utils'
@@ -17,7 +31,9 @@ import type { BudgetMonthDto, BudgetRowDto } from '@shared/types'
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
 
 export function monthLabel(month: string): string {
-  return new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-01T00:00:00Z`))
+  return new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+    new Date(`${month}-01T00:00:00Z`),
+  )
 }
 
 /** Where a budget line's spending comes from: the same category, month and kind on the ledger (SC-005). */
@@ -42,13 +58,23 @@ export function BudgetPage() {
         description="Give every rupee of income a job. Unspent money stays in its category; overspending comes out of next month."
         actions={
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" aria-label="Previous month (Alt+←)" onClick={() => go(previousMonth(month))}>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Previous month (Alt+←)"
+              onClick={() => go(previousMonth(month))}
+            >
               <ChevronLeftIcon />
             </Button>
             <span className="w-36 text-center font-medium" aria-live="polite">
               {monthLabel(month)}
             </span>
-            <Button variant="outline" size="icon" aria-label="Next month (Alt+→)" onClick={() => go(nextMonth(month))}>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Next month (Alt+→)"
+              onClick={() => go(nextMonth(month))}
+            >
               <ChevronRightIcon />
             </Button>
             {month !== monthKey(today) && (
@@ -90,7 +116,8 @@ function ToAssign({ b }: { b: BudgetMonthDto }) {
             {state === 'left' && <>Assign this to categories or goals below.</>}
             {state === 'over' && (
               <>
-                <AlertTriangleIcon className="size-4 text-warning" aria-hidden /> You have assigned more than you have. Lower some amounts.
+                <AlertTriangleIcon className="size-4 text-warning" aria-hidden /> You have assigned more than
+                you have. Lower some amounts.
               </>
             )}
           </p>
@@ -138,9 +165,12 @@ function BudgetMonthView({ budget: b }: { budget: BudgetMonthDto }) {
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <InfoIcon className="size-4 shrink-0" aria-hidden />
           <span>
-            <MoneyText minor={b.uncategorizedMinor} className="font-medium text-foreground" /> of spending this month has no category, so it is not
-            in any line.{' '}
-            <Link className="text-primary underline underline-offset-4" to={`/transactions?${new URLSearchParams({ from: b.from, to: b.to, category: 'uncategorized', kind: 'standard' })}`}>
+            <MoneyText minor={b.uncategorizedMinor} className="font-medium text-foreground" /> of spending
+            this month has no category, so it is not in any line.{' '}
+            <Link
+              className="text-primary underline underline-offset-4"
+              to={`/transactions?${new URLSearchParams({ from: b.from, to: b.to, category: 'uncategorized', kind: 'standard' })}`}
+            >
               Categorise it
             </Link>
           </span>
@@ -175,7 +205,16 @@ function BudgetMonthView({ budget: b }: { budget: BudgetMonthDto }) {
                 </TableRow>
                 {g.rows.map((r) => {
                   const i = index++
-                  return <BudgetLine key={r.categoryId} b={b} row={r} index={i} last={rows.length - 1} focusRow={focusRow} />
+                  return (
+                    <BudgetLine
+                      key={r.categoryId}
+                      b={b}
+                      row={r}
+                      index={i}
+                      last={rows.length - 1}
+                      focusRow={focusRow}
+                    />
+                  )
                 })}
               </Fragment>
             ))}
@@ -197,7 +236,8 @@ function BudgetMonthView({ budget: b }: { budget: BudgetMonthDto }) {
         </Table>
       </Card>
       <p className="text-xs text-muted-foreground">
-        Type an amount and press Enter to move to the next line (Shift+Enter goes back, Esc cancels). Alt+← and Alt+→ change month.
+        Type an amount and press Enter to move to the next line (Shift+Enter goes back, Esc cancels). Alt+←
+        and Alt+→ change month.
       </p>
     </div>
   )
@@ -260,14 +300,32 @@ function Available({ minor }: { minor: number }) {
       </span>
     )
   }
-  return <MoneyText minor={minor} tone={minor === 0 ? 'muted' : 'neutral'} className={minor > 0 ? 'font-medium text-positive' : undefined} />
+  return (
+    <MoneyText
+      minor={minor}
+      tone={minor === 0 ? 'muted' : 'neutral'}
+      className={minor > 0 ? 'font-medium text-positive' : undefined}
+    />
+  )
 }
 
 /** "₹12,000.00" for display; the parser accepts the symbol and grouping back. */
 const asText = (minor: number) => (minor === 0 ? '' : formatMoney(money(minor)))
 
 /** Inline amount: Enter saves and moves down, Shift+Enter moves up, Esc reverts. Saves on blur too. */
-function AssignInput({ b, row, index, last, focusRow }: { b: BudgetMonthDto; row: BudgetRowDto; index: number; last: number; focusRow: (i: number) => void }) {
+function AssignInput({
+  b,
+  row,
+  index,
+  last,
+  focusRow,
+}: {
+  b: BudgetMonthDto
+  row: BudgetRowDto
+  index: number
+  last: number
+  focusRow: (i: number) => void
+}) {
   const [text, setText] = useState(asText(row.assignedMinor))
   const [error, setError] = useState<string | null>(null)
   const [base, setBase] = useState(row.assignedMinor)
@@ -287,7 +345,8 @@ function AssignInput({ b, row, index, last, focusRow }: { b: BudgetMonthDto; row
       return false
     }
     setError(null)
-    if (parsed.minor !== row.assignedMinor) assign.mutate({ month: b.month, categoryId: row.categoryId, assignedMinor: parsed.minor })
+    if (parsed.minor !== row.assignedMinor)
+      assign.mutate({ month: b.month, categoryId: row.categoryId, assignedMinor: parsed.minor })
     else setText(asText(row.assignedMinor))
     return true
   }

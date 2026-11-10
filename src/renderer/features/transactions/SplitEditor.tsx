@@ -77,10 +77,21 @@ export function SplitEditor({ totalMinor, rows, onChange, showErrors }: Props) {
       })}
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => onChange([...rows, newSplitRow()])}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChange([...rows, newSplitRow()])}
+          >
             <PlusIcon /> Add part
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={fillRemaining} disabled={!remaining || remaining <= 0}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={fillRemaining}
+            disabled={!remaining || remaining <= 0}
+          >
             Fill remaining
           </Button>
         </div>

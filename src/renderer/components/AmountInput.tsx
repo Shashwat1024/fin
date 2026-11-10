@@ -1,6 +1,11 @@
 import { forwardRef } from 'react'
 import { parseAmount, toMajorString } from '@domain/money'
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@renderer/components/ui/input-group'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '@renderer/components/ui/input-group'
 
 type Props = Omit<React.ComponentProps<'input'>, 'value' | 'onChange'> & {
   value: string
@@ -35,7 +40,10 @@ export const AmountInput = forwardRef<HTMLInputElement, Props>(function AmountIn
 })
 
 /** Parse a positive amount typed by the user; returns minor units or an error message. */
-export function parseAmountText(text: string, { allowZero = false } = {}): { minor: number } | { error: string } {
+export function parseAmountText(
+  text: string,
+  { allowZero = false } = {},
+): { minor: number } | { error: string } {
   if (!text.trim()) return { error: 'Enter an amount' }
   const r = parseAmount(text)
   if (!r.ok) return { error: 'Enter a valid amount, like 1,250.50' }

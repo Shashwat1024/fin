@@ -1,4 +1,10 @@
-import { accountNature, displayBalance, isLiquid, storedOpeningBalance, type AccountType } from '@domain/ledger'
+import {
+  accountNature,
+  displayBalance,
+  isLiquid,
+  storedOpeningBalance,
+  type AccountType,
+} from '@domain/ledger'
 import { conflict, invariant, notFound } from '@shared/errors'
 import type { AccountInput } from '@shared/schemas'
 import type { AccountDto, Mutation } from '@shared/types'
@@ -105,7 +111,11 @@ export function createAccount(db: Db, input: AccountInput): Mutation<{ account: 
   return { account: getAccount(db, result), auditGroupId }
 }
 
-export function updateAccount(db: Db, id: string, patch: Partial<AccountInput>): Mutation<{ account: AccountDto }> {
+export function updateAccount(
+  db: Db,
+  id: string,
+  patch: Partial<AccountInput>,
+): Mutation<{ account: AccountDto }> {
   const current = getAccount(db, id)
   const type = patch.type ?? current.type
   // Keep the opening balance the user sees unless they changed it explicitly.

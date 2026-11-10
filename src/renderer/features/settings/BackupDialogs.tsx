@@ -5,7 +5,14 @@ import { AlertTriangleIcon, LockIcon } from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { ErrorState, FormField, LoadingState } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import { Input } from '@renderer/components/ui/input'
 import { Label } from '@renderer/components/ui/label'
 import { Switch } from '@renderer/components/ui/switch'
@@ -15,7 +22,8 @@ import { useAppStatus, useFinMutation } from '@renderer/lib/queries'
 import type { BackupInfo, DataCounts } from '@shared/types'
 
 /** "9 Nov 2026, 10:02" from a backup's local timestamp. */
-export const backupWhen = (createdAt: string) => `${formatDate(createdAt.slice(0, 10))}, ${createdAt.slice(11, 16)}`
+export const backupWhen = (createdAt: string) =>
+  `${formatDate(createdAt.slice(0, 10))}, ${createdAt.slice(11, 16)}`
 
 type DialogProps = { open: boolean; onOpenChange: (open: boolean) => void }
 
@@ -64,23 +72,46 @@ export function BackupNowDialog({ open, onOpenChange }: DialogProps) {
           {protect && (
             <>
               <FormField label="Passphrase" htmlFor={`${id}-pass`} error={issues.passphrase}>
-                <Input id={`${id}-pass`} type="password" autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} autoFocus />
+                <Input
+                  id={`${id}-pass`}
+                  type="password"
+                  autoComplete="new-password"
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  autoFocus
+                />
               </FormField>
-              <FormField label="Type it again" htmlFor={`${id}-confirm`} error={mismatch ? 'The passphrases do not match' : undefined}>
-                <Input id={`${id}-confirm`} type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <FormField
+                label="Type it again"
+                htmlFor={`${id}-confirm`}
+                error={mismatch ? 'The passphrases do not match' : undefined}
+              >
+                <Input
+                  id={`${id}-confirm`}
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                />
               </FormField>
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-warning" />
-                Keep the passphrase somewhere safe. Without it the backup cannot be opened, and Fin cannot recover it.
+                Keep the passphrase somewhere safe. Without it the backup cannot be opened, and Fin cannot
+                recover it.
               </p>
             </>
           )}
-          {create.error && !issues.passphrase && <p className="text-sm text-destructive">{create.error.message}</p>}
+          {create.error && !issues.passphrase && (
+            <p className="text-sm text-destructive">{create.error.message}</p>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => close(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={create.isPending || (protect && (pass.length === 0 || pass !== confirm))}>
+            <Button
+              type="submit"
+              disabled={create.isPending || (protect && (pass.length === 0 || pass !== confirm))}
+            >
               {create.isPending ? 'Backing up…' : 'Back up'}
             </Button>
           </DialogFooter>
@@ -125,7 +156,13 @@ export type RestoreTarget = { path: string; label: string; backup?: BackupInfo }
  * Restore: check the file (asking for the passphrase if needed), show what will replace what, and
  * only then replace the data. The current data is backed up first (FR-032).
  */
-export function RestoreDialog({ target, onOpenChange }: { target: RestoreTarget | null; onOpenChange: (open: boolean) => void }) {
+export function RestoreDialog({
+  target,
+  onOpenChange,
+}: {
+  target: RestoreTarget | null
+  onOpenChange: (open: boolean) => void
+}) {
   const id = useId()
   const navigate = useNavigate()
   const [pass, setPass] = useState('')
@@ -156,7 +193,8 @@ export function RestoreDialog({ target, onOpenChange }: { target: RestoreTarget 
     onOpenChange(o)
   }
   const result = inspect.data
-  const needsPass = result && !result.valid && (result.reason === 'NEEDS_PASSPHRASE' || result.reason === 'WRONG_PASSPHRASE')
+  const needsPass =
+    result && !result.valid && (result.reason === 'NEEDS_PASSPHRASE' || result.reason === 'WRONG_PASSPHRASE')
 
   return (
     <Dialog open={Boolean(target)} onOpenChange={close}>
@@ -180,10 +218,18 @@ export function RestoreDialog({ target, onOpenChange }: { target: RestoreTarget 
             <FormField
               label="Backup passphrase"
               htmlFor={`${id}-pass`}
-              error={result.reason === 'WRONG_PASSPHRASE' ? 'That passphrase did not open this backup' : undefined}
+              error={
+                result.reason === 'WRONG_PASSPHRASE' ? 'That passphrase did not open this backup' : undefined
+              }
               description="This backup is protected. Nothing changes until you confirm on the next step."
             >
-              <Input id={`${id}-pass`} type="password" value={pass} onChange={(e) => setPass(e.target.value)} autoFocus />
+              <Input
+                id={`${id}-pass`}
+                type="password"
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                autoFocus
+              />
             </FormField>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => close(false)}>
@@ -197,7 +243,8 @@ export function RestoreDialog({ target, onOpenChange }: { target: RestoreTarget 
         ) : !result.valid ? (
           <>
             <p role="alert" className="flex items-start gap-2 text-sm">
-              <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-destructive" /> {result.message} Your data was not changed.
+              <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-destructive" /> {result.message} Your
+              data was not changed.
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={() => close(false)}>
@@ -210,12 +257,14 @@ export function RestoreDialog({ target, onOpenChange }: { target: RestoreTarget 
             {target?.backup && <p className="text-sm">Made on {backupWhen(target.backup.createdAt)}.</p>}
             <CountsTable backup={result.counts} current={status.data?.counts} />
             {result.needsUpgrade && (
-              <p className="text-sm text-muted-foreground">It was made by an earlier version of Fin and will be updated as it is restored.</p>
+              <p className="text-sm text-muted-foreground">
+                It was made by an earlier version of Fin and will be updated as it is restored.
+              </p>
             )}
             <p className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
               <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
-              Restoring replaces all of your current data with this backup. A backup of your current data is made first, so
-              you can go back by restoring that.
+              Restoring replaces all of your current data with this backup. A backup of your current data is
+              made first, so you can go back by restoring that.
             </p>
             {restore.error && <p className="text-sm text-destructive">{restore.error.message}</p>}
             <DialogFooter>

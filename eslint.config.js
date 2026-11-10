@@ -9,7 +9,12 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
-    rules: { '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true }] },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
+    },
   },
   {
     files: ['src/renderer/**/*.{ts,tsx}'],
@@ -22,7 +27,18 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: ['electron', 'node:sqlite', 'react', 'react-*', '@db/*', '../db/*', '../main/*', '../renderer/*'] },
+        {
+          patterns: [
+            'electron',
+            'node:sqlite',
+            'react',
+            'react-*',
+            '@db/*',
+            '../db/*',
+            '../main/*',
+            '../renderer/*',
+          ],
+        },
       ],
     },
   },

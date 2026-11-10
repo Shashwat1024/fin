@@ -1,11 +1,25 @@
 import { addDays, addMonths, compareDates, startOfMonth, type CalendarDate } from '@domain/dates'
-import { BASELINE_DAYS, OVERDUE_GRACE_DAYS, runForecast, type ForecastEvent, type ForecastInput } from '@domain/forecast'
+import {
+  BASELINE_DAYS,
+  OVERDUE_GRACE_DAYS,
+  runForecast,
+  type ForecastEvent,
+  type ForecastInput,
+} from '@domain/forecast'
 import { runScenario, type ScenarioChange } from '@domain/scenarios'
 import { isLiquid, type AccountType } from '@domain/ledger'
 import { canBeValued, netWorthHistory, type NetWorthAccount } from '@domain/networth'
 import { invariant, notFound } from '@shared/errors'
 import type { ValuationInput } from '@shared/schemas'
-import type { AccountDto, ForecastAssumption, ForecastDto, Mutation, NetWorthDto, ScenarioDto, ValuationDto } from '@shared/types'
+import type {
+  AccountDto,
+  ForecastAssumption,
+  ForecastDto,
+  Mutation,
+  NetWorthDto,
+  ScenarioDto,
+  ValuationDto,
+} from '@shared/types'
 import { withAudit } from '../audit'
 import { all, get, newId, nowIso, type Db } from '../connection'
 import { getSettings } from './settings'
@@ -28,7 +42,12 @@ export function forecast(db: Db, days: number, today: CalendarDate): ForecastDto
 }
 
 /** Everything the projection is computed from, shared by the forecast and what-if scenarios. */
-function forecastBase(db: Db, days: number, today: CalendarDate, accounts: readonly AccountDto[] = listAccounts(db)) {
+function forecastBase(
+  db: Db,
+  days: number,
+  today: CalendarDate,
+  accounts: readonly AccountDto[] = listAccounts(db),
+) {
   const liquid = accounts.filter((a) => a.isLiquid)
   const liquidIds = new Set(liquid.map((a) => a.id))
   const startMinor = liquid.reduce((t, a) => t + a.balanceMinor, 0)
@@ -47,13 +66,22 @@ function forecastBase(db: Db, days: number, today: CalendarDate, accounts: reado
     if (compareDates(o.dueDate, graceFrom) < 0) continue
     const item = items.get(o.itemId)
     if (!item) continue
-    const effect = (liquidIds.has(o.accountId) ? o.expectedMinor : 0) + (item.toAccountId && liquidIds.has(item.toAccountId) ? -o.expectedMinor : 0)
+    const effect =
+      (liquidIds.has(o.accountId) ? o.expectedMinor : 0) +
+      (item.toAccountId && liquidIds.has(item.toAccountId) ? -o.expectedMinor : 0)
     if (effect === 0) {
       notCounted.add(item.name)
       continue
     }
     const overdue = o.state === 'overdue'
-    events.push({ itemId: o.itemId, name: o.itemName, dueDate: o.dueDate, date: overdue ? today : o.dueDate, amountMinor: effect, overdue })
+    events.push({
+      itemId: o.itemId,
+      name: o.itemName,
+      dueDate: o.dueDate,
+      date: overdue ? today : o.dueDate,
+      amountMinor: effect,
+      overdue,
+    })
   }
 
   // Everyday spending: money out of cash and bank that is neither a transfer nor a recurring payment.
@@ -85,7 +113,15 @@ function forecastBase(db: Db, days: number, today: CalendarDate, accounts: reado
         )?.d ?? null)
 
   const bufferMinor = getSettings(db).bufferMinor
-  const input: ForecastInput = { today, days, startMinor, bufferMinor, events, dailySpending: spending, historyStart }
+  const input: ForecastInput = {
+    today,
+    days,
+    startMinor,
+    bufferMinor,
+    events,
+    dailySpending: spending,
+    historyStart,
+  }
   return { input, liquid, notCounted, items }
 }
 
@@ -95,7 +131,12 @@ function forecastBase(db: Db, days: number, today: CalendarDate, accounts: reado
  * A scenario on top of the real forecast and goals. Reads only: nothing is written, so the real
  * data is exactly as it was afterwards (US8 scenario 2).
  */
-export function whatIf(db: Db, days: number, changes: readonly ScenarioChange[], today: CalendarDate): ScenarioDto {
+export function whatIf(
+  db: Db,
+  days: number,
+  changes: readonly ScenarioChange[],
+  today: CalendarDate,
+): ScenarioDto {
   const accounts = listAccounts(db)
   const { input, items } = forecastBase(db, days, today, accounts)
   const liquidIds = new Set(accounts.filter((a) => a.isLiquid).map((a) => a.id))
@@ -103,32 +144,50 @@ export function whatIf(db: Db, days: number, changes: readonly ScenarioChange[],
     .values.filter((v) => v.account.type === 'loan')
     .map((v) => ({ id: v.account.id, name: v.account.name, owedMinor: v.valueMinor }))
   for (const c of changes) {
-    if (c.kind === 'loan_prepayment' && !loans.some((l) => l.id === c.loanId)) throw invariant('Choose one of your loan accounts')
+    if (c.kind === 'loan_prepayment' && !loans.some((l) => l.id === c.loanId))
+      throw invariant('Choose one of your loan accounts')
   }
-  const goals = goalBases(db, today).map((g) => ({ ...g, liquid: g.linkedAccountId !== null && liquidIds.has(g.linkedAccountId) }))
+  const goals = goalBases(db, today).map((g) => ({
+    ...g,
+    liquid: g.linkedAccountId !== null && liquidIds.has(g.linkedAccountId),
+  }))
   for (const c of changes) {
-    if (c.kind === 'savings_change' && c.goalId && !goals.some((g) => g.id === c.goalId)) throw notFound('Goal')
+    if (c.kind === 'savings_change' && c.goalId && !goals.some((g) => g.id === c.goalId))
+      throw notFound('Goal')
   }
   const incomeItemIds = [...items.values()].filter((i) => i.kind === 'income').map((i) => i.id)
   return runScenario({ forecast: input, incomeItemIds, goals, loans }, changes)
 }
 
-function assumptions(f: ReturnType<typeof runForecast>, liquid: readonly AccountDto[], notCounted: ReadonlySet<string>): ForecastAssumption[] {
+function assumptions(
+  f: ReturnType<typeof runForecast>,
+  liquid: readonly AccountDto[],
+  notCounted: ReadonlySet<string>,
+): ForecastAssumption[] {
   const out: ForecastAssumption[] = liquid.map((a) => ({
     kind: 'start',
     label: a.name,
-    detail: a.lastTxnDate ? `Balance today; latest transaction ${shortDate(a.lastTxnDate)}` : 'Balance today (opening balance only)',
+    detail: a.lastTxnDate
+      ? `Balance today; latest transaction ${shortDate(a.lastTxnDate)}`
+      : 'Balance today (opening balance only)',
     amountMinor: a.balanceMinor,
   }))
   const byItem = new Map<string, ForecastAssumption & { dates: string[] }>()
   for (const e of f.events) {
     let row = byItem.get(e.itemId)
-    if (!row) byItem.set(e.itemId, (row = { kind: 'recurring', label: e.name, detail: null, amountMinor: 0, dates: [] }))
+    if (!row)
+      byItem.set(
+        e.itemId,
+        (row = { kind: 'recurring', label: e.name, detail: null, amountMinor: 0, dates: [] }),
+      )
     row.amountMinor! += e.amountMinor
     row.dates.push(e.overdue ? `${shortDate(e.dueDate)} (overdue, counted today)` : shortDate(e.date))
   }
   for (const { dates, ...row } of byItem.values()) {
-    out.push({ ...row, detail: `${dates.length === 1 ? 'Once' : `${dates.length} times`}: ${dates.join(', ')}` })
+    out.push({
+      ...row,
+      detail: `${dates.length === 1 ? 'Once' : `${dates.length} times`}: ${dates.join(', ')}`,
+    })
   }
   out.push({
     kind: 'baseline',
@@ -139,17 +198,31 @@ function assumptions(f: ReturnType<typeof runForecast>, liquid: readonly Account
         : `The usual spending for each day of the week (the median over the last ${f.baselineDays} days), not counting recurring payments or transfers between your accounts.`,
     amountMinor: -f.baselineOutMinor,
   })
-  const note = (label: string, detail: string | null = null) => out.push({ kind: 'note', label, detail, amountMinor: null })
-  note('Only cash and bank accounts are projected', 'Credit-card spending counts on the day the card bill is paid, when that bill is set up as a recurring transfer.')
-  if (notCounted.size > 0) note('Not counted: paid from a card or another non-cash account', [...notCounted].sort().join(', '))
-  note(`Unpaid items more than ${OVERDUE_GRACE_DAYS} days overdue are left out`, 'Skip them or link their payment on the Recurring page.')
+  const note = (label: string, detail: string | null = null) =>
+    out.push({ kind: 'note', label, detail, amountMinor: null })
+  note(
+    'Only cash and bank accounts are projected',
+    'Credit-card spending counts on the day the card bill is paid, when that bill is set up as a recurring transfer.',
+  )
+  if (notCounted.size > 0)
+    note('Not counted: paid from a card or another non-cash account', [...notCounted].sort().join(', '))
+  note(
+    `Unpaid items more than ${OVERDUE_GRACE_DAYS} days overdue are left out`,
+    'Skip them or link their payment on the Recurring page.',
+  )
   return out
 }
 
 // ---- Net worth and valuations (FR-028) -----------------------------------------------------------
 
 type ValuationRow = { id: string; account_id: string; date: string; value_minor: number; note: string | null }
-const toValuation = (r: ValuationRow): ValuationDto => ({ id: r.id, accountId: r.account_id, date: r.date, valueMinor: r.value_minor, note: r.note })
+const toValuation = (r: ValuationRow): ValuationDto => ({
+  id: r.id,
+  accountId: r.account_id,
+  date: r.date,
+  valueMinor: r.value_minor,
+  note: r.note,
+})
 
 function netWorthAccounts(db: Db, accounts: readonly AccountDto[]): NetWorthAccount[] {
   const daily = new Map<string, { date: string; amountMinor: number }[]>()
@@ -169,7 +242,10 @@ function netWorthAccounts(db: Db, accounts: readonly AccountDto[]): NetWorthAcco
     vals.set(r.account_id, list)
   }
   const stored = new Map(
-    all<{ id: string; opening_balance_minor: number }>(db, 'SELECT id, opening_balance_minor FROM accounts').map((a) => [a.id, a.opening_balance_minor]),
+    all<{ id: string; opening_balance_minor: number }>(
+      db,
+      'SELECT id, opening_balance_minor FROM accounts',
+    ).map((a) => [a.id, a.opening_balance_minor]),
   )
   return accounts.map((a) => ({
     id: a.id,
@@ -198,19 +274,38 @@ export function netWorthNow(db: Db, today: CalendarDate, accounts: readonly Acco
   let liabilities = 0
   const values = accounts.map((a) => {
     const v = canBeValued(a.type) ? latest.get(a.id) : undefined
-    const value = { valueMinor: v ? v.value_minor : a.balanceMinor, source: v ? ('valuation' as const) : ('ledger' as const), valuationDate: v?.date ?? null }
+    const value = {
+      valueMinor: v ? v.value_minor : a.balanceMinor,
+      source: v ? ('valuation' as const) : ('ledger' as const),
+      valuationDate: v?.date ?? null,
+    }
     if (a.nature === 'asset') assets += value.valueMinor
     else liabilities += value.valueMinor
     return { account: a, ...value }
   })
-  return { date: today, assetsMinor: assets, liabilitiesMinor: liabilities, netMinor: assets - liabilities, values }
+  return {
+    date: today,
+    assetsMinor: assets,
+    liabilitiesMinor: liabilities,
+    netMinor: assets - liabilities,
+    values,
+  }
 }
 
 /** Month-end net worth from `from` (default: 11 months ago, or the first account's opening) to today. */
-export function netWorthHistoryFor(db: Db, today: CalendarDate, from?: CalendarDate, to?: CalendarDate): NetWorthDto {
+export function netWorthHistoryFor(
+  db: Db,
+  today: CalendarDate,
+  from?: CalendarDate,
+  to?: CalendarDate,
+): NetWorthDto {
   const accounts = listAccounts(db)
   const nw = netWorthAccounts(db, accounts)
-  const earliest = accounts.reduce<CalendarDate | null>((m, a) => (!m || compareDates(a.openingDate, m) < 0 ? a.openingDate : m), null) ?? today
+  const earliest =
+    accounts.reduce<CalendarDate | null>(
+      (m, a) => (!m || compareDates(a.openingDate, m) < 0 ? a.openingDate : m),
+      null,
+    ) ?? today
   const defaultFrom = addMonths(startOfMonth(today), -11)
   let start = from ?? (compareDates(earliest, defaultFrom) > 0 ? earliest : defaultFrom)
   if (compareDates(start, earliest) < 0) start = earliest
@@ -238,24 +333,46 @@ export function netWorthHistoryFor(db: Db, today: CalendarDate, from?: CalendarD
 }
 
 export function listValuations(db: Db, accountId: string): ValuationDto[] {
-  return all<ValuationRow>(db, 'SELECT * FROM valuations WHERE account_id = ? ORDER BY date DESC', accountId).map(toValuation)
+  return all<ValuationRow>(
+    db,
+    'SELECT * FROM valuations WHERE account_id = ? ORDER BY date DESC',
+    accountId,
+  ).map(toValuation)
 }
 
 function valuableAccount(db: Db, accountId: string) {
-  const a = get<{ name: string; type: AccountType; archived_at: string | null }>(db, 'SELECT name, type, archived_at FROM accounts WHERE id = ?', accountId)
+  const a = get<{ name: string; type: AccountType; archived_at: string | null }>(
+    db,
+    'SELECT name, type, archived_at FROM accounts WHERE id = ?',
+    accountId,
+  )
   if (!a) throw notFound('Account')
   if (!canBeValued(a.type)) {
-    throw invariant(isLiquid(a.type) || a.type === 'credit_card' ? 'This account’s balance comes from its transactions' : 'This account cannot be valued')
+    throw invariant(
+      isLiquid(a.type) || a.type === 'credit_card'
+        ? 'This account’s balance comes from its transactions'
+        : 'This account cannot be valued',
+    )
   }
   return a
 }
 
 /** Record what an investment, loan or other asset/liability is worth on a date (one value per day). */
-export function upsertValuation(db: Db, input: ValuationInput, today: CalendarDate): Mutation<{ valuation: ValuationDto }> {
+export function upsertValuation(
+  db: Db,
+  input: ValuationInput,
+  today: CalendarDate,
+): Mutation<{ valuation: ValuationDto }> {
   const account = valuableAccount(db, input.accountId)
   if (account.archived_at) throw invariant('This account is archived. Restore it before recording a value.')
-  if (compareDates(input.date, today) > 0) throw invariant('A value can only be recorded for today or earlier')
-  const existing = get<ValuationRow>(db, 'SELECT * FROM valuations WHERE account_id = ? AND date = ?', input.accountId, input.date)
+  if (compareDates(input.date, today) > 0)
+    throw invariant('A value can only be recorded for today or earlier')
+  const existing = get<ValuationRow>(
+    db,
+    'SELECT * FROM valuations WHERE account_id = ? AND date = ?',
+    input.accountId,
+    input.date,
+  )
   const { result, auditGroupId } = withAudit(db, `Record value of ${account.name}`, (a) => {
     const fields = { value_minor: input.valueMinor, note: input.note ?? null, updated_at: nowIso() }
     if (existing) {
@@ -263,10 +380,19 @@ export function upsertValuation(db: Db, input: ValuationInput, today: CalendarDa
       return existing.id
     }
     const id = newId('val')
-    a.insert('valuations', { id, account_id: input.accountId, date: input.date, ...fields, created_at: nowIso() })
+    a.insert('valuations', {
+      id,
+      account_id: input.accountId,
+      date: input.date,
+      ...fields,
+      created_at: nowIso(),
+    })
     return id
   })
-  return { valuation: toValuation(get<ValuationRow>(db, 'SELECT * FROM valuations WHERE id = ?', result)!), auditGroupId }
+  return {
+    valuation: toValuation(get<ValuationRow>(db, 'SELECT * FROM valuations WHERE id = ?', result)!),
+    auditGroupId,
+  }
 }
 
 export function deleteValuation(db: Db, id: string): Mutation<object> {

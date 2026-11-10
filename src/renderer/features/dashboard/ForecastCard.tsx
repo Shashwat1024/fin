@@ -22,7 +22,8 @@ export function ForecastCard() {
           'Add a cash or bank account to see a forecast'
         ) : (
           <>
-            {f.low.date === f.today ? 'Today' : `On ${formatDate(f.low.date)}`} · {CONFIDENCE_LABELS[f.confidence]} estimate
+            {f.low.date === f.today ? 'Today' : `On ${formatDate(f.low.date)}`} ·{' '}
+            {CONFIDENCE_LABELS[f.confidence]} estimate
             {warn && (
               <span className="mt-1 flex items-center gap-1.5 text-foreground">
                 <AlertTriangleIcon className="size-3.5 text-warning" aria-hidden />

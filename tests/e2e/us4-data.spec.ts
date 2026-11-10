@@ -20,8 +20,14 @@ test.afterAll(async () => {
 /** Answer the next native open/save dialog in the main process (Playwright cannot click OS dialogs). */
 async function answerDialogs(file: string) {
   await fin.app.evaluate(({ dialog }, path) => {
-    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [path] })) as typeof dialog.showOpenDialog
-    dialog.showSaveDialog = (async () => ({ canceled: false, filePath: path })) as typeof dialog.showSaveDialog
+    dialog.showOpenDialog = (async () => ({
+      canceled: false,
+      filePaths: [path],
+    })) as typeof dialog.showOpenDialog
+    dialog.showSaveDialog = (async () => ({
+      canceled: false,
+      filePath: path,
+    })) as typeof dialog.showSaveDialog
   }, file)
 }
 
@@ -34,7 +40,8 @@ async function addExpense(amount: string, payee: string) {
 }
 
 const cash = () => page.getByRole('link', { name: /^Cash position/ }).locator('[data-slot="card-title"]')
-const backupsCard = () => page.locator('[data-slot="card"]', { has: page.getByText('Backups', { exact: true }) })
+const backupsCard = () =>
+  page.locator('[data-slot="card"]', { has: page.getByText('Backups', { exact: true }) })
 const restoreDialog = () => page.getByRole('dialog', { name: 'Restore a backup' })
 
 async function backUp(passphrase?: string) {
@@ -95,7 +102,9 @@ test('US4: back up, restore exactly, refuse bad files, export, and demo mode', a
   await page.keyboard.press('Control+,')
   await answerDialogs(resolve(fixture('hdfc_savings.csv')))
   await backupsCard().getByRole('button', { name: 'Restore from file…' }).click()
-  await expect(restoreDialog().getByRole('alert')).toContainText('This file is not a Fin backup. Your data was not changed.')
+  await expect(restoreDialog().getByRole('alert')).toContainText(
+    'This file is not a Fin backup. Your data was not changed.',
+  )
   await restoreDialog().getByRole('button', { name: 'Close' }).first().click()
 
   // Export transactions to CSV

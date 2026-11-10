@@ -25,7 +25,8 @@ const OUTCOME_LABEL: Record<string, string> = {
   ignored: 'Not a transaction',
 }
 
-export const useImportBatches = () => useQuery({ queryKey: ['import', 'batches'], queryFn: () => call('import.batches', undefined) })
+export const useImportBatches = () =>
+  useQuery({ queryKey: ['import', 'batches'], queryFn: () => call('import.batches', undefined) })
 
 /** Every import, with the source lines it read and a one-step undo (FR-015). */
 export function ImportHistory() {
@@ -34,12 +35,19 @@ export function ImportHistory() {
   const [includeEdited, setIncludeEdited] = useState(false)
   const [viewing, setViewing] = useState<ImportBatchDto | null>(null)
   const undo = useFinMutation('import.undo', {
-    success: (r) => `Removed ${r.removed} imported transaction${r.removed === 1 ? '' : 's'}${r.kept ? ` · kept ${r.kept} you edited` : ''}`,
+    success: (r) =>
+      `Removed ${r.removed} imported transaction${r.removed === 1 ? '' : 's'}${r.kept ? ` · kept ${r.kept} you edited` : ''}`,
   })
 
   if (batches.isPending) return <LoadingState />
   if (!batches.data?.length) {
-    return <EmptyState icon={<FileClockIcon />} title="No imports yet" description="Imported statements appear here, and any import can be undone." />
+    return (
+      <EmptyState
+        icon={<FileClockIcon />}
+        title="No imports yet"
+        description="Imported statements appear here, and any import can be undone."
+      />
+    )
   }
 
   return (
@@ -72,7 +80,8 @@ export function ImportHistory() {
                 <TableCell>
                   {b.statementClosing ? (
                     <span className="text-xs">
-                      <MoneyText minor={b.statementClosing.balanceMinor} /> on {formatDate(b.statementClosing.date)}
+                      <MoneyText minor={b.statementClosing.balanceMinor} /> on{' '}
+                      {formatDate(b.statementClosing.date)}
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>
@@ -80,7 +89,12 @@ export function ImportHistory() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setViewing(b)} aria-label={`Source lines of ${b.fileName}`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setViewing(b)}
+                      aria-label={`Source lines of ${b.fileName}`}
+                    >
                       <FileTextIcon /> Lines
                     </Button>
                     {!b.undone && b.liveCount > 0 && (
@@ -120,12 +134,16 @@ export function ImportHistory() {
         description={
           <span className="flex flex-col gap-3">
             <span>
-              This removes the {undoing?.liveCount} transaction{undoing?.liveCount === 1 ? '' : 's'} this import created. Nothing
-              else changes, and you can undo this too.
+              This removes the {undoing?.liveCount} transaction{undoing?.liveCount === 1 ? '' : 's'} this
+              import created. Nothing else changes, and you can undo this too.
             </span>
             {undoing && undoing.editedCount > 0 && (
               <span className="flex items-center gap-2">
-                <Checkbox id="undo-edited" checked={includeEdited} onCheckedChange={(v) => setIncludeEdited(v === true)} />
+                <Checkbox
+                  id="undo-edited"
+                  checked={includeEdited}
+                  onCheckedChange={(v) => setIncludeEdited(v === true)}
+                />
                 <Label htmlFor="undo-edited" className="font-normal">
                   Also remove the {undoing.editedCount} you changed after importing
                 </Label>
@@ -139,7 +157,9 @@ export function ImportHistory() {
         <SheetContent side="right" className="w-[48rem] sm:max-w-[48rem]">
           <SheetHeader>
             <SheetTitle>{viewing?.fileName}</SheetTitle>
-            <SheetDescription>Every line Fin read from this file, exactly as it appeared, and what happened to it.</SheetDescription>
+            <SheetDescription>
+              Every line Fin read from this file, exactly as it appeared, and what happened to it.
+            </SheetDescription>
           </SheetHeader>
           {viewing && <BatchLines batchId={viewing.id} />}
         </SheetContent>
@@ -149,7 +169,10 @@ export function ImportHistory() {
 }
 
 function BatchLines({ batchId }: { batchId: string }) {
-  const lines = useQuery({ queryKey: ['import', 'rows', batchId], queryFn: () => call('import.batchRows', { id: batchId }) })
+  const lines = useQuery({
+    queryKey: ['import', 'rows', batchId],
+    queryFn: () => call('import.batchRows', { id: batchId }),
+  })
   if (lines.isPending) return <LoadingState />
   return (
     <div className="overflow-auto px-4 pb-4">
@@ -166,12 +189,22 @@ function BatchLines({ batchId }: { batchId: string }) {
             <TableRow key={l.rowNumber}>
               <TableCell className="tabular-nums text-muted-foreground">{l.rowNumber}</TableCell>
               <TableCell>
-                <Badge variant={l.outcome === 'failed' ? 'destructive' : l.outcome.startsWith('imported') ? 'default' : 'secondary'}>
+                <Badge
+                  variant={
+                    l.outcome === 'failed'
+                      ? 'destructive'
+                      : l.outcome.startsWith('imported')
+                        ? 'default'
+                        : 'secondary'
+                  }
+                >
                   {OUTCOME_LABEL[l.outcome] ?? l.outcome}
                 </Badge>
                 {l.message && <div className="mt-1 text-xs text-muted-foreground">{l.message}</div>}
               </TableCell>
-              <TableCell className="font-mono text-xs break-all whitespace-normal">{l.raw.join(' | ')}</TableCell>
+              <TableCell className="font-mono text-xs break-all whitespace-normal">
+                {l.raw.join(' | ')}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

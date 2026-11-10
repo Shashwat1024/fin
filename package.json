@@ -1,7 +1,7 @@
 {
   "name": "fin",
   "productName": "Fin",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Private, local-first personal finance tracker",
   "private": true,
   "type": "module",
@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

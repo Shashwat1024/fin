@@ -4,11 +4,23 @@ import { describe, expect, it } from 'vitest'
 import { detectHeaderRow, normalizeHeader, parseTable } from '@domain/import/csv'
 import { decodeBytes } from '@domain/import/decode'
 import { detectDateOrder, parseDateText } from '@domain/import/dates'
-import { fingerprintKey, isPossibleDuplicate, normalizeDescription, occurrenceIndexes } from '@domain/import/fingerprint'
-import { applyMapping, closingBalance, suggestMapping, type Mapping, type ParsedRow } from '@domain/import/mapping'
+import {
+  fingerprintKey,
+  isPossibleDuplicate,
+  normalizeDescription,
+  occurrenceIndexes,
+} from '@domain/import/fingerprint'
+import {
+  applyMapping,
+  closingBalance,
+  suggestMapping,
+  type Mapping,
+  type ParsedRow,
+} from '@domain/import/mapping'
 import { BUILTIN_PRESETS, matchPreset } from '@domain/import/presets'
 
-const fixture = (name: string) => decodeBytes(new Uint8Array(readFileSync(join('tests/fixtures/csv', name)))).text
+const fixture = (name: string) =>
+  decodeBytes(new Uint8Array(readFileSync(join('tests/fixtures/csv', name)))).text
 
 /** Full pipeline the wizard runs: parse → header → preset (or suggestion) → mapping. */
 function importFile(name: string) {
@@ -28,7 +40,10 @@ describe('decode', () => {
     expect(decodeBytes(new Uint8Array([0xff, 0xfe, 0x41, 0x00]))).toEqual({ text: 'A', encoding: 'utf-16le' })
     expect(decodeBytes(new Uint8Array([0xfe, 0xff, 0x00, 0x41]))).toEqual({ text: 'A', encoding: 'utf-16be' })
     expect(decodeBytes(new TextEncoder().encode('₹ 10'))).toEqual({ text: '₹ 10', encoding: 'utf-8' })
-    expect(decodeBytes(new Uint8Array([0x43, 0x61, 0x66, 0xe9]))).toEqual({ text: 'Café', encoding: 'windows-1252' })
+    expect(decodeBytes(new Uint8Array([0x43, 0x61, 0x66, 0xe9]))).toEqual({
+      text: 'Café',
+      encoding: 'windows-1252',
+    })
   })
 })
 
@@ -78,7 +93,11 @@ describe('mapping with built-in presets', () => {
     expect(preset?.id).toBe('builtin:hdfc')
     const values = ok(result.rows)
     expect(values.map((v) => v.amountMinor)).toEqual([-45_000, 8_500_000, -4_000, -4_000, -1_800_000])
-    expect(values[0]).toMatchObject({ date: '2026-10-01', reference: '0000428812345678', balanceMinor: 4_955_000 })
+    expect(values[0]).toMatchObject({
+      date: '2026-10-01',
+      reference: '0000428812345678',
+      balanceMinor: 4_955_000,
+    })
     const errors = result.rows.filter((r) => r.status === 'error')
     expect(errors).toEqual([expect.objectContaining({ rowNumber: 10, code: 'DATE_INVALID' })])
     expect(result.rows.filter((r) => r.status === 'ignored')).toHaveLength(1)
@@ -106,7 +125,9 @@ describe('mapping with built-in presets', () => {
   })
 
   it('Axis and Kotak (Dr/Cr indicator column)', () => {
-    expect(ok(importFile('axis_savings.csv').result.rows).map((v) => v.amountMinor)).toEqual([-215_075, 50_000])
+    expect(ok(importFile('axis_savings.csv').result.rows).map((v) => v.amountMinor)).toEqual([
+      -215_075, 50_000,
+    ])
     const kotak = importFile('kotak_savings.csv')
     expect(kotak.preset?.id).toBe('builtin:kotak')
     expect(ok(kotak.result.rows).map((v) => v.amountMinor)).toEqual([-105_000, 2_500])
@@ -129,7 +150,14 @@ describe('mapping without a preset', () => {
     expect(m).toMatchObject({
       amountMode: 'debit_credit',
       dateOrder: 'dmy',
-      columns: { date: 'Posting Date', description: 'Details', debit: 'Debit', credit: 'Credit', balance: 'Running Balance', reference: 'Ref' },
+      columns: {
+        date: 'Posting Date',
+        description: 'Details',
+        debit: 'Debit',
+        credit: 'Credit',
+        balance: 'Running Balance',
+        reference: 'Ref',
+      },
     })
     expect(ok(applyMapping(table, m).rows)[0]?.amountMinor).toBe(-10_000)
   })
@@ -155,7 +183,10 @@ describe('mapping without a preset', () => {
       'INDICATOR_INVALID',
       'ignored',
     ])
-    expect(applyMapping(table, { ...indicator, columns: { ...indicator.columns, indicator: 'Nope' } }).missingColumns).toEqual(['indicator'])
+    expect(
+      applyMapping(table, { ...indicator, columns: { ...indicator.columns, indicator: 'Nope' } })
+        .missingColumns,
+    ).toEqual(['indicator'])
   })
 })
 

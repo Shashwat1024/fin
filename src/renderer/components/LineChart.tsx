@@ -62,12 +62,25 @@ function useWidth<T extends HTMLElement>() {
  * A single-series line over dates, drawn as SVG. Hover or use ←/→ for the value on each day;
  * gridlines and axes stay quiet so the line, the reference and any shaded range carry the meaning.
  */
-export function LineChart({ points, label, reference, ranges = [], marker, compare, tooltip, height = 240, className }: Props) {
+export function LineChart({
+  points,
+  label,
+  reference,
+  ranges = [],
+  marker,
+  compare,
+  tooltip,
+  height = 240,
+  className,
+}: Props) {
   const [box, width] = useWidth<HTMLDivElement>()
   const [active, setActive] = useState<number | null>(null)
   const n = points.length
   const values = [...points, ...(compare ?? [])].map((p) => p.valueMinor)
-  const ticks = niceTicks(Math.min(...values, reference?.valueMinor ?? Infinity), Math.max(...values, reference?.valueMinor ?? -Infinity))
+  const ticks = niceTicks(
+    Math.min(...values, reference?.valueMinor ?? Infinity),
+    Math.max(...values, reference?.valueMinor ?? -Infinity),
+  )
   const lo = ticks[0]!
   const hi = ticks.at(-1)!
   const plotW = Math.max(0, width - PAD.left - PAD.right)
@@ -75,11 +88,22 @@ export function LineChart({ points, label, reference, ranges = [], marker, compa
   const x = (i: number) => PAD.left + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW)
   const y = (v: number) => PAD.top + (1 - (v - lo) / (hi - lo || 1)) * plotH
   const index = new Map(points.map((p, i) => [p.date, i]))
-  const line = (list: readonly LinePoint[]) => list.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.valueMinor).toFixed(1)}`).join('')
+  const line = (list: readonly LinePoint[]) =>
+    list.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.valueMinor).toFixed(1)}`).join('')
   const path = line(points)
-  const spanMonths = n > 1 ? (asDate(points[n - 1]!.date).getTime() - asDate(points[0]!.date).getTime()) / 86_400_000 > 120 : false
+  const spanMonths =
+    n > 1
+      ? (asDate(points[n - 1]!.date).getTime() - asDate(points[0]!.date).getTime()) / 86_400_000 > 120
+      : false
   const fmt = (d: string) => (spanMonths ? MONTH_YEAR : DAY_MONTH).format(asDate(d))
-  const xTicks = n <= 1 ? [0] : Array.from(new Set(Array.from({ length: Math.min(6, n) }, (_, k) => Math.round((k * (n - 1)) / Math.min(5, n - 1)))))
+  const xTicks =
+    n <= 1
+      ? [0]
+      : Array.from(
+          new Set(
+            Array.from({ length: Math.min(6, n) }, (_, k) => Math.round((k * (n - 1)) / Math.min(5, n - 1))),
+          ),
+        )
   const step = Math.max(1, plotW / Math.max(1, n - 1))
   const m = marker ? index.get(marker.date) : undefined
 
@@ -119,18 +143,44 @@ export function LineChart({ points, label, reference, ranges = [], marker, compa
             if (a === undefined || b === undefined) return null
             const x0 = Math.max(PAD.left, x(a) - step / 2)
             const x1 = Math.min(PAD.left + plotW, x(b) + step / 2)
-            return <rect key={r.from} x={x0} y={PAD.top} width={Math.max(2, x1 - x0)} height={plotH} className="fill-warning/15" />
+            return (
+              <rect
+                key={r.from}
+                x={x0}
+                y={PAD.top}
+                width={Math.max(2, x1 - x0)}
+                height={plotH}
+                className="fill-warning/15"
+              />
+            )
           })}
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={PAD.left} x2={PAD.left + plotW} y1={y(t)} y2={y(t)} className={t === 0 ? 'stroke-muted-foreground/50' : 'stroke-border'} />
-              <text x={PAD.left - 8} y={y(t) + 4} textAnchor="end" className="fill-muted-foreground text-[11px] tabular-nums">
+              <line
+                x1={PAD.left}
+                x2={PAD.left + plotW}
+                y1={y(t)}
+                y2={y(t)}
+                className={t === 0 ? 'stroke-muted-foreground/50' : 'stroke-border'}
+              />
+              <text
+                x={PAD.left - 8}
+                y={y(t) + 4}
+                textAnchor="end"
+                className="fill-muted-foreground text-[11px] tabular-nums"
+              >
                 {formatMoney(money(t), { compact: true })}
               </text>
             </g>
           ))}
           {xTicks.map((i) => (
-            <text key={i} x={x(i)} y={height - 6} textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'} className="fill-muted-foreground text-[11px]">
+            <text
+              key={i}
+              x={x(i)}
+              y={height - 6}
+              textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}
+              className="fill-muted-foreground text-[11px]"
+            >
               {fmt(points[i]!.date)}
             </text>
           ))}
@@ -145,18 +195,43 @@ export function LineChart({ points, label, reference, ranges = [], marker, compa
                 strokeWidth={1.5}
                 className="stroke-warning"
               />
-              <text x={PAD.left + plotW - 4} y={y(reference.valueMinor) - 5} textAnchor="end" className="fill-muted-foreground text-[11px]">
+              <text
+                x={PAD.left + plotW - 4}
+                y={y(reference.valueMinor) - 5}
+                textAnchor="end"
+                className="fill-muted-foreground text-[11px]"
+              >
                 {reference.label}
               </text>
             </g>
           )}
           {compare && compare.length > 0 && (
-            <path d={line(compare)} fill="none" strokeWidth={2} strokeDasharray="5 4" strokeLinejoin="round" className="stroke-muted-foreground/70" />
+            <path
+              d={line(compare)}
+              fill="none"
+              strokeWidth={2}
+              strokeDasharray="5 4"
+              strokeLinejoin="round"
+              className="stroke-muted-foreground/70"
+            />
           )}
-          <path d={path} fill="none" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" className="stroke-series-in" />
+          <path
+            d={path}
+            fill="none"
+            strokeWidth={2}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            className="stroke-series-in"
+          />
           {m !== undefined && marker && (
             <g>
-              <circle cx={x(m)} cy={y(points[m]!.valueMinor)} r={5} strokeWidth={2} className="fill-series-in stroke-card" />
+              <circle
+                cx={x(m)}
+                cy={y(points[m]!.valueMinor)}
+                r={5}
+                strokeWidth={2}
+                className="fill-series-in stroke-card"
+              />
               <text
                 x={x(m)}
                 y={y(points[m]!.valueMinor) + 18}
@@ -169,8 +244,20 @@ export function LineChart({ points, label, reference, ranges = [], marker, compa
           )}
           {active !== null && (
             <g pointerEvents="none">
-              <line x1={x(active)} x2={x(active)} y1={PAD.top} y2={PAD.top + plotH} className="stroke-muted-foreground/60" />
-              <circle cx={x(active)} cy={y(points[active]!.valueMinor)} r={4} strokeWidth={2} className="fill-series-in stroke-card" />
+              <line
+                x1={x(active)}
+                x2={x(active)}
+                y1={PAD.top}
+                y2={PAD.top + plotH}
+                className="stroke-muted-foreground/60"
+              />
+              <circle
+                cx={x(active)}
+                cy={y(points[active]!.valueMinor)}
+                r={4}
+                strokeWidth={2}
+                className="fill-series-in stroke-card"
+              />
             </g>
           )}
         </svg>

@@ -3,7 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import { FormField, LoadingState } from '@renderer/components/layout'
 import { CategoryPicker } from '@renderer/components/pickers'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import { FieldGroup } from '@renderer/components/ui/field'
 import { Input } from '@renderer/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@renderer/components/ui/select'
@@ -25,10 +32,22 @@ const TOP = 'top'
 /** Add or edit a category: name, parent (two levels at most) and budget group. */
 export type CategoryEditTarget = { category?: CategoryDto; parentId?: string | null }
 
-export function CategoryDialog({ target, onOpenChange }: { target: CategoryEditTarget | null; onOpenChange: (o: boolean) => void }) {
+export function CategoryDialog({
+  target,
+  onOpenChange,
+}: {
+  target: CategoryEditTarget | null
+  onOpenChange: (o: boolean) => void
+}) {
   return (
     <Dialog open={target !== null} onOpenChange={onOpenChange}>
-      {target && <CategoryForm key={target.category?.id ?? `new-${target.parentId ?? ''}`} target={target} onDone={() => onOpenChange(false)} />}
+      {target && (
+        <CategoryForm
+          key={target.category?.id ?? `new-${target.parentId ?? ''}`}
+          target={target}
+          onDone={() => onOpenChange(false)}
+        />
+      )}
     </Dialog>
   )
 }
@@ -43,8 +62,14 @@ function CategoryForm({ target, onDone }: { target: CategoryEditTarget; onDone: 
   const parentGroup = categories.find((c) => c.id === parent)?.group
   const [group, setGroup] = useState<CategoryGroup>(editing?.group ?? parentGroup ?? 'wants')
   const [error, setError] = useState<string | null>(null)
-  const create = useFinMutation('categories.create', { success: (r) => `Added ${r.category.path}`, toastErrors: false })
-  const update = useFinMutation('categories.update', { success: (r) => `Saved ${r.category.path}`, toastErrors: false })
+  const create = useFinMutation('categories.create', {
+    success: (r) => `Added ${r.category.path}`,
+    toastErrors: false,
+  })
+  const update = useFinMutation('categories.update', {
+    success: (r) => `Saved ${r.category.path}`,
+    toastErrors: false,
+  })
   const parents = categories.filter((c) => !c.parentId && !c.archived && c.id !== editing?.id)
 
   const submit = async (e: React.FormEvent) => {
@@ -71,7 +96,11 @@ function CategoryForm({ target, onDone }: { target: CategoryEditTarget; onDone: 
           <FormField label="Name" htmlFor={`${id}-name`} error={error ?? undefined}>
             <Input id={`${id}-name`} autoFocus value={name} onChange={(e) => setName(e.target.value)} />
           </FormField>
-          <FormField label="Inside" htmlFor={`${id}-parent`} description={hasChildren ? 'It has subcategories, so it stays at the top level.' : undefined}>
+          <FormField
+            label="Inside"
+            htmlFor={`${id}-parent`}
+            description={hasChildren ? 'It has subcategories, so it stays at the top level.' : undefined}
+          >
             <Select
               value={parent}
               disabled={hasChildren}
@@ -94,7 +123,11 @@ function CategoryForm({ target, onDone }: { target: CategoryEditTarget; onDone: 
               </SelectContent>
             </Select>
           </FormField>
-          <FormField label="Budget group" htmlFor={`${id}-group`} description="Income and transfers are not budgeted.">
+          <FormField
+            label="Budget group"
+            htmlFor={`${id}-group`}
+            description="Income and transfers are not budgeted."
+          >
             <Select value={group} onValueChange={(g) => setGroup(g as CategoryGroup)}>
               <SelectTrigger id={`${id}-group`} className="w-full">
                 <SelectValue />
@@ -126,7 +159,13 @@ function CategoryForm({ target, onDone }: { target: CategoryEditTarget; onDone: 
  * Delete a category. When anything uses it, the user picks where it all goes (a merge);
  * nothing is left without a category by accident.
  */
-export function DeleteCategoryDialog({ category, onOpenChange }: { category: CategoryDto | null; onOpenChange: (o: boolean) => void }) {
+export function DeleteCategoryDialog({
+  category,
+  onOpenChange,
+}: {
+  category: CategoryDto | null
+  onOpenChange: (o: boolean) => void
+}) {
   return (
     <Dialog open={category !== null} onOpenChange={onOpenChange}>
       {category && <DeleteForm key={category.id} category={category} onDone={() => onOpenChange(false)} />}
@@ -136,10 +175,17 @@ export function DeleteCategoryDialog({ category, onOpenChange }: { category: Cat
 
 function DeleteForm({ category, onDone }: { category: CategoryDto; onDone: () => void }) {
   const id = useId()
-  const usage = useQuery({ queryKey: ['categories', 'usage', category.id], queryFn: () => call('categories.usage', { id: category.id }), gcTime: 0 })
+  const usage = useQuery({
+    queryKey: ['categories', 'usage', category.id],
+    queryFn: () => call('categories.usage', { id: category.id }),
+    gcTime: 0,
+  })
   const [replacement, setReplacement] = useState<string | null>(null)
   const remove = useFinMutation('categories.delete', {
-    success: (r) => (r.moved > 0 ? `Merged ${category.path}: ${plural(r.moved, 'transaction')} moved` : `Deleted ${category.path}`),
+    success: (r) =>
+      r.moved > 0
+        ? `Merged ${category.path}: ${plural(r.moved, 'transaction')} moved`
+        : `Deleted ${category.path}`,
     onSuccess: onDone,
   })
   const u = usage.data
@@ -162,9 +208,15 @@ function DeleteForm({ category, onDone }: { category: CategoryDto; onDone: () =>
       {!u ? (
         <LoadingState label="Checking where it is used…" />
       ) : u.children > 0 ? (
-        <p className="text-sm">It has {plural(u.children, 'subcategory', 'subcategories')}. Move or delete those first.</p>
+        <p className="text-sm">
+          It has {plural(u.children, 'subcategory', 'subcategories')}. Move or delete those first.
+        </p>
       ) : inUse ? (
-        <FormField label="Move everything to" htmlFor={`${id}-to`} description={`Used by ${parts.join(', ')}. They will use the category you choose.`}>
+        <FormField
+          label="Move everything to"
+          htmlFor={`${id}-to`}
+          description={`Used by ${parts.join(', ')}. They will use the category you choose.`}
+        >
           <CategoryPicker id={`${id}-to`} value={replacement} onChange={setReplacement} />
         </FormField>
       ) : (
@@ -176,7 +228,12 @@ function DeleteForm({ category, onDone }: { category: CategoryDto; onDone: () =>
         </Button>
         <Button
           variant="destructive"
-          disabled={!u || u.children > 0 || (inUse && (!replacement || replacement === category.id)) || remove.isPending}
+          disabled={
+            !u ||
+            u.children > 0 ||
+            (inUse && (!replacement || replacement === category.id)) ||
+            remove.isPending
+          }
           onClick={() => remove.mutate({ id: category.id, replacementId: inUse ? replacement : null })}
         >
           {inUse ? 'Merge and delete' : 'Delete'}

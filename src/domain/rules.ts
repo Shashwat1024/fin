@@ -21,7 +21,12 @@ export type Rule = {
 }
 
 /** What a rule looks at. `merchant` is the merchant name, or null when unknown. */
-export type RuleSubject = { description: string; merchant: string | null; amountMinor: number; accountId: string }
+export type RuleSubject = {
+  description: string
+  merchant: string | null
+  amountMinor: number
+  accountId: string
+}
 
 const fold = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
 
@@ -72,7 +77,9 @@ export function ruleMatches(rule: Rule, s: RuleSubject): boolean {
 
 /** Rules in the order they are tried: priority, then name, then id. */
 export function orderRules<T extends Rule>(rules: readonly T[]): T[] {
-  return [...rules].sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
+  return [...rules].sort(
+    (a, b) => a.priority - b.priority || a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
+  )
 }
 
 export function firstMatchingRule<T extends Rule>(rules: readonly T[], s: RuleSubject): T | null {
@@ -84,18 +91,25 @@ export function validateRule(conditions: readonly RuleCondition[]): string[] {
   const problems: string[] = []
   if (conditions.length === 0) problems.push('Add at least one condition')
   for (const c of conditions) {
-    if ((c.field === 'description' || c.field === 'merchant') && !c.value.trim()) problems.push('A text condition is empty')
-    if (c.field === 'description' && c.op === 'regex' && !compileRegex(c.value)) problems.push(`"${c.value}" is not a valid pattern`)
+    if ((c.field === 'description' || c.field === 'merchant') && !c.value.trim())
+      problems.push('A text condition is empty')
+    if (c.field === 'description' && c.op === 'regex' && !compileRegex(c.value))
+      problems.push(`"${c.value}" is not a valid pattern`)
     if (c.field === 'amount') {
       if (c.min == null && c.max == null) problems.push('An amount condition needs a minimum or maximum')
-      if (c.min != null && c.max != null && c.min > c.max) problems.push('The minimum amount is above the maximum')
+      if (c.min != null && c.max != null && c.min > c.max)
+        problems.push('The minimum amount is above the maximum')
     }
   }
   return problems
 }
 
 /** "Description contains SWIGGY" — for lists and previews. */
-export function describeCondition(c: RuleCondition, accountName?: (id: string) => string, money?: (minor: number) => string): string {
+export function describeCondition(
+  c: RuleCondition,
+  accountName?: (id: string) => string,
+  money?: (minor: number) => string,
+): string {
   const fmt = money ?? ((m: number) => String(m / 100))
   switch (c.field) {
     case 'description':

@@ -7,7 +7,12 @@ describe('narration parsing', () => {
     ['UPI-CHAI POINT-CHAIPOINT@YBL-YESB0YBLUPI-428899990001-UPI', 'UPI', 'Chai Point', '428899990001'],
     ['UPI/428811112222/Amazon Pay/amazon@apl/Payment', 'UPI', 'Amazon Pay', '428811112222'],
     ['TO TRANSFER-UPI/DR/428877776666/ZOMATO/ybl', 'UPI', 'Zomato', '428877776666'],
-    ['BY TRANSFER-UPI/CR/428877770000/RAHUL SHARMA/SBIN/rahul@oksbi/Payment', 'UPI', 'Rahul Sharma', '428877770000'],
+    [
+      'BY TRANSFER-UPI/CR/428877770000/RAHUL SHARMA/SBIN/rahul@oksbi/Payment',
+      'UPI',
+      'Rahul Sharma',
+      '428877770000',
+    ],
     ['UPI/P2M/428855554444/BigBasket', 'UPI', 'BigBasket', '428855554444'],
     ['UPI/BLINKIT/428866665555', 'UPI', 'Blinkit', '428866665555'],
     ['IMPS/P2A/428833332222/FRIEND/REPAY', 'IMPS', 'Friend', '428833332222'],

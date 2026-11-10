@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { AccountType } from '@domain/ledger'
-import { accountValueAt, canBeValued, monthEnds, netWorthAt, netWorthHistory, type NetWorthAccount } from '@domain/networth'
+import {
+  accountValueAt,
+  canBeValued,
+  monthEnds,
+  netWorthAt,
+  netWorthHistory,
+  type NetWorthAccount,
+} from '@domain/networth'
 
 const bank: NetWorthAccount = {
   id: 'bank',
@@ -35,17 +42,36 @@ const loan: NetWorthAccount = {
   daily: [{ date: '2026-09-05', amountMinor: 1_000_000 }],
   valuations: [{ date: '2026-10-31', valueMinor: 48_500_000 }],
 }
-const card: NetWorthAccount = { id: 'card', type: 'credit_card', openingMinor: -500_000, openingDate: '2026-08-01', daily: [], valuations: [] }
+const card: NetWorthAccount = {
+  id: 'card',
+  type: 'credit_card',
+  openingMinor: -500_000,
+  openingDate: '2026-08-01',
+  daily: [],
+  valuations: [],
+}
 
 describe('account value', () => {
   it('uses the ledger balance up to the date, starting from the opening date', () => {
     expect(accountValueAt(bank, '2026-08-01').valueMinor).toBe(0) // before it was opened
-    expect(accountValueAt(bank, '2026-09-10')).toEqual({ valueMinor: 12_000_000, source: 'ledger', valuationDate: null })
+    expect(accountValueAt(bank, '2026-09-10')).toEqual({
+      valueMinor: 12_000_000,
+      source: 'ledger',
+      valuationDate: null,
+    })
   })
 
   it('lets the latest valuation on or before the date override the ledger for investments and loans', () => {
-    expect(accountValueAt(fund, '2026-09-29')).toEqual({ valueMinor: 25_000_000, source: 'ledger', valuationDate: null })
-    expect(accountValueAt(fund, '2026-10-14')).toEqual({ valueMinor: 26_000_000, source: 'valuation', valuationDate: '2026-09-30' })
+    expect(accountValueAt(fund, '2026-09-29')).toEqual({
+      valueMinor: 25_000_000,
+      source: 'ledger',
+      valuationDate: null,
+    })
+    expect(accountValueAt(fund, '2026-10-14')).toEqual({
+      valueMinor: 26_000_000,
+      source: 'valuation',
+      valuationDate: '2026-09-30',
+    })
     expect(accountValueAt(fund, '2026-12-01').valueMinor).toBe(27_000_000)
     expect(accountValueAt(loan, '2026-10-30').valueMinor).toBe(49_000_000) // owed, from the ledger
     expect(accountValueAt(loan, '2026-10-31').valueMinor).toBe(48_500_000)
@@ -70,9 +96,18 @@ describe('net worth', () => {
   })
 
   it('gives one point per month end, ending on the last date', () => {
-    expect(monthEnds('2026-08-15', '2026-11-09')).toEqual(['2026-08-31', '2026-09-30', '2026-10-31', '2026-11-09'])
+    expect(monthEnds('2026-08-15', '2026-11-09')).toEqual([
+      '2026-08-31',
+      '2026-09-30',
+      '2026-10-31',
+      '2026-11-09',
+    ])
     expect(monthEnds('2026-02-01', '2026-02-28')).toEqual(['2026-02-28'])
     const h = netWorthHistory([bank, fund], '2026-08-01', '2026-10-31')
-    expect(h.map((p) => p.netMinor)).toEqual([5_000_000 + 20_000_000, 12_000_000 + 26_000_000, 22_000_000 + 27_000_000])
+    expect(h.map((p) => p.netMinor)).toEqual([
+      5_000_000 + 20_000_000,
+      12_000_000 + 26_000_000,
+      22_000_000 + 27_000_000,
+    ])
   })
 })

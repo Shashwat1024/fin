@@ -32,7 +32,9 @@ describe('audit and undo', () => {
 
   it('refuses to undo twice', () => {
     const db = testDb()
-    const { auditGroupId } = withAudit(db, 'x', (a) => a.insert('tags', { id: 'tag_a', name: 'a', created_at: 'x' }))
+    const { auditGroupId } = withAudit(db, 'x', (a) =>
+      a.insert('tags', { id: 'tag_a', name: 'a', created_at: 'x' }),
+    )
     undoGroup(db, auditGroupId)
     expect(() => undoGroup(db, auditGroupId)).toThrow(/already undone/)
   })

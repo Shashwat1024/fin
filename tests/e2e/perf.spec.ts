@@ -36,7 +36,9 @@ test.beforeAll(async () => {
     const start = performance.now()
     fin = await launchFin(dir)
     page = fin.page
-    await expect(page.locator('[data-slot="card"]', { hasText: 'Cash position' })).toContainText('₹', { timeout: 10_000 })
+    await expect(page.locator('[data-slot="card"]', { hasText: 'Cash position' })).toContainText('₹', {
+      timeout: 10_000,
+    })
     starts.push(performance.now() - start)
   }
   console.log(`cold starts: ${starts.map(Math.round).join(', ')} ms`)

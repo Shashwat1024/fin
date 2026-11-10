@@ -5,14 +5,27 @@ import { AmountInput, amountToText, parseAmountText } from '@renderer/components
 import { FormField } from '@renderer/components/layout'
 import { MoneyText } from '@renderer/components/MoneyText'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import { FieldGroup } from '@renderer/components/ui/field'
 import { Input } from '@renderer/components/ui/input'
 import { useFinMutation, useToday, useValuations } from '@renderer/lib/queries'
 import type { NetWorthAccountRow } from '@shared/types'
 
 /** Record what an investment, loan or other asset/liability is worth, and see or remove past values. */
-export function ValuationDialog({ account, onOpenChange }: { account: NetWorthAccountRow | null; onOpenChange: (o: boolean) => void }) {
+export function ValuationDialog({
+  account,
+  onOpenChange,
+}: {
+  account: NetWorthAccountRow | null
+  onOpenChange: (o: boolean) => void
+}) {
   return (
     <Dialog open={account !== null} onOpenChange={onOpenChange}>
       {account && <ValuationForm key={account.id} account={account} onDone={() => onOpenChange(false)} />}
@@ -29,7 +42,10 @@ function ValuationForm({ account, onDone }: { account: NetWorthAccountRow; onDon
   const [date, setDate] = useState(today)
   const [note, setNote] = useState('')
   const [error, setError] = useState<string>()
-  const save = useFinMutation('valuations.upsert', { success: `Recorded the value of ${account.name}`, toastErrors: false })
+  const save = useFinMutation('valuations.upsert', {
+    success: `Recorded the value of ${account.name}`,
+    toastErrors: false,
+  })
   const remove = useFinMutation('valuations.delete', { success: 'Value deleted' })
 
   const submit = async (e: React.FormEvent) => {
@@ -60,10 +76,22 @@ function ValuationForm({ account, onDone }: { account: NetWorthAccountRow; onDon
         <FieldGroup className="gap-4">
           <div className="grid grid-cols-2 gap-4">
             <FormField label={owed ? 'Amount owed' : 'Value'} htmlFor={`${id}-value`} error={error}>
-              <AmountInput id={`${id}-value`} autoFocus value={amountText} onChange={setAmountText} invalid={Boolean(error)} />
+              <AmountInput
+                id={`${id}-value`}
+                autoFocus
+                value={amountText}
+                onChange={setAmountText}
+                invalid={Boolean(error)}
+              />
             </FormField>
             <FormField label="As of" htmlFor={`${id}-date`}>
-              <Input id={`${id}-date`} type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id={`${id}-date`}
+                type="date"
+                max={today}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </FormField>
           </div>
           <FormField label="Note (optional)" htmlFor={`${id}-note`}>
@@ -72,7 +100,10 @@ function ValuationForm({ account, onDone }: { account: NetWorthAccountRow; onDon
         </FieldGroup>
         {(history.data?.length ?? 0) > 0 && (
           <section className="mt-5" aria-labelledby={`${id}-history`}>
-            <h3 id={`${id}-history`} className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <h3
+              id={`${id}-history`}
+              className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+            >
               Earlier values
             </h3>
             <ul className="mt-1 max-h-48 divide-y overflow-y-auto">

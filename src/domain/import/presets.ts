@@ -66,7 +66,14 @@ export const BUILTIN_PRESETS: readonly Preset[] = [
     mapping: {
       dateOrder: 'dmy',
       amountMode: 'debit_credit',
-      columns: { date: 'Tran Date', description: 'PARTICULARS', debit: 'DR', credit: 'CR', balance: 'BAL', reference: 'CHQNO' },
+      columns: {
+        date: 'Tran Date',
+        description: 'PARTICULARS',
+        debit: 'DR',
+        credit: 'CR',
+        balance: 'BAL',
+        reference: 'CHQNO',
+      },
     },
   },
   {

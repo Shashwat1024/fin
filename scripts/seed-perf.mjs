@@ -15,7 +15,13 @@ if (existsSync(file)) {
 }
 const root = resolve(import.meta.dirname, '..')
 const alias = Object.fromEntries(['domain', 'shared', 'db'].map((d) => [`@${d}`, join(root, 'src', d)]))
-const vite = await createServer({ root, configFile: false, logLevel: 'error', resolve: { alias }, server: { middlewareMode: true, hmr: false } })
+const vite = await createServer({
+  root,
+  configFile: false,
+  logLevel: 'error',
+  resolve: { alias },
+  server: { middlewareMode: true, hmr: false },
+})
 try {
   const load = (p) => vite.ssrLoadModule(join(root, p))
   const { openDatabase } = await load('src/db/connection.ts')
@@ -30,7 +36,9 @@ try {
   const r = seedPerfData(db, todayIn('Asia/Kolkata'))
   db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
   db.close()
-  console.log(`Wrote ${r.transactions.toLocaleString('en-IN')} transactions in ${Math.round(performance.now() - started)} ms to ${dir}`)
+  console.log(
+    `Wrote ${r.transactions.toLocaleString('en-IN')} transactions in ${Math.round(performance.now() - started)} ms to ${dir}`,
+  )
   console.log(`Open it with:  $env:FIN_DATA_DIR='${dir}'; npm run dev`)
 } finally {
   await vite.close()

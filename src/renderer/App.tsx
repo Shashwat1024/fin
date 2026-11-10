@@ -61,21 +61,21 @@ export function App() {
     <HashRouter>
       <AccountDialogProvider>
         <ReconcileDialogProvider>
-        <TransactionDialogProvider>
-          {settings.data.onboarded ? (
-            <>
-              <AppShell>
-                <Routed />
-              </AppShell>
-              <ErrorBoundary>
-                <CommandPalette />
-                <ShortcutsSheet />
-              </ErrorBoundary>
-            </>
-          ) : (
-            <Onboarding settings={settings.data} />
-          )}
-        </TransactionDialogProvider>
+          <TransactionDialogProvider>
+            {settings.data.onboarded ? (
+              <>
+                <AppShell>
+                  <Routed />
+                </AppShell>
+                <ErrorBoundary>
+                  <CommandPalette />
+                  <ShortcutsSheet />
+                </ErrorBoundary>
+              </>
+            ) : (
+              <Onboarding settings={settings.data} />
+            )}
+          </TransactionDialogProvider>
         </ReconcileDialogProvider>
       </AccountDialogProvider>
     </HashRouter>

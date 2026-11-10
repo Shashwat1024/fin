@@ -1,12 +1,27 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircleIcon, CheckCircle2Icon, ClockIcon, LinkIcon, MoreHorizontalIcon, RotateCcwIcon, SkipForwardIcon } from 'lucide-react'
+import {
+  AlertCircleIcon,
+  CheckCircle2Icon,
+  ClockIcon,
+  LinkIcon,
+  MoreHorizontalIcon,
+  RotateCcwIcon,
+  SkipForwardIcon,
+} from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { LoadingState } from '@renderer/components/layout'
 import { MoneyText } from '@renderer/components/MoneyText'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,8 +37,16 @@ import type { OccurrenceDto, OccurrenceState } from '@shared/types'
 const STATE: Record<OccurrenceState, { label: string; icon: typeof ClockIcon; className: string }> = {
   expected: { label: 'Expected', icon: ClockIcon, className: 'text-muted-foreground' },
   paid: { label: 'Paid', icon: CheckCircle2Icon, className: 'text-positive' },
-  overdue: { label: 'Overdue', icon: AlertCircleIcon, className: 'border-warning/50 bg-warning/15 text-foreground [&>svg]:text-warning' },
-  skipped: { label: 'Skipped', icon: SkipForwardIcon, className: 'text-muted-foreground line-through decoration-1' },
+  overdue: {
+    label: 'Overdue',
+    icon: AlertCircleIcon,
+    className: 'border-warning/50 bg-warning/15 text-foreground [&>svg]:text-warning',
+  },
+  skipped: {
+    label: 'Skipped',
+    icon: SkipForwardIcon,
+    className: 'text-muted-foreground line-through decoration-1',
+  },
 }
 
 /** State with an icon and words, never colour alone. */
@@ -39,7 +62,15 @@ export function OccurrenceBadge({ state, income }: { state: OccurrenceState; inc
 }
 
 /** Expected occurrences with their state, and actions to skip, link a payment, or reset. */
-export function OccurrenceList({ items, empty, compact }: { items: OccurrenceDto[]; empty: string; compact?: boolean }) {
+export function OccurrenceList({
+  items,
+  empty,
+  compact,
+}: {
+  items: OccurrenceDto[]
+  empty: string
+  compact?: boolean
+}) {
   const [linking, setLinking] = useState<OccurrenceDto | null>(null)
   const action = useFinMutation('recurring.setOccurrence', {
     success: 'Updated',
@@ -49,7 +80,11 @@ export function OccurrenceList({ items, empty, compact }: { items: OccurrenceDto
     <>
       <ul className="divide-y">
         {items.map((o) => (
-          <li key={o.id} className="flex items-center gap-4 py-2.5 text-sm" aria-label={`${o.itemName} ${formatDate(o.dueDate)}`}>
+          <li
+            key={o.id}
+            className="flex items-center gap-4 py-2.5 text-sm"
+            aria-label={`${o.itemName} ${formatDate(o.dueDate)}`}
+          >
             <span className="w-24 shrink-0 text-muted-foreground tabular-nums">{formatDate(o.dueDate)}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">{o.itemName}</span>
@@ -69,13 +104,19 @@ export function OccurrenceList({ items, empty, compact }: { items: OccurrenceDto
             {!compact && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${o.itemName} on ${formatDate(o.dueDate)}`}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Actions for ${o.itemName} on ${formatDate(o.dueDate)}`}
+                  >
                     <MoreHorizontalIcon />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {o.state !== 'skipped' && (
-                    <DropdownMenuItem onSelect={() => action.mutate({ itemId: o.itemId, dueDate: o.dueDate, action: 'skip' })}>
+                    <DropdownMenuItem
+                      onSelect={() => action.mutate({ itemId: o.itemId, dueDate: o.dueDate, action: 'skip' })}
+                    >
                       <SkipForwardIcon /> Skip this one
                     </DropdownMenuItem>
                   )}
@@ -85,7 +126,11 @@ export function OccurrenceList({ items, empty, compact }: { items: OccurrenceDto
                   {o.manual && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={() => action.mutate({ itemId: o.itemId, dueDate: o.dueDate, action: 'reset' })}>
+                      <DropdownMenuItem
+                        onSelect={() =>
+                          action.mutate({ itemId: o.itemId, dueDate: o.dueDate, action: 'reset' })
+                        }
+                      >
                         <RotateCcwIcon /> Match automatically again
                       </DropdownMenuItem>
                     </>
@@ -102,13 +147,22 @@ export function OccurrenceList({ items, empty, compact }: { items: OccurrenceDto
 }
 
 /** Choose the transaction that paid an occurrence (for payments outside the automatic ±3 days). */
-function LinkPaymentDialog({ occurrence, onOpenChange }: { occurrence: OccurrenceDto | null; onOpenChange: (o: boolean) => void }) {
+function LinkPaymentDialog({
+  occurrence,
+  onOpenChange,
+}: {
+  occurrence: OccurrenceDto | null
+  onOpenChange: (o: boolean) => void
+}) {
   const candidates = useQuery({
     queryKey: ['recurring', 'candidates', occurrence?.id],
     queryFn: () => call('recurring.candidates', { itemId: occurrence!.itemId, dueDate: occurrence!.dueDate }),
     enabled: Boolean(occurrence),
   })
-  const link = useFinMutation('recurring.setOccurrence', { success: 'Payment linked', onSuccess: () => onOpenChange(false) })
+  const link = useFinMutation('recurring.setOccurrence', {
+    success: 'Payment linked',
+    onSuccess: () => onOpenChange(false),
+  })
   return (
     <Dialog open={Boolean(occurrence)} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -117,7 +171,8 @@ function LinkPaymentDialog({ occurrence, onOpenChange }: { occurrence: Occurrenc
           <DialogDescription>
             {occurrence && (
               <>
-                {occurrence.itemName}, due {formatDate(occurrence.dueDate)}. Transactions within 10 days in the same direction:
+                {occurrence.itemName}, due {formatDate(occurrence.dueDate)}. Transactions within 10 days in
+                the same direction:
               </>
             )}
           </DialogDescription>
@@ -134,9 +189,18 @@ function LinkPaymentDialog({ occurrence, onOpenChange }: { occurrence: Occurrenc
                   type="button"
                   className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
                   disabled={link.isPending}
-                  onClick={() => link.mutate({ itemId: occurrence!.itemId, dueDate: occurrence!.dueDate, action: 'match', txnId: c.id })}
+                  onClick={() =>
+                    link.mutate({
+                      itemId: occurrence!.itemId,
+                      dueDate: occurrence!.dueDate,
+                      action: 'match',
+                      txnId: c.id,
+                    })
+                  }
                 >
-                  <span className="w-24 shrink-0 text-muted-foreground tabular-nums">{formatDate(c.postedDate)}</span>
+                  <span className="w-24 shrink-0 text-muted-foreground tabular-nums">
+                    {formatDate(c.postedDate)}
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{c.payee || 'Transaction'}</span>
                     <span className="block truncate text-xs text-muted-foreground">{c.accountName}</span>

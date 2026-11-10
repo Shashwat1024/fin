@@ -18,14 +18,46 @@ const CHANNELS: readonly Channel[] = ['UPI', 'IMPS', 'NEFT', 'RTGS', 'POS', 'ATM
 
 /** Tokens that describe the payment rather than who it was with. */
 const NOISE = new Set([
-  'UPI', 'IMPS', 'NEFT', 'RTGS', 'DR', 'CR', 'P2M', 'P2A', 'MMT', 'INB', 'TO', 'BY', 'TRANSFER', 'TRF', 'TO TRANSFER', 'BY TRANSFER',
-  'NEFT CR', 'NEFT DR', 'RTGS CR', 'RTGS DR', 'IMPS CR', 'IMPS DR', 'UPI CR', 'UPI DR', 'PAYMENT', 'PAY', 'PAYMENT FROM PH', 'SENT USING PAYTM UPI',
-  'ORDER', 'NA', 'NULL', 'COLLECT', 'REQ', 'REQUEST',
+  'UPI',
+  'IMPS',
+  'NEFT',
+  'RTGS',
+  'DR',
+  'CR',
+  'P2M',
+  'P2A',
+  'MMT',
+  'INB',
+  'TO',
+  'BY',
+  'TRANSFER',
+  'TRF',
+  'TO TRANSFER',
+  'BY TRANSFER',
+  'NEFT CR',
+  'NEFT DR',
+  'RTGS CR',
+  'RTGS DR',
+  'IMPS CR',
+  'IMPS DR',
+  'UPI CR',
+  'UPI DR',
+  'PAYMENT',
+  'PAY',
+  'PAYMENT FROM PH',
+  'SENT USING PAYTM UPI',
+  'ORDER',
+  'NA',
+  'NULL',
+  'COLLECT',
+  'REQ',
+  'REQUEST',
 ])
 
 /** IFSC (HDFC0000001) and 4-letter bank codes (YESB) that follow the name in some formats. */
 const IFSC = /^[A-Z]{4}0[A-Z0-9]{6}$/
-const BANK_CODE = /^(HDFC|ICIC|SBIN|UTIB|KKBK|YESB|PUNB|BARB|CNRB|UBIN|IDIB|INDB|IDFB|FDRL|AIRP|PYTM|AXIS|YBL|IBL|OKAXIS|OKSBI|OKHDFCBANK|OKICICI)$/
+const BANK_CODE =
+  /^(HDFC|ICIC|SBIN|UTIB|KKBK|YESB|PUNB|BARB|CNRB|UBIN|IDIB|INDB|IDFB|FDRL|AIRP|PYTM|AXIS|YBL|IBL|OKAXIS|OKSBI|OKHDFCBANK|OKICICI)$/
 const REFERENCE = /^(?=.*\d)[A-Z0-9]{9,}$/
 
 function isReference(token: string): boolean {
@@ -44,7 +76,10 @@ function isName(token: string): boolean {
 
 /** "SWIGGY LIMITED" → "Swiggy Limited"; mixed case is left alone. */
 export function tidyName(name: string): string {
-  const n = name.replace(/\s+/g, ' ').trim().replace(/[.,]+$/, '')
+  const n = name
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[.,]+$/, '')
   if (n !== n.toUpperCase()) return n
   return n.toLowerCase().replace(/\b([a-z])/g, (c) => c.toUpperCase())
 }
@@ -54,7 +89,12 @@ export function parseNarration(raw: string): Narration {
   const upper = text.toUpperCase()
 
   const card = /^(?:POS|PCD|ECOM)\s+(?:[0-9X*]{8,}\s+)?(.+)$/i.exec(text)
-  if (card) return { channel: 'POS', counterparty: tidyName(card[1]!.replace(/\s+(?:IN|IND|INDIA)$/i, '')), reference: null }
+  if (card)
+    return {
+      channel: 'POS',
+      counterparty: tidyName(card[1]!.replace(/\s+(?:IN|IND|INDIA)$/i, '')),
+      reference: null,
+    }
   if (/^(ATW|ATM|NWD|ATD)\b/.test(upper)) return { channel: 'ATM', counterparty: null, reference: null }
 
   const channel = CHANNELS.find((c) => new RegExp(`(^|[^A-Z])${c}([^A-Z]|$)`).test(upper)) ?? null

@@ -7,6 +7,8 @@ import {
   LayoutDashboardIcon,
   LightbulbIcon,
   LineChartIcon,
+  MonitorIcon,
+  MoonIcon,
   PieChartIcon,
   PlusIcon,
   ReceiptTextIcon,
@@ -14,16 +16,21 @@ import {
   ScaleIcon,
   SearchIcon,
   SettingsIcon,
+  SunIcon,
   TagsIcon,
   TargetIcon,
   type LucideIcon,
 } from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
+import { ToggleGroup, ToggleGroupItem } from '@renderer/components/ui/toggle-group'
 import { DemoBanner } from '@renderer/features/demo/DemoBanner'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { showShortcuts, useHotkey } from '@renderer/lib/hotkeys'
+import { useFinMutation } from '@renderer/lib/queries'
+import { useTheme } from '@renderer/lib/theme'
 import { cn } from '@renderer/lib/utils'
+import type { Theme } from '@shared/types'
 
 const NAV: { to: string; label: string; icon: LucideIcon; combo?: string }[] = [
   { to: '/', label: 'Overview', icon: LayoutDashboardIcon, combo: 'mod+1' },
@@ -37,8 +44,35 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo?: string }[] = [
   { to: '/forecast', label: 'Forecast', icon: LineChartIcon, combo: 'mod+9' },
   { to: '/net-worth', label: 'Net worth', icon: ScaleIcon, combo: 'mod+0' },
   { to: '/insights', label: 'Insights', icon: LightbulbIcon },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' },
 ]
+const SETTINGS = { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' }
+
+/** Quick appearance switch in the sidebar; the same choice as Settings › Appearance. */
+function ThemeSwitch() {
+  const { theme } = useTheme()
+  const update = useFinMutation('settings.update')
+  return (
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      size="sm"
+      value={theme}
+      onValueChange={(v) => v && update.mutate({ theme: v as Theme })}
+      aria-label="Appearance"
+      className="w-full"
+    >
+      <ToggleGroupItem value="system" aria-label="System theme" title="System" className="flex-1">
+        <MonitorIcon />
+      </ToggleGroupItem>
+      <ToggleGroupItem value="light" aria-label="Light theme" title="Light" className="flex-1">
+        <SunIcon />
+      </ToggleGroupItem>
+      <ToggleGroupItem value="dark" aria-label="Dark theme" title="Dark" className="flex-1">
+        <MoonIcon />
+      </ToggleGroupItem>
+    </ToggleGroup>
+  )
+}
 
 function NavItem({ to, label, icon: Icon, combo }: (typeof NAV)[number]) {
   return (
@@ -54,7 +88,9 @@ function NavItem({ to, label, icon: Icon, combo }: (typeof NAV)[number]) {
     >
       <Icon className="size-4" aria-hidden />
       <span className="flex-1">{label}</span>
-      {combo && <ShortcutHint combo={combo} className="opacity-0 transition-opacity group-hover:opacity-60" />}
+      {combo && (
+        <ShortcutHint combo={combo} className="opacity-0 transition-opacity group-hover:opacity-60" />
+      )}
     </NavLink>
   )
 }
@@ -75,12 +111,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   useHotkey('mod+,', () => navigate('/settings'))
   return (
     <div className="flex h-full">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:px-3 focus:py-2">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:px-3 focus:py-2"
+      >
         Skip to content
       </a>
-      <aside className="flex w-60 shrink-0 flex-col gap-6 border-r bg-sidebar px-3 py-5 text-sidebar-foreground">
+      <aside className="flex w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r bg-sidebar px-3 py-5 text-sidebar-foreground">
         <div className="flex items-center gap-2 px-3">
-          <div className="grid size-7 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground" aria-hidden>
+          <div
+            className="grid size-7 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
+            aria-hidden
+          >
             ₹
           </div>
           <span className="text-lg font-semibold tracking-tight">Fin</span>
@@ -93,7 +135,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem key={item.to} {...item} />
           ))}
         </nav>
-        <div className="mt-auto flex flex-col gap-2 px-3 text-xs text-muted-foreground">
+        <div className="mt-auto flex flex-col gap-3 border-t pt-4">
+          <nav aria-label="App">
+            <NavItem {...SETTINGS} />
+          </nav>
+          <div className="px-1">
+            <ThemeSwitch />
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 px-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <SearchIcon className="size-3.5" /> Command palette <ShortcutHint combo="mod+k" />
           </span>

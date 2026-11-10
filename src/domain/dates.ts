@@ -46,7 +46,12 @@ function fromUtc(ms: number): CalendarDate {
 /** Today's calendar date in the given IANA time zone. */
 export function todayIn(timeZone: string, now: Date = new Date()): CalendarDate {
   // en-CA formats as YYYY-MM-DD.
-  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now)
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
 }
 
 export function addDays(date: CalendarDate, days: number): CalendarDate {
@@ -96,7 +101,8 @@ export function financialYear(date: CalendarDate, fyStartMonth: number): DateRan
   const startYear = month >= fyStartMonth ? year : year - 1
   const from = makeDate(startYear, fyStartMonth, 1)
   const to = addDays(addMonths(from, 12), -1)
-  const label = fyStartMonth === 1 ? `${startYear}` : `FY ${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`
+  const label =
+    fyStartMonth === 1 ? `${startYear}` : `FY ${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`
   return { from, to, label }
 }
 
@@ -121,7 +127,11 @@ export function presetRange(preset: RangePreset, today: CalendarDate, fyStartMon
   }
 }
 
-export function formatDate(date: CalendarDate, locale = 'en-IN', style: 'medium' | 'short' = 'medium'): string {
+export function formatDate(
+  date: CalendarDate,
+  locale = 'en-IN',
+  style: 'medium' | 'short' = 'medium',
+): string {
   const { year, month, day } = parts(date)
   return new Intl.DateTimeFormat(locale, {
     timeZone: 'UTC',

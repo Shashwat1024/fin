@@ -14,7 +14,8 @@ export function BulkActionBar({ ids, onClear }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [tag, setTag] = useState('')
   const bulk = useFinMutation('txns.bulkUpdate', {
-    success: (r) => `Updated ${r.count} transaction${r.count === 1 ? '' : 's'}${r.skipped ? ` · ${r.skipped} skipped (splits or transfers)` : ''}`,
+    success: (r) =>
+      `Updated ${r.count} transaction${r.count === 1 ? '' : 's'}${r.skipped ? ` · ${r.skipped} skipped (splits or transfers)` : ''}`,
     onSuccess: onClear,
   })
   const remove = useFinMutation('txns.delete', {
@@ -47,7 +48,13 @@ export function BulkActionBar({ ids, onClear }: Props) {
               setTag('')
             }}
           >
-            <Input autoFocus aria-label="Tag name" placeholder="Tag name" value={tag} onChange={(e) => setTag(e.target.value)} />
+            <Input
+              autoFocus
+              aria-label="Tag name"
+              placeholder="Tag name"
+              value={tag}
+              onChange={(e) => setTag(e.target.value)}
+            />
             <Button type="submit" size="sm">
               Add
             </Button>

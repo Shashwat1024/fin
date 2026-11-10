@@ -28,7 +28,13 @@ export function exportJson(db: Db, now = new Date()) {
     ),
     (s) => s.transaction_id,
   )
-  const tags = groupBy(all<{ transaction_id: string; tag_id: string }>(db, 'SELECT transaction_id, tag_id FROM transaction_tags'), (t) => t.transaction_id)
+  const tags = groupBy(
+    all<{ transaction_id: string; tag_id: string }>(
+      db,
+      'SELECT transaction_id, tag_id FROM transaction_tags',
+    ),
+    (t) => t.transaction_id,
+  )
 
   return {
     format: 'fin-export' as const,
@@ -59,7 +65,11 @@ export function exportJson(db: Db, now = new Date()) {
        FROM transactions WHERE deleted_at IS NULL ORDER BY posted_date, id`,
     ).map((t) => ({
       ...t,
-      splits: (splits.get(t.id) ?? []).map((s) => ({ categoryId: s.category_id, amountMinor: s.amount_minor, memo: s.memo })),
+      splits: (splits.get(t.id) ?? []).map((s) => ({
+        categoryId: s.category_id,
+        amountMinor: s.amount_minor,
+        memo: s.memo,
+      })),
       tagIds: (tags.get(t.id) ?? []).map((x) => x.tag_id),
     })),
     transfers: all<Record<string, unknown>>(
@@ -97,7 +107,10 @@ export function exportJson(db: Db, now = new Date()) {
       db,
       'SELECT id, account_id AS accountId, date, value_minor AS valueMinor, note FROM valuations ORDER BY account_id, date',
     ),
-    dismissedInsights: all<Record<string, unknown>>(db, 'SELECT key, dismissed_at AS dismissedAt FROM dismissed_insights ORDER BY dismissed_at, key'),
+    dismissedInsights: all<Record<string, unknown>>(
+      db,
+      'SELECT key, dismissed_at AS dismissedAt FROM dismissed_insights ORDER BY dismissed_at, key',
+    ),
     importBatches: all<Record<string, unknown>>(
       db,
       `SELECT id, account_id AS accountId, file_name AS fileName, imported_at AS importedAt, rows_total AS rowsTotal,

@@ -120,5 +120,7 @@ const KEY_NAMES: Record<string, string> = {
 }
 
 export function comboLabel(combo: string): string[] {
-  return combo.split('+').map((k) => KEY_NAMES[k] ?? (k.length === 1 ? k.toUpperCase() : k[0]!.toUpperCase() + k.slice(1)))
+  return combo
+    .split('+')
+    .map((k) => KEY_NAMES[k] ?? (k.length === 1 ? k.toUpperCase() : k[0]!.toUpperCase() + k.slice(1)))
 }

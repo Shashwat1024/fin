@@ -22,7 +22,15 @@ type Props = {
 }
 
 /** Explicit confirmation for destructive or bulk actions (Constitution IV). */
-export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel, destructive, onConfirm }: Props) {
+export function ConfirmDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel,
+  destructive,
+  onConfirm,
+}: Props) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>

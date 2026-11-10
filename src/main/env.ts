@@ -13,7 +13,11 @@ export interface AppEnv {
   readonly workDir: string
   isDemo(): boolean
   /** Replace the live database with a checked backup, after backing up the current data. */
-  restore(db: Db, path: string, passphrase: string | undefined): Promise<{ preRestoreBackup: BackupInfo; counts: DataCounts }>
+  restore(
+    db: Db,
+    path: string,
+    passphrase: string | undefined,
+  ): Promise<{ preRestoreBackup: BackupInfo; counts: DataCounts }>
   /** Switch to a fresh demo database (or back to the real one); returns the database now open. */
   enterDemo(): Db
   exitDemo(): Db
