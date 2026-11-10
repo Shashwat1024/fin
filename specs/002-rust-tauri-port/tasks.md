@@ -42,12 +42,16 @@ phase ends with tests, a commit and a push.
   presets, history, undo with edited rows. The harness can move the clock mid-script.
 
 ## P3: Overview, backup and data (US3, US4)
-- [ ] R301 dashboard.summary, app.status
-- [ ] R302 backup create/list/inspect/restore, `.finbackup` crypto (format-compatible), daily auto-backup, retention
-- [ ] R303 export.json/export.csv, demo mode (seed), dialogs and open-folder via Tauri plugins
-- [ ] R304 Restore a 1.1.1 backup (both kinds) in the Rust build; parity and end-to-end tests for US3 and US4
+- [x] R301 dashboard.summary, app.status; net worth now/history and valuations (pulled from P5)
+- [x] R302 backup create/list/inspect/restore, `.finbackup` crypto (format-compatible), daily auto-backup, retention
+- [x] R303 export.json/export.csv (byte-identical), dialogs and open-folder via Tauri plugins called
+  from Rust (no webview permissions). Demo mode moves to P4: its seed uses the planning code.
+- [x] R304 Encrypted backups restore across 1.x and 2.0 in both directions, with NFC passphrases
+  (`tests/parity/backup-interop.test.ts`); 81-step data parity (`data.parity.test.ts`); the US1
+  end-to-end suite passes against the Tauri build. Parity now runs as `npm run test:parity`.
 
 ## P4: Planning and categorisation (US5, US6)
+- [ ] R400 demo.enter/demo.exit and the demo seed (needs R401–R402)
 - [ ] R401 recurrence domain, recurring items, occurrences, candidates, setOccurrence
 - [ ] R402 budget month and assign; goals and contributions
 - [x] R403 categories create/update/usage/delete; rules CRUD, preview and apply; suggestions

@@ -4,7 +4,12 @@
 use serde_json::{Value, json};
 
 use crate::app::App;
-use crate::db::{DbResult, accounts, audit, categories, categorization, imports, settings, transactions};
+use std::path::{Path, PathBuf};
+
+use crate::db::backup::{self as backups, DEFAULT_KDF};
+use crate::db::{
+    DbResult, accounts, audit, categories, categorization, dashboard, export, imports, networth, settings, transactions,
+};
 use crate::error::{AppError, ErrorCode};
 
 fn s<'a>(v: &'a Value, k: &str) -> &'a str {
@@ -73,8 +78,113 @@ fn activity(app: &App, limit: i64) -> DbResult<Value> {
     ))
 }
 
+fn io(message: &str) -> AppError {
+    AppError::new(ErrorCode::Io, message)
+}
+
+fn no_demo(app: &App, what: &str) -> DbResult<()> {
+    if app.is_demo() {
+        return Err(AppError::invariant(format!("{what} is not available with demo data. Exit the demo first.")));
+    }
+    Ok(())
+}
+
+/// Fails with a plain message unless Fin can create and write files in `dir`.
+fn writable(dir: &Path) -> DbResult<()> {
+    let probe = dir.join(format!(".fin-write-test-{}", std::process::id()));
+    let ok = std::fs::create_dir_all(dir).is_ok() && std::fs::write(&probe, b"").is_ok();
+    let _ = std::fs::remove_file(&probe);
+    if ok { Ok(()) } else { Err(io("Fin cannot write to that folder. Choose another one.")) }
+}
+
+fn path_str(p: &Path) -> String {
+    p.to_string_lossy().into_owned()
+}
+
+/// Backups, export and other requests that touch files or swap the open database.
+fn handle_files(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Value>> {
+    let passphrase = |k: &str| input.get(k).and_then(Value::as_str).filter(|p| !p.is_empty()).map(str::to_owned);
+    let result = match channel {
+        "backup.list" => (|| {
+            // Safety copies made before upgrades always go to the default folder, so list both.
+            let mut seen: Vec<Value> = Vec::new();
+            for b in backups::list_backups(&app.backup_dir()?)
+                .into_iter()
+                .chain(backups::list_backups(&app.paths.backup_dir))
+            {
+                match seen.iter_mut().find(|x| x["path"] == b["path"]) {
+                    Some(slot) => *slot = b,
+                    None => seen.push(b),
+                }
+            }
+            seen.sort_by(backups::newest_first);
+            Ok(Value::Array(seen))
+        })(),
+        "backup.create" => (|| {
+            no_demo(app, "Backing up")?;
+            let dir = app.backup_dir()?;
+            writable(&dir)?;
+            backups::create_backup(app.db(), &dir, "manual", passphrase("passphrase").as_deref(), DEFAULT_KDF)
+        })(),
+        "backup.pickFile" => {
+            Ok(app.dialogs.choose_file("Choose a Fin backup").map_or(Value::Null, |p| json!({ "path": path_str(&p) })))
+        }
+        "backup.inspect" => Ok(backups::inspect_backup(
+            &PathBuf::from(s(input, "path")),
+            passphrase("passphrase").as_deref(),
+            &app.work_dir,
+        )),
+        "backup.restore" => (|| {
+            no_demo(app, "Restoring")?;
+            app.restore(&PathBuf::from(s(input, "path")), passphrase("passphrase").as_deref())
+        })(),
+        "backup.chooseFolder" => (|| {
+            no_demo(app, "Changing the backup folder")?;
+            let Some(dir) = app.dialogs.choose_folder("Choose where to keep backups") else { return Ok(Value::Null) };
+            writable(&dir)?;
+            let mut patch = serde_json::Map::new();
+            patch.insert("backupDir".into(), json!(path_str(&dir)));
+            settings::update_settings(app.db(), &patch).map(Value::Object)
+        })(),
+        "backup.openFolder" => (|| {
+            let dir = app.backup_dir()?;
+            let _ = std::fs::create_dir_all(&dir);
+            app.dialogs.open_folder(&dir);
+            Ok(Value::Null)
+        })(),
+        "export.json" => (|| {
+            let name = format!("fin-export-{}.json", backups::local_date());
+            let Some(path) = app.dialogs.choose_save_path("Export all data", &name, "json") else {
+                return Ok(Value::Null);
+            };
+            let text = format!(
+                "{}
+",
+                export::to_js_pretty(&export::export_json(app.db())?)
+            );
+            std::fs::write(&path, text).map_err(|_| io("Fin could not write the export file."))?;
+            Ok(json!({ "path": path_str(&path) }))
+        })(),
+        "export.csv" => (|| {
+            let name = format!("fin-transactions-{}.csv", backups::local_date());
+            let Some(path) = app.dialogs.choose_save_path("Export transactions", &name, "csv") else {
+                return Ok(Value::Null);
+            };
+            std::fs::write(&path, export::export_transactions_csv(app.db())?)
+                .map_err(|_| io("Fin could not write the export file."))?;
+            Ok(json!({ "path": path_str(&path) }))
+        })(),
+        _ => return None,
+    };
+    Some(result)
+}
+
 /// `None` when the channel is not ported to Rust yet.
 pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Value>> {
+    if let Some(r) = handle_files(app, channel, input) {
+        return Some(r);
+    }
+    let today = || settings::today(app.db());
     let db = app.db();
     let result = match channel {
         "settings.get" => settings::get_settings(db).map(Value::Object),
@@ -146,6 +256,21 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         }
         "rules.apply" => categorization::apply_rule(db, s(input, "ruleId"), &ids(input, "txnIds")),
         "suggestions.forTxns" => categorization::suggest_for_txns(db, &ids(input, "txnIds")).map(Value::Array),
+        "dashboard.summary" => (|| match input.get("asOf").and_then(Value::as_str) {
+            Some(d) => dashboard::dashboard_summary(db, d),
+            None => dashboard::dashboard_summary(db, &today()?),
+        })(),
+        "networth.history" => (|| {
+            networth::net_worth_history_for(
+                db,
+                &today()?,
+                input.get("from").and_then(Value::as_str),
+                input.get("to").and_then(Value::as_str),
+            )
+        })(),
+        "valuations.list" => networth::list_valuations(db, s(input, "accountId")).map(Value::Array),
+        "valuations.upsert" => (|| networth::upsert_valuation(db, input, &today()?))(),
+        "valuations.delete" => networth::delete_valuation(db, s(input, "id")),
         "app.status" => (|| {
             Ok(json!({
                 "demo": app.is_demo(),

@@ -3,10 +3,14 @@
 
 pub mod accounts;
 pub mod audit;
+pub mod backup;
 pub mod categories;
 pub mod categorization;
+pub mod dashboard;
+pub mod export;
 pub mod imports;
 pub mod migrate;
+pub mod networth;
 pub mod settings;
 pub mod transactions;
 
@@ -48,6 +52,11 @@ impl Db {
         )?;
         conn.pragma_update(None, "journal_mode", "WAL")?;
         Self::configure(conn)
+    }
+
+    /// Wrap an already-open connection (used to inspect backups).
+    pub fn from_connection(conn: Connection) -> Db {
+        Db { conn, depth: Cell::new(0) }
     }
 
     pub fn open_in_memory() -> DbResult<Db> {

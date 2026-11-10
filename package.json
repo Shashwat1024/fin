@@ -30,7 +30,8 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "test:rust": "cargo test --workspace"
+    "test:rust": "cargo test --workspace && vitest run --config vitest.parity.config.ts",
+    "test:parity": "vitest run --config vitest.parity.config.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.4",

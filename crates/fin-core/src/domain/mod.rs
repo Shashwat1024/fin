@@ -4,4 +4,5 @@ pub mod dates;
 pub mod import;
 pub mod ledger;
 pub mod money;
+pub mod networth;
 pub mod rules;

@@ -8,17 +8,15 @@
  * (`acc#1`, `txn#3`), and the data folder path is masked.
  */
 import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'node:child_process'
-import { cpSync, existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createInterface, type Interface } from 'node:readline'
 import { vi } from 'vitest'
-import { openDatabase, type Db } from '@db/connection'
-import { migrate } from '@db/migrate'
-import { backfillMerchants } from '@db/repos/categories'
-import { seedDefaultCategories } from '@db/seed/categories'
+import type { Db } from '@db/connection'
 import { dispatch } from '../../src/main/dispatch'
-import { fakeEnv } from '../integration/db/helpers'
+import type { AppEnv } from '../../src/main/env'
+import { createSystem } from '../../src/main/services/system'
 
 export const FIXED_NOW = '2026-11-10T06:30:00.000Z'
 /** When an upgraded app first opens data written earlier (see compareOnTsData). */
@@ -32,7 +30,14 @@ export type Reply = {
 }
 export type Step = {
   name: string
-  /** A request channel, or 'clock' to move both backends' clocks to `input` (an ISO instant). */
+  /**
+   * A request channel, or a test step run on both sides:
+   *  - 'clock': move both clocks to `input` (an ISO instant)
+   *  - 'dialogs': answer the next file dialogs with `{ file?, save?, folder? }` paths
+   *  - 'readFile': read the file at `input` (text, with the data folder masked by the caller)
+   *  - 'writeFile': write `{ path, text }`
+   * The backend's data folder is available to inputs as `r.$dir.data`.
+   */
   channel: string
   /** A value, or a function of earlier replies (by step name) from the same backend. */
   input?:
@@ -63,7 +68,7 @@ export function ensureCli(): boolean {
   return r.status === 0 && existsSync(exe)
 }
 
-class RustBackend {
+export class RustBackend {
   private proc: ChildProcessWithoutNullStreams
   private lines: Interface
   private pending: ((line: string) => void)[] = []
@@ -78,8 +83,15 @@ class RustBackend {
     this.lines.on('line', (line) => this.pending.shift()?.(line))
   }
   call(channel: string, input: unknown): Promise<Reply> {
+    if (channel === 'readFile' || channel === 'writeFile') return Promise.resolve(fileStep(channel, input))
     const message =
-      channel === 'clock' ? { setNow: input } : input === undefined ? { channel } : { channel, input }
+      channel === 'clock'
+        ? { setNow: input }
+        : channel === 'dialogs'
+          ? { dialogs: input }
+          : input === undefined
+            ? { channel }
+            : { channel, input }
     return new Promise((ok) => {
       this.pending.push((line) => ok(JSON.parse(line) as Reply))
       this.proc.stdin.write(`${JSON.stringify(message)}\n`)
@@ -91,23 +103,65 @@ class RustBackend {
   }
 }
 
-class TsBackend {
-  readonly db: Db
+/** The real TypeScript system service (restore, backups, demo), with dialogs answered in advance. */
+export class TsBackend {
+  private system: ReturnType<typeof createSystem>
+  private answers: { file?: string | null; save?: string | null; folder?: string | null } = {}
   constructor(readonly dir: string) {
-    this.db = openDatabase(join(dir, 'fin.db'))
-    migrate(this.db)
-    seedDefaultCategories(this.db)
-    backfillMerchants(this.db)
+    const quiet = { debug() {}, info() {}, warn() {}, error() {} }
+    this.system = createSystem(
+      {
+        dataDir: dir,
+        dbFile: join(dir, 'fin.db'),
+        backupDir: join(dir, 'backups'),
+        logFile: join(dir, 'logs', 'fin.log'),
+      },
+      quiet,
+      () => undefined,
+    )
+    this.system.start()
+  }
+  get db(): Db {
+    return this.system.db
+  }
+  close() {
+    this.system.db.close()
   }
   async call(channel: string, input: unknown): Promise<Reply> {
     if (channel === 'clock') {
       vi.setSystemTime(new Date(input as string))
       return { ok: true, data: null }
     }
+    if (channel === 'dialogs') {
+      this.answers = input as typeof this.answers
+      return { ok: true, data: null }
+    }
+    if (channel === 'readFile' || channel === 'writeFile') return fileStep(channel, input)
     // What crosses the Tauri bridge is JSON, so the TypeScript side sees the same values.
     const sent = input === undefined ? undefined : JSON.parse(JSON.stringify(input))
-    const reply = await dispatch({ db: this.db, env: fakeEnv(this.dir) }, channel, sent)
+    const answers = this.answers
+    const env: AppEnv = {
+      ...this.system.env,
+      chooseFile: async () => answers.file ?? null,
+      chooseSavePath: async () => answers.save ?? null,
+      chooseFolder: async () => answers.folder ?? null,
+      openFolder: async () => undefined,
+    }
+    const reply = await dispatch({ db: this.system.db, env }, channel, sent)
     return reply as Reply
+  }
+}
+
+function fileStep(channel: string, input: unknown): Reply {
+  try {
+    if (channel === 'writeFile') {
+      const { path, text } = input as { path: string; text: string }
+      writeFileSync(path, text)
+      return { ok: true, data: null }
+    }
+    return { ok: true, data: readFileSync(input as string, 'utf8') }
+  } catch {
+    return { ok: false, error: { code: 'TEST', message: 'file step failed' } }
   }
 }
 
@@ -137,8 +191,8 @@ export async function compare(script: Step[]): Promise<{ differences: Comparison
   vi.useFakeTimers({ now: new Date(FIXED_NOW), toFake: ['Date'] })
   const ts = new TsBackend(tsDir)
   const rust = new RustBackend(rsDir)
-  const tsReplies: Record<string, Reply> = {}
-  const rsReplies: Record<string, Reply> = {}
+  const tsReplies: Record<string, Reply> = { $dir: { ok: true, data: tsDir } }
+  const rsReplies: Record<string, Reply> = { $dir: { ok: true, data: rsDir } }
   const tsIds = new Map<string, string>()
   const rsIds = new Map<string, string>()
   const differences: Comparison[] = []
@@ -162,7 +216,7 @@ export async function compare(script: Step[]): Promise<{ differences: Comparison
     }
   } finally {
     vi.useRealTimers()
-    ts.db.close()
+    ts.close()
     await rust.close()
     rmSync(tsDir, { recursive: true, force: true })
     rmSync(rsDir, { recursive: true, force: true })
@@ -204,7 +258,7 @@ export async function compareOnTsData(
       setupReplies[step.name] = await writer.call(step.channel, input)
     }
     writer.db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
-    writer.db.close()
+    writer.close()
     cpSync(base, rsDir, { recursive: true })
     // A day later, as when a user upgrades: new records sort after the ones written by 1.x.
     vi.setSystemTime(new Date(LATER_NOW))
@@ -233,7 +287,7 @@ export async function compareOnTsData(
     }
   } finally {
     vi.useRealTimers()
-    ts?.db.close()
+    ts?.close()
     await rust?.close()
     rmSync(base, { recursive: true, force: true })
     rmSync(rsDir, { recursive: true, force: true })

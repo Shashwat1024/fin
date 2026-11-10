@@ -4,7 +4,7 @@
 
 use std::io::{self, BufRead, Write};
 
-use fin_core::app::{App, AppPaths};
+use fin_core::app::{App, AppPaths, PresetDialogs};
 use serde_json::{Value, json};
 
 fn main() {
@@ -12,7 +12,7 @@ fn main() {
         eprintln!("Set FIN_DATA_DIR to the data folder to use");
         std::process::exit(2);
     };
-    let mut app = match App::open(AppPaths::in_dir(std::path::Path::new(&dir))) {
+    let mut app = match App::open(AppPaths::in_dir(std::path::Path::new(&dir)), Box::new(PresetDialogs::default())) {
         Ok(app) => app,
         Err(e) => {
             eprintln!("Cannot open the data folder: {e}");
@@ -28,6 +28,13 @@ fn main() {
         }
         let reply = match serde_json::from_str::<Value>(&line) {
             // Test tooling: {"setNow": "<RFC 3339>"} moves the clock for the parity harness.
+            // Test tooling: {"dialogs": {"file", "save", "folder"}} answers the next dialogs.
+            Ok(req) if req.get("dialogs").is_some() => {
+                let path = |k: &str| req["dialogs"][k].as_str().map(std::path::PathBuf::from);
+                app.dialogs =
+                    Box::new(PresetDialogs { file: path("file"), save: path("save"), folder: path("folder") });
+                json!({ "ok": true, "data": null })
+            }
             Ok(req) if req.get("setNow").is_some() => {
                 let at = req["setNow"].as_str().and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok());
                 fin_core::clock::set_now(at.map(|d| d.with_timezone(&chrono::Utc)));
