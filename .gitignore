@@ -36,3 +36,4 @@ coverage/
 .github/.copilot/
 test-results/
 playwright-report/
+/target

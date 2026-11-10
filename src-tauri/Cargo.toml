@@ -1,0 +1,19 @@
+[package]
+name = "fin"
+description = "Fin desktop app (Tauri shell around fin-core)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+name = "fin_app"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+fin-core = { path = "../crates/fin-core" }
+serde_json.workspace = true
+tauri = { version = "2", features = [] }
