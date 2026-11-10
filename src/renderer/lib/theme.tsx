@@ -3,7 +3,13 @@ import type { Theme } from '@shared/types'
 import { useSettings } from './queries'
 
 type Resolved = 'light' | 'dark'
-const ThemeContext = createContext<{ theme: Theme; resolved: Resolved }>({ theme: 'system', resolved: 'light' })
+type ThemeState = {
+  theme: Theme
+  resolved: Resolved
+  /** Shows a theme before it is saved (e.g. during first-run setup); null goes back to the saved one. */
+  setPreview: (theme: Theme | null) => void
+}
+const ThemeContext = createContext<ThemeState>({ theme: 'system', resolved: 'light', setPreview: () => {} })
 
 function systemTheme(): Resolved {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -12,7 +18,8 @@ function systemTheme(): Resolved {
 /** Applies the user's theme preference (light / dark / follow the system) to the document. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { data } = useSettings()
-  const theme = data?.theme ?? 'system'
+  const [preview, setPreview] = useState<Theme | null>(null)
+  const theme = preview ?? data?.theme ?? 'system'
   const [system, setSystem] = useState<Resolved>(systemTheme)
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -25,7 +32,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('dark', resolved === 'dark')
     document.documentElement.style.colorScheme = resolved
   }, [resolved])
-  return <ThemeContext.Provider value={{ theme, resolved }}>{children}</ThemeContext.Provider>
+  return <ThemeContext.Provider value={{ theme, resolved, setPreview }}>{children}</ThemeContext.Provider>
 }
 
 export const useTheme = () => useContext(ThemeContext)
