@@ -109,3 +109,20 @@ fn validity_today_and_names_match() {
         assert_eq!(d::weekday_long(i), s(&names["weekdayLong"][i as usize]));
     }
 }
+
+#[test]
+fn narration_matches() {
+    use fin_core::domain::import::narration as n;
+    let v = vectors();
+    let cases = v["narration"].as_array().unwrap();
+    assert!(cases.len() > 100);
+    for c in cases {
+        let input = s(&c["input"]);
+        let parsed = serde_json::to_value(n::parse_narration(input)).unwrap();
+        assert_eq!(parsed, c["parsed"], "parse {input:?}");
+        let name = n::merchant_name(input).map(Value::from).unwrap_or_default();
+        assert_eq!(name, c["merchantName"], "name {input:?}");
+        assert_eq!(n::merchant_key(input), s(&c["merchantKey"]), "key {input:?}");
+        assert_eq!(n::tidy_name(input), s(&c["tidyName"]), "tidy {input:?}");
+    }
+}

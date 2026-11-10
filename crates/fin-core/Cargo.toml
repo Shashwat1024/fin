@@ -13,7 +13,12 @@ thiserror.workspace = true
 chrono.workspace = true
 chrono-tz.workspace = true
 regex.workspace = true
+rusqlite.workspace = true
+ulid.workspace = true
 
 [[bin]]
 name = "fin-cli"
 path = "src/bin/fin-cli.rs"
+
+[dev-dependencies]
+tempfile = "3"

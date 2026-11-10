@@ -15,18 +15,23 @@ phase ends with tests, a commit and a push.
   en-IN grouping and whole-rupee prose (`formatMoney` is display-only and stays in the renderer)
 - [x] R006 [P] Port `domain/dates` (+ tests): calendar arithmetic, FY, presets, todayIn
   (chrono-tz), en-IN formatDate and month names
-- [~] R007 `fin-cli` JSON-lines dispatcher (done). The `tests/parity` call-script harness (TS
-  dispatch versus fin-cli, ID and timestamp normalisation) moves to P1, where it first has calls to
-  compare; it needs a fixed "today" in both backends.
+- [x] R007 `fin-cli` JSON-lines dispatcher; the call-script harness landed in P1 (R106), with a
+  fixed clock in both backends (Vitest fake timers / `FIN_FAKE_NOW`).
 - [x] R008 Parity vectors for money and date formatting generated from JS `Intl`, checked in Rust
 
 ## P1: Ledger (US1)
-- [ ] R101 Connection (WAL, foreign keys), migrations 1–6 as embedded SQL, schema_version, pre-upgrade snapshot
-- [ ] R102 Contract types and validation for US1 channels (Zod-identical issues)
-- [ ] R103 settings, accounts, categories (seed), tags, payees.suggest
-- [ ] R104 txns query/get/create/update/delete/bulkUpdate, splits, transfers, FTS
-- [ ] R105 audit log, activity.list, undo.apply; accounts.reconcile
-- [ ] R106 Parity scripts for US1; US1 end-to-end tests on Tauri
+- [x] R101 Connection (WAL, foreign keys), migrations 1–6 shared as `.sql` with the TypeScript
+  backend, schema_version, pre-upgrade snapshot
+- [x] R102 Validation for **all 76** channels (Zod-identical issues), proven by 3,233 Zod-generated
+  vectors (`tests/parity/contract-vectors`)
+- [x] R103 settings, accounts, categories (seed, merchant backfill), tags, payees.suggest, app.status
+- [x] R104 txns query/get/create/update/delete/bulkUpdate, splits, transfers, FTS; narration
+  parser (139 parity vectors)
+- [x] R105 audit log, activity.list, undo.apply; accounts.reconcile
+- [x] R106 Parity harness (`tests/parity/harness.ts`): a 66-step US1 script matches on both
+  backends, and Rust reads, edits and undoes a ledger written by the TypeScript backend.
+  `FIN_E2E_SHELL=tauri` runs Playwright against the Tauri build; first-run setup works. The
+  Overview needs channels from P3–P5, so the end-to-end suite on Tauri is the P6 gate.
 
 ## P2: Import (US2)
 - [ ] R201 decode (UTF-8/UTF-16/Windows-1252), csv, dates, mapping, presets, fingerprint, narration

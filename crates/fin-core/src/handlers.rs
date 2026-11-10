@@ -1,0 +1,134 @@
+//! Channel → handler (`src/main/handlers.ts`). Inputs arrive already validated and cleaned, so a
+//! field the schema requires is present with the right type.
+
+use serde_json::{Value, json};
+
+use crate::app::App;
+use crate::db::{DbResult, accounts, audit, categories, settings, transactions};
+use crate::error::{AppError, ErrorCode};
+
+fn s<'a>(v: &'a Value, k: &str) -> &'a str {
+    v.get(k).and_then(Value::as_str).unwrap_or_default()
+}
+
+fn ids(v: &Value, k: &str) -> Vec<String> {
+    v.get(k)
+        .and_then(Value::as_array)
+        .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect())
+        .unwrap_or_default()
+}
+
+fn count(db: &crate::db::Db, sql: &str) -> DbResult<i64> {
+    Ok(db.query_row(sql, [], |r| r.get::<_, i64>(0))?.unwrap_or(0))
+}
+
+/// Record counts shown before a restore and in Settings › Data.
+pub fn count_data(db: &crate::db::Db) -> DbResult<Value> {
+    let has_imports = db
+        .query_row("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'import_batches'", [], |_| Ok(()))?
+        .is_some();
+    Ok(json!({
+        "accounts": count(db, "SELECT COUNT(*) FROM accounts WHERE archived_at IS NULL")?,
+        "transactions": count(db, "SELECT COUNT(*) FROM transactions WHERE deleted_at IS NULL")?,
+        // Backups from before imports existed (schema v1) have no import tables.
+        "importBatches": if has_imports { count(db, "SELECT COUNT(*) FROM import_batches WHERE undone_at IS NULL")? } else { 0 },
+        "latestTxnDate": db.query_row("SELECT MAX(posted_date) FROM transactions WHERE deleted_at IS NULL", [], |r| r.get::<_, Option<String>>(0))?.flatten(),
+    }))
+}
+
+fn backup_dir_for(app: &App) -> DbResult<String> {
+    let s = settings::get_settings(app.db())?;
+    Ok(s["backupDir"].as_str().filter(|d| !d.is_empty()).map_or_else(|| app.default_backup_dir(), str::to_owned))
+}
+
+fn activity(app: &App, limit: i64) -> DbResult<Value> {
+    let rows = app.db().query_map(
+        "SELECT g.id, g.at, g.label, g.undone_at, g.undo_of FROM audit_groups g ORDER BY g.id DESC LIMIT ?",
+        [limit],
+        |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, Option<String>>(3)?,
+                r.get::<_, Option<String>>(4)?,
+            ))
+        },
+    )?;
+    Ok(Value::Array(
+        rows.into_iter()
+            .enumerate()
+            .map(|(i, (id, at, label, undone_at, undo_of))| {
+                json!({
+                    "id": id,
+                    "at": at,
+                    "label": label,
+                    "undone": undone_at.is_some(),
+                    "isUndo": undo_of.is_some(),
+                    // Only the most recent change is offered for one-click undo; older ones may conflict.
+                    "canUndo": i == 0 && undone_at.is_none(),
+                })
+            })
+            .collect(),
+    ))
+}
+
+/// `None` when the channel is not ported to Rust yet.
+pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Value>> {
+    let db = app.db();
+    let result = match channel {
+        "settings.get" => settings::get_settings(db).map(Value::Object),
+        "settings.update" => {
+            settings::update_settings(db, input.as_object().unwrap_or(&Default::default())).map(Value::Object)
+        }
+        "accounts.list" => {
+            accounts::list_accounts(db, input.get("includeArchived").and_then(Value::as_bool).unwrap_or(false))
+                .map(Value::Array)
+        }
+        "accounts.create" => accounts::create_account(db, input),
+        "accounts.update" => accounts::update_account(db, s(input, "id"), &input["patch"]),
+        "accounts.archive" => {
+            accounts::set_account_archived(db, s(input, "id"), input["archived"].as_bool().unwrap_or(false))
+        }
+        "accounts.reconcile" => accounts::reconcile(
+            db,
+            s(input, "id"),
+            s(input, "statementDate"),
+            input["statementBalanceMinor"].as_i64().unwrap_or(0),
+        ),
+        "categories.list" => categories::list_categories(db).map(Value::Array),
+        "tags.list" => categories::list_tags(db).map(Value::Array),
+        "txns.query" => transactions::query_transactions(db, input),
+        "txns.get" => transactions::get_transaction(db, s(input, "id")),
+        "txns.create" => transactions::create_transaction(db, input),
+        "txns.update" => transactions::update_transaction(db, s(input, "id"), &input["patch"]),
+        "txns.delete" => transactions::delete_transactions(db, &ids(input, "ids")),
+        "txns.bulkUpdate" => transactions::bulk_update(db, input),
+        "transfers.create" => transactions::create_transfer(db, input),
+        "transfers.update" => transactions::update_transfer(db, s(input, "transferId"), &input["patch"]),
+        "payees.suggest" => transactions::suggest_payees(
+            db,
+            s(input, "prefix"),
+            input.get("limit").and_then(Value::as_u64).unwrap_or(8) as usize,
+        )
+        .map(Value::Array),
+        "activity.list" => activity(app, input.get("limit").and_then(Value::as_i64).unwrap_or(50)),
+        "undo.apply" => audit::undo_group(db, s(input, "auditGroupId"))
+            .map(|r| json!({ "reverted": r.result, "auditGroupId": r.audit_group_id })),
+        "app.status" => (|| {
+            Ok(json!({
+                "demo": app.is_demo(),
+                "dataDir": app.paths.data_dir.to_string_lossy(),
+                "backupDir": backup_dir_for(app)?,
+                "defaultBackupDir": app.default_backup_dir(),
+                "counts": count_data(app.db())?,
+            }))
+        })(),
+        _ => return None,
+    };
+    Some(result)
+}
+
+pub fn not_ported() -> AppError {
+    AppError::new(ErrorCode::Internal, "This part of Fin is not available in this build yet.")
+}

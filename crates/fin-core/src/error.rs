@@ -21,11 +21,14 @@ pub struct AppError {
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub issues: Option<Value>,
+    /// Technical detail for logs and internal checks; never sent to the interface.
+    #[serde(skip)]
+    pub detail: Option<String>,
 }
 
 impl AppError {
     pub fn new(code: ErrorCode, message: impl Into<String>) -> Self {
-        Self { code, message: message.into(), issues: None }
+        Self { code, message: message.into(), issues: None, detail: None }
     }
 
     pub fn with_issues(mut self, issues: Value) -> Self {

@@ -4,15 +4,19 @@
  * file that `crates/fin-core/tests/domain_vectors.rs` replays against the Rust code.
  * Regenerate with FIN_UPDATE_VECTORS=1 npm test -- tests/parity.
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import * as d from '@domain/dates'
+import { merchantKey, merchantName, parseNarration, tidyName } from '@domain/import/narration'
 import { allocate, parseAmount, toMajorString } from '@domain/money'
 
 const FILE = join('tests', 'parity', 'vectors', 'domain.json')
 const NBSP = String.fromCharCode(0xa0)
 const BOM = String.fromCharCode(0xfeff)
+const CR = String.fromCharCode(13)
+const LF = String.fromCharCode(10)
+const TAB = String.fromCharCode(9)
 
 /** Small deterministic PRNG (mulberry32) so the vectors never change between runs. */
 function rng(seed: number) {
@@ -215,7 +219,58 @@ function build() {
     ),
   }
 
-  return { parse, major, alloc, rupees, dateOps, validity, today, names }
+  // Narrations: every cell of every bank fixture, plus the documented formats and awkward input.
+  const fixtureDir = join('tests', 'fixtures', 'csv')
+  const cells = readdirSync(fixtureDir).flatMap((f) =>
+    readFileSync(join(fixtureDir, f), 'utf8')
+      .replaceAll(CR, '')
+      .split(LF)
+      .flatMap((line) => line.replaceAll(TAB, ',').split(','))
+      .map((c) => c.replace(/^"|"$/g, '')),
+  )
+  const narrationInputs = [
+    ...new Set([
+      ...cells,
+      'UPI-SWIGGY-SWIGGY@ICICI-ICIC0DC0099-428812345678-ORDER',
+      'UPI/428811112222/Amazon Pay/amazon@apl/Payment',
+      'TO TRANSFER-UPI/DR/428877776666/ZOMATO/YESB/zomato@ybl/Pay',
+      'UPI/P2M/428855554444/BigBasket',
+      'UPI/BLINKIT/428866665555',
+      'NEFT CR-ACME TECHNOLOGIES PVT LTD-SALARY OCT',
+      'NEFT DR-HDFC0000001-KORAMANGALA HOMES-RENT',
+      'IMPS/P2A/428833332222/FRIEND/REPAY',
+      'POS 4123XXXXXXXX1234 AMAZON PAY IN',
+      'ECOM 4123XXXXXXXX1234 MYNTRA DESIGNS INDIA',
+      'pcd swiggy',
+      'ATW-512345XXXXXX1234-S1ANBG12-BANGALORE',
+      'NWD-4123',
+      'UPI CR-RAHUL SHARMA-428800001111',
+      'UPI DR/  DR  /  ',
+      "upi/o'reilly media/428800002222",
+      'Café Coffee Day',
+      'SWIGGY LIMITED.',
+      'swiggy pvt ltd',
+      'The Coffee Co.',
+      'XXXX1234',
+      '  ',
+      '',
+      'Salary',
+      'Rent – November',
+      'RTGS-UTIB0000123-MEGA CORP SERVICES-REF998877',
+      'BY TRANSFER-NEFT*HDFC0000123*N312*JOHN',
+      'Ünïcödé STORE',
+      'straße UPI/ÄRZTE/428800003333',
+    ]),
+  ]
+  const narration = narrationInputs.map((input) => ({
+    input,
+    parsed: parseNarration(input),
+    merchantName: merchantName(input),
+    merchantKey: merchantKey(input),
+    tidyName: tidyName(input),
+  }))
+
+  return { parse, major, alloc, rupees, dateOps, validity, today, names, narration }
 }
 
 test('domain parity vectors are up to date', () => {

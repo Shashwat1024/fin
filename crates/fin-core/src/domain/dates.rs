@@ -72,7 +72,7 @@ fn from_naive(d: NaiveDate) -> Result<String, DateError> {
 
 /// Today's calendar date in an IANA time zone (falls back to UTC for an unknown zone).
 pub fn today_in(time_zone: &str) -> String {
-    today_in_at(time_zone, Utc::now())
+    today_in_at(time_zone, crate::clock::now())
 }
 
 pub fn today_in_at(time_zone: &str, now: chrono::DateTime<Utc>) -> String {

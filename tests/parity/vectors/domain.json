@@ -22362,5 +22362,1536 @@
    "Friday",
    "Saturday"
   ]
- }
+ },
+ "narration": [
+  {
+   "input": "Tran Date",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Tran Date",
+   "merchantKey": "tran date",
+   "tidyName": "Tran Date"
+  },
+  {
+   "input": "CHQNO",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Chqno",
+   "merchantKey": "chqno",
+   "tidyName": "Chqno"
+  },
+  {
+   "input": "PARTICULARS",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Particulars",
+   "merchantKey": "particulars",
+   "tidyName": "Particulars"
+  },
+  {
+   "input": "DR",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Dr",
+   "merchantKey": "dr",
+   "tidyName": "Dr"
+  },
+  {
+   "input": "CR",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Cr",
+   "merchantKey": "cr",
+   "tidyName": "Cr"
+  },
+  {
+   "input": "BAL",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Bal",
+   "merchantKey": "bal",
+   "tidyName": "Bal"
+  },
+  {
+   "input": "SOL",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Sol",
+   "merchantKey": "sol",
+   "tidyName": "Sol"
+  },
+  {
+   "input": "04-10-2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "04-10-2026",
+   "merchantKey": "04 10 2026",
+   "tidyName": "04-10-2026"
+  },
+  {
+   "input": "",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": null,
+   "merchantKey": "",
+   "tidyName": ""
+  },
+  {
+   "input": "UPI/P2M/428855554444/BigBasket",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "BigBasket",
+    "reference": "428855554444"
+   },
+   "merchantName": "BigBasket",
+   "merchantKey": "upi p2m 428855554444 bigbasket",
+   "tidyName": "UPI/P2M/428855554444/BigBasket"
+  },
+  {
+   "input": "2",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "2",
+   "merchantKey": "2",
+   "tidyName": "2"
+  },
+  {
+   "input": "150.75",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "150.75",
+   "merchantKey": "150 75",
+   "tidyName": "150.75"
+  },
+  {
+   "input": "7",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "7",
+   "merchantKey": "7",
+   "tidyName": "7"
+  },
+  {
+   "input": "849.25",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "849.25",
+   "merchantKey": "849 25",
+   "tidyName": "849.25"
+  },
+  {
+   "input": "1234",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "1234",
+   "merchantKey": "1234",
+   "tidyName": "1234"
+  },
+  {
+   "input": "05-10-2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "05-10-2026",
+   "merchantKey": "05 10 2026",
+   "tidyName": "05-10-2026"
+  },
+  {
+   "input": "IMPS/P2A/428833332222/FRIEND/REPAY",
+   "parsed": {
+    "channel": "IMPS",
+    "counterparty": "Friend",
+    "reference": "428833332222"
+   },
+   "merchantName": "Friend",
+   "merchantKey": "imps p2a 428833332222 friend repay",
+   "tidyName": "Imps/P2a/428833332222/Friend/Repay"
+  },
+  {
+   "input": "500.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "500.00",
+   "merchantKey": "500 00",
+   "tidyName": "500.00"
+  },
+  {
+   "input": "8",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "8",
+   "merchantKey": "8",
+   "tidyName": "8"
+  },
+  {
+   "input": "349.25",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "349.25",
+   "merchantKey": "349 25",
+   "tidyName": "349.25"
+  },
+  {
+   "input": "Date",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Date",
+   "merchantKey": "date",
+   "tidyName": "Date"
+  },
+  {
+   "input": "Description",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Description",
+   "merchantKey": "description",
+   "tidyName": "Description"
+  },
+  {
+   "input": "Amount",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Amount",
+   "merchantKey": "amount",
+   "tidyName": "Amount"
+  },
+  {
+   "input": "02/10/2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "02/10/2026",
+   "merchantKey": "02 10 2026",
+   "tidyName": "02/10/2026"
+  },
+  {
+   "input": "MAKEMYTRIP INDIA",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Makemytrip India",
+   "merchantKey": "makemytrip",
+   "tidyName": "Makemytrip India"
+  },
+  {
+   "input": "12",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "12",
+   "merchantKey": "12",
+   "tidyName": "12"
+  },
+  {
+   "input": "499.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "499.00",
+   "merchantKey": "499 00",
+   "tidyName": "499.00"
+  },
+  {
+   "input": "05/10/2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "05/10/2026",
+   "merchantKey": "05 10 2026",
+   "tidyName": "05/10/2026"
+  },
+  {
+   "input": "PAYMENT RECEIVED - THANK YOU",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Payment Received - Thank You",
+   "merchantKey": "payment received thank you",
+   "tidyName": "Payment Received - Thank You"
+  },
+  {
+   "input": "-5",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "-5",
+   "merchantKey": "5",
+   "tidyName": "-5"
+  },
+  {
+   "input": "000.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "000.00",
+   "merchantKey": "000 00",
+   "tidyName": "000.00"
+  },
+  {
+   "input": "HDFC BANK Ltd.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "HDFC BANK Ltd",
+   "merchantKey": "hdfc bank",
+   "tidyName": "HDFC BANK Ltd"
+  },
+  {
+   "input": "Account Statement (synthetic test data)",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Account Statement (synthetic test data)",
+   "merchantKey": "account statement synthetic test data",
+   "tidyName": "Account Statement (synthetic test data)"
+  },
+  {
+   "input": "Statement From : 01/10/26 To : 31/10/26",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Statement From : 01/10/26 To : 31/10/26",
+   "merchantKey": "statement from 01 10 26 to 31 10 26",
+   "tidyName": "Statement From : 01/10/26 To : 31/10/26"
+  },
+  {
+   "input": "Narration",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Narration",
+   "merchantKey": "narration",
+   "tidyName": "Narration"
+  },
+  {
+   "input": "Chq./Ref.No.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Chq./Ref.No",
+   "merchantKey": "chq ref no",
+   "tidyName": "Chq./Ref.No"
+  },
+  {
+   "input": "Value Dt",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Value Dt",
+   "merchantKey": "value dt",
+   "tidyName": "Value Dt"
+  },
+  {
+   "input": "Withdrawal Amt.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Withdrawal Amt",
+   "merchantKey": "withdrawal amt",
+   "tidyName": "Withdrawal Amt"
+  },
+  {
+   "input": "Deposit Amt.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Deposit Amt",
+   "merchantKey": "deposit amt",
+   "tidyName": "Deposit Amt"
+  },
+  {
+   "input": "Closing Balance",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Closing Balance",
+   "merchantKey": "closing balance",
+   "tidyName": "Closing Balance"
+  },
+  {
+   "input": "01/10/26",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "01/10/26",
+   "merchantKey": "01 10 26",
+   "tidyName": "01/10/26"
+  },
+  {
+   "input": "UPI-SWIGGY-SWIGGY@ICICI-ICIC0DC0099-428812345678-ORDER",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Swiggy",
+    "reference": "428812345678"
+   },
+   "merchantName": "Swiggy",
+   "merchantKey": "upi swiggy swiggy icici icic0dc0099 428812345678 order",
+   "tidyName": "Upi-Swiggy-Swiggy@Icici-Icic0dc0099-428812345678-Order"
+  },
+  {
+   "input": "0000428812345678",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "0000428812345678",
+   "merchantKey": "0000428812345678",
+   "tidyName": "0000428812345678"
+  },
+  {
+   "input": "450.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "450.00",
+   "merchantKey": "450 00",
+   "tidyName": "450.00"
+  },
+  {
+   "input": "49",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "49",
+   "merchantKey": "49",
+   "tidyName": "49"
+  },
+  {
+   "input": "550.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "550.00",
+   "merchantKey": "550 00",
+   "tidyName": "550.00"
+  },
+  {
+   "input": "NEFT CR-ACME TECHNOLOGIES PVT LTD-SALARY OCT",
+   "parsed": {
+    "channel": "NEFT",
+    "counterparty": "Acme Technologies Pvt Ltd",
+    "reference": null
+   },
+   "merchantName": "Acme Technologies Pvt Ltd",
+   "merchantKey": "neft cr acme salary oct",
+   "tidyName": "Neft Cr-Acme Technologies Pvt Ltd-Salary Oct"
+  },
+  {
+   "input": "NEFTN0000001",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Neftn0000001",
+   "merchantKey": "neftn0000001",
+   "tidyName": "Neftn0000001"
+  },
+  {
+   "input": "85",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "85",
+   "merchantKey": "85",
+   "tidyName": "85"
+  },
+  {
+   "input": "1",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "1",
+   "merchantKey": "1",
+   "tidyName": "1"
+  },
+  {
+   "input": "34",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "34",
+   "merchantKey": "34",
+   "tidyName": "34"
+  },
+  {
+   "input": "03/10/26",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "03/10/26",
+   "merchantKey": "03 10 26",
+   "tidyName": "03/10/26"
+  },
+  {
+   "input": "UPI-CHAI POINT-CHAIPOINT@YBL-YESB0YBLUPI-428899990001-UPI",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Chai Point",
+    "reference": "428899990001"
+   },
+   "merchantName": "Chai Point",
+   "merchantKey": "upi chai point chaipoint ybl yesb0yblupi 428899990001 upi",
+   "tidyName": "Upi-Chai Point-Chaipoint@Ybl-Yesb0yblupi-428899990001-Upi"
+  },
+  {
+   "input": "0000428899990001",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "0000428899990001",
+   "merchantKey": "0000428899990001",
+   "tidyName": "0000428899990001"
+  },
+  {
+   "input": "40.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "40.00",
+   "merchantKey": "40 00",
+   "tidyName": "40.00"
+  },
+  {
+   "input": "510.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "510.00",
+   "merchantKey": "510 00",
+   "tidyName": "510.00"
+  },
+  {
+   "input": "470.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "470.00",
+   "merchantKey": "470 00",
+   "tidyName": "470.00"
+  },
+  {
+   "input": "32/10/26",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "32/10/26",
+   "merchantKey": "32 10 26",
+   "tidyName": "32/10/26"
+  },
+  {
+   "input": "MALFORMED DATE ROW",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Malformed Date Row",
+   "merchantKey": "malformed date row",
+   "tidyName": "Malformed Date Row"
+  },
+  {
+   "input": "10.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "10.00",
+   "merchantKey": "10 00",
+   "tidyName": "10.00"
+  },
+  {
+   "input": "460.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "460.00",
+   "merchantKey": "460 00",
+   "tidyName": "460.00"
+  },
+  {
+   "input": "05/10/26",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "05/10/26",
+   "merchantKey": "05 10 26",
+   "tidyName": "05/10/26"
+  },
+  {
+   "input": "NEFT DR-HDFC0000001-KORAMANGALA HOMES-RENT OCT",
+   "parsed": {
+    "channel": "NEFT",
+    "counterparty": "Koramangala Homes",
+    "reference": null
+   },
+   "merchantName": "Koramangala Homes",
+   "merchantKey": "neft dr hdfc0000001 koramangala homes rent oct",
+   "tidyName": "Neft Dr-Hdfc0000001-Koramangala Homes-Rent Oct"
+  },
+  {
+   "input": "NEFTN0000002",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Neftn0000002",
+   "merchantKey": "neftn0000002",
+   "tidyName": "Neftn0000002"
+  },
+  {
+   "input": "18",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "18",
+   "merchantKey": "18",
+   "tidyName": "18"
+  },
+  {
+   "input": "16",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "16",
+   "merchantKey": "16",
+   "tidyName": "16"
+  },
+  {
+   "input": "**Statement end (synthetic)**",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "**Statement end (synthetic)**",
+   "merchantKey": "statement end synthetic",
+   "tidyName": "**Statement end (synthetic)**"
+  },
+  {
+   "input": "S No.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "S No",
+   "merchantKey": "s no",
+   "tidyName": "S No"
+  },
+  {
+   "input": "Value Date",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Value Date",
+   "merchantKey": "value date",
+   "tidyName": "Value Date"
+  },
+  {
+   "input": "Transaction Date",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Transaction Date",
+   "merchantKey": "transaction date",
+   "tidyName": "Transaction Date"
+  },
+  {
+   "input": "Cheque Number",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Cheque Number",
+   "merchantKey": "cheque number",
+   "tidyName": "Cheque Number"
+  },
+  {
+   "input": "Transaction Remarks",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Transaction Remarks",
+   "merchantKey": "transaction remarks",
+   "tidyName": "Transaction Remarks"
+  },
+  {
+   "input": "Withdrawal Amount (INR )",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Withdrawal Amount (INR )",
+   "merchantKey": "withdrawal amount inr",
+   "tidyName": "Withdrawal Amount (INR )"
+  },
+  {
+   "input": "Deposit Amount (INR )",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Deposit Amount (INR )",
+   "merchantKey": "deposit amount inr",
+   "tidyName": "Deposit Amount (INR )"
+  },
+  {
+   "input": "Balance (INR )",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Balance (INR )",
+   "merchantKey": "balance inr",
+   "tidyName": "Balance (INR )"
+  },
+  {
+   "input": "08/10/2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "08/10/2026",
+   "merchantKey": "08 10 2026",
+   "tidyName": "08/10/2026"
+  },
+  {
+   "input": "-",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": null,
+   "merchantKey": "",
+   "tidyName": "-"
+  },
+  {
+   "input": "UPI/428811112222/Amazon Pay/amazon@apl/Payment",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Amazon Pay",
+    "reference": "428811112222"
+   },
+   "merchantName": "Amazon Pay",
+   "merchantKey": "upi 428811112222 amazon pay amazon apl payment",
+   "tidyName": "UPI/428811112222/Amazon Pay/amazon@apl/Payment"
+  },
+  {
+   "input": "299.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "299.00",
+   "merchantKey": "299 00",
+   "tidyName": "299.00"
+  },
+  {
+   "input": "0.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "0.00",
+   "merchantKey": "0 00",
+   "tidyName": "0.00"
+  },
+  {
+   "input": "48",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "48",
+   "merchantKey": "48",
+   "tidyName": "48"
+  },
+  {
+   "input": "701.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "701.00",
+   "merchantKey": "701 00",
+   "tidyName": "701.00"
+  },
+  {
+   "input": "06/10/2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "06/10/2026",
+   "merchantKey": "06 10 2026",
+   "tidyName": "06/10/2026"
+  },
+  {
+   "input": "BIL/ONL/000123/AIRTEL/MOBILE",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Bil/Onl/000123/Airtel/Mobile",
+   "merchantKey": "bil onl 000123 airtel mobile",
+   "tidyName": "Bil/Onl/000123/Airtel/Mobile"
+  },
+  {
+   "input": "599.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "599.00",
+   "merchantKey": "599 00",
+   "tidyName": "599.00"
+  },
+  {
+   "input": "50",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "50",
+   "merchantKey": "50",
+   "tidyName": "50"
+  },
+  {
+   "input": "3",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "3",
+   "merchantKey": "3",
+   "tidyName": "3"
+  },
+  {
+   "input": "INF/INFT/0001/INTEREST CREDIT",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Inf/Inft/0001/Interest Credit",
+   "merchantKey": "inf inft 0001 interest credit",
+   "tidyName": "Inf/Inft/0001/Interest Credit"
+  },
+  {
+   "input": "Sl. No.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Sl. No",
+   "merchantKey": "sl no",
+   "tidyName": "Sl. No"
+  },
+  {
+   "input": "Chq / Ref number",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Chq / Ref number",
+   "merchantKey": "chq ref number",
+   "tidyName": "Chq / Ref number"
+  },
+  {
+   "input": "Dr / Cr",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Dr / Cr",
+   "merchantKey": "dr cr",
+   "tidyName": "Dr / Cr"
+  },
+  {
+   "input": "Balance",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Balance",
+   "merchantKey": "balance",
+   "tidyName": "Balance"
+  },
+  {
+   "input": "07-10-2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "07-10-2026",
+   "merchantKey": "07 10 2026",
+   "tidyName": "07-10-2026"
+  },
+  {
+   "input": "UPI/BLINKIT/428866665555",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Blinkit",
+    "reference": "428866665555"
+   },
+   "merchantName": "Blinkit",
+   "merchantKey": "upi blinkit 428866665555",
+   "tidyName": "Upi/Blinkit/428866665555"
+  },
+  {
+   "input": "UPI-428866665555",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": null,
+    "reference": "428866665555"
+   },
+   "merchantName": "Upi-428866665555",
+   "merchantKey": "upi 428866665555",
+   "tidyName": "Upi-428866665555"
+  },
+  {
+   "input": "050.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "050.00",
+   "merchantKey": "050 00",
+   "tidyName": "050.00"
+  },
+  {
+   "input": "20",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "20",
+   "merchantKey": "20",
+   "tidyName": "20"
+  },
+  {
+   "input": "950.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "950.00",
+   "merchantKey": "950 00",
+   "tidyName": "950.00"
+  },
+  {
+   "input": "09-10-2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "09-10-2026",
+   "merchantKey": "09 10 2026",
+   "tidyName": "09-10-2026"
+  },
+  {
+   "input": "NEFT CASHBACK",
+   "parsed": {
+    "channel": "NEFT",
+    "counterparty": "Cashback",
+    "reference": null
+   },
+   "merchantName": "Cashback",
+   "merchantKey": "neft cashback",
+   "tidyName": "Neft Cashback"
+  },
+  {
+   "input": "NEFT-0009",
+   "parsed": {
+    "channel": "NEFT",
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Neft-0009",
+   "merchantKey": "neft 0009",
+   "tidyName": "Neft-0009"
+  },
+  {
+   "input": "25.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "25.00",
+   "merchantKey": "25 00",
+   "tidyName": "25.00"
+  },
+  {
+   "input": "975.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "975.00",
+   "merchantKey": "975 00",
+   "tidyName": "975.00"
+  },
+  {
+   "input": "Txn Date",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Txn Date",
+   "merchantKey": "txn date",
+   "tidyName": "Txn Date"
+  },
+  {
+   "input": "Ref No./Cheque No.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Ref No./Cheque No",
+   "merchantKey": "ref no cheque no",
+   "tidyName": "Ref No./Cheque No"
+  },
+  {
+   "input": "Debit",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Debit",
+   "merchantKey": "debit",
+   "tidyName": "Debit"
+  },
+  {
+   "input": "Credit",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Credit",
+   "merchantKey": "credit",
+   "tidyName": "Credit"
+  },
+  {
+   "input": "1 Oct 2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "1 Oct 2026",
+   "merchantKey": "1 oct 2026",
+   "tidyName": "1 Oct 2026"
+  },
+  {
+   "input": "TO TRANSFER-UPI/DR/428877776666/ZOMATO/ybl",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Zomato",
+    "reference": "428877776666"
+   },
+   "merchantName": "Zomato",
+   "merchantKey": "to transfer upi dr 428877776666 zomato ybl",
+   "tidyName": "TO TRANSFER-UPI/DR/428877776666/ZOMATO/ybl"
+  },
+  {
+   "input": "TRANSFER TO 4897",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Transfer To 4897",
+   "merchantKey": "transfer to 4897",
+   "tidyName": "Transfer To 4897"
+  },
+  {
+   "input": "320.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "320.00",
+   "merchantKey": "320 00",
+   "tidyName": "320.00"
+  },
+  {
+   "input": "9",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "9",
+   "merchantKey": "9",
+   "tidyName": "9"
+  },
+  {
+   "input": "680.00",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "680.00",
+   "merchantKey": "680 00",
+   "tidyName": "680.00"
+  },
+  {
+   "input": "2 Oct 2026",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "2 Oct 2026",
+   "merchantKey": "2 oct 2026",
+   "tidyName": "2 Oct 2026"
+  },
+  {
+   "input": "BY TRANSFER-NEFT-REFUND",
+   "parsed": {
+    "channel": "NEFT",
+    "counterparty": "Refund",
+    "reference": null
+   },
+   "merchantName": "Refund",
+   "merchantKey": "by transfer neft refund",
+   "tidyName": "By Transfer-Neft-Refund"
+  },
+  {
+   "input": "TRANSFER FROM 1234",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Transfer From 1234",
+   "merchantKey": "transfer from 1234",
+   "tidyName": "Transfer From 1234"
+  },
+  {
+   "input": "10",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "10",
+   "merchantKey": "10",
+   "tidyName": "10"
+  },
+  {
+   "input": "TO TRANSFER-UPI/DR/428877776666/ZOMATO/YESB/zomato@ybl/Pay",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Zomato",
+    "reference": "428877776666"
+   },
+   "merchantName": "Zomato",
+   "merchantKey": "to transfer upi dr 428877776666 zomato yesb zomato ybl pay",
+   "tidyName": "TO TRANSFER-UPI/DR/428877776666/ZOMATO/YESB/zomato@ybl/Pay"
+  },
+  {
+   "input": "NEFT DR-HDFC0000001-KORAMANGALA HOMES-RENT",
+   "parsed": {
+    "channel": "NEFT",
+    "counterparty": "Koramangala Homes",
+    "reference": null
+   },
+   "merchantName": "Koramangala Homes",
+   "merchantKey": "neft dr hdfc0000001 koramangala homes rent",
+   "tidyName": "Neft Dr-Hdfc0000001-Koramangala Homes-Rent"
+  },
+  {
+   "input": "POS 4123XXXXXXXX1234 AMAZON PAY IN",
+   "parsed": {
+    "channel": "POS",
+    "counterparty": "Amazon Pay",
+    "reference": null
+   },
+   "merchantName": "Amazon Pay",
+   "merchantKey": "pos 4123xxxxxxxx1234 amazon pay",
+   "tidyName": "Pos 4123xxxxxxxx1234 Amazon Pay In"
+  },
+  {
+   "input": "ECOM 4123XXXXXXXX1234 MYNTRA DESIGNS INDIA",
+   "parsed": {
+    "channel": "POS",
+    "counterparty": "Myntra Designs",
+    "reference": null
+   },
+   "merchantName": "Myntra Designs",
+   "merchantKey": "ecom 4123xxxxxxxx1234 myntra designs",
+   "tidyName": "Ecom 4123xxxxxxxx1234 Myntra Designs India"
+  },
+  {
+   "input": "pcd swiggy",
+   "parsed": {
+    "channel": "POS",
+    "counterparty": "swiggy",
+    "reference": null
+   },
+   "merchantName": "swiggy",
+   "merchantKey": "pcd swiggy",
+   "tidyName": "pcd swiggy"
+  },
+  {
+   "input": "ATW-512345XXXXXX1234-S1ANBG12-BANGALORE",
+   "parsed": {
+    "channel": "ATM",
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Atw-512345xxxxxx1234-S1anbg12-Bangalore",
+   "merchantKey": "atw 512345xxxxxx1234 s1anbg12 bangalore",
+   "tidyName": "Atw-512345xxxxxx1234-S1anbg12-Bangalore"
+  },
+  {
+   "input": "NWD-4123",
+   "parsed": {
+    "channel": "ATM",
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Nwd-4123",
+   "merchantKey": "nwd 4123",
+   "tidyName": "Nwd-4123"
+  },
+  {
+   "input": "UPI CR-RAHUL SHARMA-428800001111",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Rahul Sharma",
+    "reference": "428800001111"
+   },
+   "merchantName": "Rahul Sharma",
+   "merchantKey": "upi cr rahul sharma 428800001111",
+   "tidyName": "Upi Cr-Rahul Sharma-428800001111"
+  },
+  {
+   "input": "UPI DR/  DR  /  ",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Upi Dr/ Dr /",
+   "merchantKey": "upi dr dr",
+   "tidyName": "Upi Dr/ Dr /"
+  },
+  {
+   "input": "upi/o'reilly media/428800002222",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "o'reilly media",
+    "reference": "428800002222"
+   },
+   "merchantName": "o'reilly media",
+   "merchantKey": "upi o reilly media 428800002222",
+   "tidyName": "upi/o'reilly media/428800002222"
+  },
+  {
+   "input": "Café Coffee Day",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Café Coffee Day",
+   "merchantKey": "caf coffee day",
+   "tidyName": "Café Coffee Day"
+  },
+  {
+   "input": "SWIGGY LIMITED.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Swiggy Limited",
+   "merchantKey": "swiggy",
+   "tidyName": "Swiggy Limited"
+  },
+  {
+   "input": "swiggy pvt ltd",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "swiggy pvt ltd",
+   "merchantKey": "swiggy",
+   "tidyName": "swiggy pvt ltd"
+  },
+  {
+   "input": "The Coffee Co.",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "The Coffee Co",
+   "merchantKey": "the coffee",
+   "tidyName": "The Coffee Co"
+  },
+  {
+   "input": "XXXX1234",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Xxxx1234",
+   "merchantKey": "xxxx1234",
+   "tidyName": "Xxxx1234"
+  },
+  {
+   "input": "  ",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": null,
+   "merchantKey": "",
+   "tidyName": ""
+  },
+  {
+   "input": "Salary",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Salary",
+   "merchantKey": "salary",
+   "tidyName": "Salary"
+  },
+  {
+   "input": "Rent – November",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Rent – November",
+   "merchantKey": "rent november",
+   "tidyName": "Rent – November"
+  },
+  {
+   "input": "RTGS-UTIB0000123-MEGA CORP SERVICES-REF998877",
+   "parsed": {
+    "channel": "RTGS",
+    "counterparty": "Mega Corp Services",
+    "reference": "REF998877"
+   },
+   "merchantName": "Mega Corp Services",
+   "merchantKey": "rtgs utib0000123 mega ref998877",
+   "tidyName": "Rtgs-Utib0000123-Mega Corp Services-Ref998877"
+  },
+  {
+   "input": "BY TRANSFER-NEFT*HDFC0000123*N312*JOHN",
+   "parsed": {
+    "channel": "NEFT",
+    "counterparty": "Neft*Hdfc0000123*N312*John",
+    "reference": null
+   },
+   "merchantName": "Neft*Hdfc0000123*N312*John",
+   "merchantKey": "by transfer neft hdfc0000123 n312 john",
+   "tidyName": "By Transfer-Neft*Hdfc0000123*N312*John"
+  },
+  {
+   "input": "Ünïcödé STORE",
+   "parsed": {
+    "channel": null,
+    "counterparty": null,
+    "reference": null
+   },
+   "merchantName": "Ünïcödé STORE",
+   "merchantKey": "n c d store",
+   "tidyName": "Ünïcödé STORE"
+  },
+  {
+   "input": "straße UPI/ÄRZTE/428800003333",
+   "parsed": {
+    "channel": "UPI",
+    "counterparty": "Pi",
+    "reference": "428800003333"
+   },
+   "merchantName": "Pi",
+   "merchantKey": "stra e upi rzte 428800003333",
+   "tidyName": "straße UPI/ÄRZTE/428800003333"
+  }
+ ]
 }
