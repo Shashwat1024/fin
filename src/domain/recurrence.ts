@@ -47,7 +47,8 @@ function firstIndexFrom(s: Schedule, date: CalendarDate): number {
 
 /** Occurrence dates within [from, to], in order. */
 export function occurrencesBetween(s: Schedule, from: CalendarDate, to: CalendarDate): CalendarDate[] {
-  if (s.interval < 1 || !Number.isInteger(s.interval)) throw new RangeError('interval must be a positive integer')
+  if (s.interval < 1 || !Number.isInteger(s.interval))
+    throw new RangeError('interval must be a positive integer')
   const out: CalendarDate[] = []
   const last = s.endDate && compareDates(s.endDate, to) < 0 ? s.endDate : to
   for (let n = firstIndexFrom(s, from); ; n++) {
@@ -62,14 +63,21 @@ export function occurrencesBetween(s: Schedule, from: CalendarDate, to: Calendar
 /** The first occurrence on or after `date`, or null when the schedule has ended. */
 export function nextOccurrence(s: Schedule, date: CalendarDate): CalendarDate | null {
   // Yearly schedules can be up to interval years apart.
-  const horizon = s.frequency === 'yearly' ? 366 * s.interval + 1 : s.frequency === 'monthly' ? 31 * s.interval + 1 : 7 * s.interval
+  const horizon =
+    s.frequency === 'yearly'
+      ? 366 * s.interval + 1
+      : s.frequency === 'monthly'
+        ? 31 * s.interval + 1
+        : 7 * s.interval
   return occurrencesBetween(s, date, addDays(date, horizon))[0] ?? null
 }
 
 export function describeSchedule(s: Schedule): string {
   const { day } = parts(s.anchorDate)
   const every = (unit: string) => (s.interval === 1 ? `Every ${unit}` : `Every ${s.interval} ${unit}s`)
-  const weekday = new Intl.DateTimeFormat('en-IN', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${s.anchorDate}T00:00:00Z`))
+  const weekday = new Intl.DateTimeFormat('en-IN', { weekday: 'long', timeZone: 'UTC' }).format(
+    new Date(`${s.anchorDate}T00:00:00Z`),
+  )
   const dayText = day >= 29 ? `${ordinal(day)} (or the last day)` : ordinal(day)
   switch (s.frequency) {
     case 'weekly':
@@ -77,7 +85,9 @@ export function describeSchedule(s: Schedule): string {
     case 'monthly':
       return `${every('month')} on the ${dayText}`
     case 'yearly': {
-      const month = new Intl.DateTimeFormat('en-IN', { month: 'long', timeZone: 'UTC' }).format(new Date(`${s.anchorDate}T00:00:00Z`))
+      const month = new Intl.DateTimeFormat('en-IN', { month: 'long', timeZone: 'UTC' }).format(
+        new Date(`${s.anchorDate}T00:00:00Z`),
+      )
       return `${every('year')} on ${day} ${month}`
     }
   }
@@ -122,7 +132,11 @@ export function bestMatch(
     const days = Math.abs(diffDays(c.postedDate, dueDate))
     if (days > MATCH_WINDOW_DAYS || !withinTolerance(expectedMinor, c.amountMinor, toleranceBp)) continue
     const diff = Math.abs(c.amountMinor - expectedMinor)
-    if (!best || days < best.days || (days === best.days && (diff < best.diff || (diff === best.diff && c.id < best.c.id)))) {
+    if (
+      !best ||
+      days < best.days ||
+      (days === best.days && (diff < best.diff || (diff === best.diff && c.id < best.c.id)))
+    ) {
       best = { c, days, diff }
     }
   }
@@ -132,7 +146,12 @@ export function bestMatch(
 export type OccurrenceState = 'expected' | 'paid' | 'overdue' | 'skipped'
 
 /** expected → paid (matched) · expected → overdue (due date passed) · any → skipped (user). */
-export function occurrenceState(dueDate: CalendarDate, today: CalendarDate, matched: boolean, skipped: boolean): OccurrenceState {
+export function occurrenceState(
+  dueDate: CalendarDate,
+  today: CalendarDate,
+  matched: boolean,
+  skipped: boolean,
+): OccurrenceState {
   if (skipped) return 'skipped'
   if (matched) return 'paid'
   return compareDates(dueDate, today) < 0 ? 'overdue' : 'expected'
@@ -192,7 +211,10 @@ function middle(values: readonly number[]): number {
  * rhythm and a steady amount (within ±25%), that are still going (the last one is no more than one
  * and a half periods ago). Suggestions only: nothing is created until the user confirms (FR-020).
  */
-export function detectRecurring(payments: readonly PastPayment[], today: CalendarDate): RecurringSuggestion[] {
+export function detectRecurring(
+  payments: readonly PastPayment[],
+  today: CalendarDate,
+): RecurringSuggestion[] {
   const from = addDays(today, -DETECT_LOOKBACK_DAYS)
   const groups = new Map<string, PastPayment[]>()
   for (const p of payments) {
@@ -230,7 +252,9 @@ export function detectRecurring(payments: readonly PastPayment[], today: Calenda
       lastDate: last.date,
       nextDate,
       toleranceBp,
-      payments: [...sorted].reverse().map((p) => ({ txnId: p.txnId, date: p.date, amountMinor: p.amountMinor })),
+      payments: [...sorted]
+        .reverse()
+        .map((p) => ({ txnId: p.txnId, date: p.date, amountMinor: p.amountMinor })),
     })
   }
   return out.sort((a, b) => compareDates(a.nextDate, b.nextDate) || a.name.localeCompare(b.name))

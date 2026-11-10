@@ -37,7 +37,8 @@ export function RecurringSuggestions({ onSetUp }: { onSetUp: (draft: RecurringDr
           <SparklesIcon className="size-4 text-muted-foreground" aria-hidden /> Looks recurring
         </CardTitle>
         <CardDescription>
-          These payments repeat at a steady rhythm and amount. Set them up to see them coming and spot one that is missed.
+          These payments repeat at a steady rhythm and amount. Set them up to see them coming and spot one
+          that is missed.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -47,13 +48,23 @@ export function RecurringSuggestions({ onSetUp }: { onSetUp: (draft: RecurringDr
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{s.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {s.frequency === 'monthly' ? 'Every month' : 'Every week'} · {s.accountName} · {plural(s.payments.length, 'payment')}, latest{' '}
-                  {formatDate(s.lastDate)} · next around {formatDate(s.nextDate)}
+                  {s.frequency === 'monthly' ? 'Every month' : 'Every week'} · {s.accountName} ·{' '}
+                  {plural(s.payments.length, 'payment')}, latest {formatDate(s.lastDate)} · next around{' '}
+                  {formatDate(s.nextDate)}
                 </p>
               </div>
-              <MoneyText minor={s.direction === 'in' ? s.amountMinor : -s.amountMinor} tone="auto" showPlus className="font-medium" />
+              <MoneyText
+                minor={s.direction === 'in' ? s.amountMinor : -s.amountMinor}
+                tone="auto"
+                showPlus
+                className="font-medium"
+              />
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => onSetUp(draftFrom(s))} aria-label={`Set up ${s.name} as recurring`}>
+                <Button
+                  size="sm"
+                  onClick={() => onSetUp(draftFrom(s))}
+                  aria-label={`Set up ${s.name} as recurring`}
+                >
                   Set up…
                 </Button>
                 <Button

@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FolderPlusIcon, ListChecksIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, Trash2Icon, WandSparklesIcon } from 'lucide-react'
+import {
+  FolderPlusIcon,
+  ListChecksIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  PlusIcon,
+  Trash2Icon,
+  WandSparklesIcon,
+} from 'lucide-react'
 import { describeCondition } from '@domain/rules'
 import { formatMoney, money } from '@domain/money'
 import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
@@ -8,12 +16,23 @@ import { EmptyState, ErrorState, LoadingState, Page, PageHeader } from '@rendere
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@renderer/components/ui/dropdown-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@renderer/components/ui/dropdown-menu'
 import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useAccounts, useCategories, useFinMutation, useRules } from '@renderer/lib/queries'
 import type { CategoryDto, RuleDto } from '@shared/types'
-import { CategoryDialog, DeleteCategoryDialog, GROUP_LABELS, type CategoryEditTarget } from './CategoryDialogs'
+import {
+  CategoryDialog,
+  DeleteCategoryDialog,
+  GROUP_LABELS,
+  type CategoryEditTarget,
+} from './CategoryDialogs'
 import { ApplyRuleDialog, RuleDialog, type RuleEditTarget } from './RuleDialogs'
 
 type Tab = 'categories' | 'rules'
@@ -23,8 +42,14 @@ export function CategoriesPage() {
   const tab: Tab = params.get('tab') === 'rules' ? 'rules' : 'categories'
   return (
     <Page>
-      <PageHeader title="Categories" description="Organise spending into two levels, and set rules that suggest categories." />
-      <Tabs value={tab} onValueChange={(t) => setParams(t === 'categories' ? {} : { tab: t }, { replace: true })}>
+      <PageHeader
+        title="Categories"
+        description="Organise spending into two levels, and set rules that suggest categories."
+      />
+      <Tabs
+        value={tab}
+        onValueChange={(t) => setParams(t === 'categories' ? {} : { tab: t }, { replace: true })}
+      >
         <TabsList className="mb-4">
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
@@ -40,7 +65,17 @@ export function CategoriesPage() {
   )
 }
 
-function CategoryActions({ c, onEdit, onAddChild, onDelete }: { c: CategoryDto; onEdit: () => void; onAddChild?: () => void; onDelete: () => void }) {
+function CategoryActions({
+  c,
+  onEdit,
+  onAddChild,
+  onDelete,
+}: {
+  c: CategoryDto
+  onEdit: () => void
+  onAddChild?: () => void
+  onDelete: () => void
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -71,7 +106,8 @@ function CategoryManager() {
   const [editing, setEditing] = useState<CategoryEditTarget | null>(null)
   const [deleting, setDeleting] = useState<CategoryDto | null>(null)
   if (categories.isPending) return <LoadingState />
-  if (categories.isError) return <ErrorState error={categories.error} onRetry={() => void categories.refetch()} />
+  if (categories.isError)
+    return <ErrorState error={categories.error} onRetry={() => void categories.refetch()} />
   const all = categories.data.filter((c) => !c.archived)
   const parents = all.filter((c) => !c.parentId)
 
@@ -116,7 +152,11 @@ function CategoryManager() {
                             {GROUP_LABELS[c.group]}
                           </Badge>
                         )}
-                        <CategoryActions c={c} onEdit={() => setEditing({ category: c })} onDelete={() => setDeleting(c)} />
+                        <CategoryActions
+                          c={c}
+                          onEdit={() => setEditing({ category: c })}
+                          onDelete={() => setDeleting(c)}
+                        />
                       </li>
                     ))}
                   </ul>
@@ -138,8 +178,13 @@ function RulesList() {
   const [editing, setEditing] = useState<RuleEditTarget | null>(null)
   const [applying, setApplying] = useState<RuleDto | null>(null)
   const [deleting, setDeleting] = useState<RuleDto | null>(null)
-  const update = useFinMutation('rules.update', { success: (r) => `${r.rule.name} turned ${r.rule.enabled ? 'on' : 'off'}` })
-  const remove = useFinMutation('rules.delete', { success: 'Rule deleted', onSuccess: () => setDeleting(null) })
+  const update = useFinMutation('rules.update', {
+    success: (r) => `${r.rule.name} turned ${r.rule.enabled ? 'on' : 'off'}`,
+  })
+  const remove = useFinMutation('rules.delete', {
+    success: 'Rule deleted',
+    onSuccess: () => setDeleting(null),
+  })
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? 'an account'
   const rupees = (m: number) => formatMoney(money(m))
 
@@ -170,14 +215,26 @@ function RulesList() {
                   <Switch
                     aria-label={`${r.name} is on`}
                     checked={r.enabled}
-                    onCheckedChange={(enabled) => update.mutate({ id: r.id, input: { name: r.name, priority: r.priority, conditions: r.conditions, categoryId: r.categoryId, enabled } })}
+                    onCheckedChange={(enabled) =>
+                      update.mutate({
+                        id: r.id,
+                        input: {
+                          name: r.name,
+                          priority: r.priority,
+                          conditions: r.conditions,
+                          categoryId: r.categoryId,
+                          enabled,
+                        },
+                      })
+                    }
                   />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">
                       {r.name} <span className="font-normal text-muted-foreground">→ {r.categoryPath}</span>
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {r.conditions.map((c) => describeCondition(c, accountName, rupees)).join(' and ')} · priority {r.priority}
+                      {r.conditions.map((c) => describeCondition(c, accountName, rupees)).join(' and ')} ·
+                      priority {r.priority}
                     </p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => setApplying(r)}>
@@ -205,7 +262,11 @@ function RulesList() {
           </Card>
         </>
       )}
-      <RuleDialog target={editing} onOpenChange={(o) => !o && setEditing(null)} onSaved={(r, isNew) => isNew && setApplying(r)} />
+      <RuleDialog
+        target={editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        onSaved={(r, isNew) => isNew && setApplying(r)}
+      />
       <ApplyRuleDialog rule={applying} onOpenChange={(o) => !o && setApplying(null)} />
       <ConfirmDialog
         open={deleting !== null}

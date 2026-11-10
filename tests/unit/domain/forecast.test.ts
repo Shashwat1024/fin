@@ -66,7 +66,10 @@ describe('weekday baseline', () => {
 
   it('only counts days since the history started, and nothing without history', () => {
     expect(weekdayBaseline(TODAY, steady(5_000, 10), addDays(TODAY, -10)).days).toBe(10)
-    expect(weekdayBaseline(TODAY, steady(5_000, 10), null)).toEqual({ byWeekday: [0, 0, 0, 0, 0, 0, 0], days: 0 })
+    expect(weekdayBaseline(TODAY, steady(5_000, 10), null)).toEqual({
+      byWeekday: [0, 0, 0, 0, 0, 0, 0],
+      days: 0,
+    })
   })
 })
 
@@ -76,11 +79,20 @@ describe('projection', () => {
       base({
         days: 30,
         dailySpending: steady(50_000, 90), // ₹500 a day
-        events: [ev('Salary', '2026-12-01', 10_000_000), ev('Rent', '2026-11-12', -2_500_000), ev('Too late', '2026-12-20', -1)],
+        events: [
+          ev('Salary', '2026-12-01', 10_000_000),
+          ev('Rent', '2026-11-12', -2_500_000),
+          ev('Too late', '2026-12-20', -1),
+        ],
       }),
     )
     expect(f.points).toHaveLength(31)
-    expect(f.points[0]).toEqual({ date: TODAY, balanceMinor: 10_000_000, recurringMinor: 0, baselineMinor: 0 })
+    expect(f.points[0]).toEqual({
+      date: TODAY,
+      balanceMinor: 10_000_000,
+      recurringMinor: 0,
+      baselineMinor: 0,
+    })
     // 11 Nov: two days of ₹500; 12 Nov: a third day and the rent.
     expect(f.points[2]!.balanceMinor).toBe(10_000_000 - 100_000)
     expect(f.points[3]!.balanceMinor).toBe(10_000_000 - 150_000 - 2_500_000)
@@ -93,7 +105,9 @@ describe('projection', () => {
   })
 
   it('finds the lowest point and the earliest date it is reached', () => {
-    const f = runForecast(base({ events: [ev('Rent', '2026-11-12', -9_000_000), ev('Salary', '2026-12-01', 9_000_000)] }))
+    const f = runForecast(
+      base({ events: [ev('Rent', '2026-11-12', -9_000_000), ev('Salary', '2026-12-01', 9_000_000)] }),
+    )
     expect(f.low).toEqual({ date: '2026-11-12', balanceMinor: 1_000_000 })
   })
 
@@ -133,7 +147,9 @@ describe('buffer warnings', () => {
   })
 
   it('has no ranges when the balance stays at or above the buffer', () => {
-    expect(bufferRanges([{ date: TODAY, balanceMinor: 100, recurringMinor: 0, baselineMinor: 0 }], 100, [])).toEqual([])
+    expect(
+      bufferRanges([{ date: TODAY, balanceMinor: 100, recurringMinor: 0, baselineMinor: 0 }], 100, []),
+    ).toEqual([])
   })
 })
 
@@ -154,9 +170,13 @@ describe('confidence', () => {
 
   it('measures the recurring share against the projected everyday spending', () => {
     // 30 days × ₹100 baseline = ₹3,000; recurring ₹12,000 → 80%.
-    const f = runForecast(base({ dailySpending: steady(10_000, 90), events: [ev('Rent', '2026-11-12', -1_200_000)] }))
+    const f = runForecast(
+      base({ dailySpending: steady(10_000, 90), events: [ev('Rent', '2026-11-12', -1_200_000)] }),
+    )
     expect(f.confidence).toBe('high')
-    const g = runForecast(base({ dailySpending: steady(10_000, 90), events: [ev('Rent', '2026-11-12', -1_100_000)] }))
+    const g = runForecast(
+      base({ dailySpending: steady(10_000, 90), events: [ev('Rent', '2026-11-12', -1_100_000)] }),
+    )
     expect(g.confidence).toBe('medium')
   })
 })

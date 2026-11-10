@@ -13,7 +13,14 @@ type Props = {
 }
 
 /** Formats an exact minor-unit amount with Indian digit grouping (₹1,25,000.00). */
-export function MoneyText({ minor, currency = 'INR', tone = 'neutral', showPlus, compact, className }: Props) {
+export function MoneyText({
+  minor,
+  currency = 'INR',
+  tone = 'neutral',
+  showPlus,
+  compact,
+  className,
+}: Props) {
   const text = formatMoney(money(minor, currency), { signDisplay: showPlus ? 'exceptZero' : 'auto', compact })
   return (
     <span

@@ -44,13 +44,19 @@ export function projectGoal(input: {
 }): GoalProjection {
   const { targetMinor, targetDate, savedMinor, recentMinor, today } = input
   const remainingMinor = Math.max(targetMinor - savedMinor, 0)
-  const percent = targetMinor <= 0 ? 100 : Math.min(100, Math.max(0, Math.floor((savedMinor * 100) / targetMinor)))
+  const percent =
+    targetMinor <= 0 ? 100 : Math.min(100, Math.max(0, Math.floor((savedMinor * 100) / targetMinor)))
   const past = targetDate !== null && compareDates(targetDate, today) < 0
   const monthsLeft = targetDate === null || past ? null : Math.max(1, monthsBetween(today, targetDate))
   const requiredMonthlyMinor = monthsLeft === null ? null : Math.ceil(remainingMinor / monthsLeft)
   const paceMonthlyMinor = Math.max(0, Math.floor(recentMinor / PACE_MONTHS))
   const monthsAtPace = recentMinor > 0 ? Math.ceil((remainingMinor * PACE_MONTHS) / recentMinor) : Infinity
-  const projectedDate = remainingMinor === 0 ? today : monthsAtPace <= MAX_PROJECTION_MONTHS ? addMonths(today, monthsAtPace) : null
+  const projectedDate =
+    remainingMinor === 0
+      ? today
+      : monthsAtPace <= MAX_PROJECTION_MONTHS
+        ? addMonths(today, monthsAtPace)
+        : null
 
   let status: GoalStatus
   if (remainingMinor === 0) status = 'achieved'
@@ -59,5 +65,14 @@ export function projectGoal(input: {
   else if (targetDate === null || compareDates(projectedDate, targetDate) <= 0) status = 'on_track'
   else status = 'off_track'
 
-  return { savedMinor, remainingMinor, percent, monthsLeft, requiredMonthlyMinor, paceMonthlyMinor, projectedDate, status }
+  return {
+    savedMinor,
+    remainingMinor,
+    percent,
+    monthsLeft,
+    requiredMonthlyMinor,
+    paceMonthlyMinor,
+    projectedDate,
+    status,
+  }
 }

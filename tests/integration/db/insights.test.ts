@@ -4,7 +4,13 @@ import type { Db } from '@db/connection'
 import { exportJson } from '@db/export'
 import { createAccount, listAccounts } from '@db/repos/accounts'
 import { dashboardSummary } from '@db/repos/dashboard'
-import { deleteValuation, forecast, listValuations, netWorthHistoryFor, upsertValuation } from '@db/repos/insights'
+import {
+  deleteValuation,
+  forecast,
+  listValuations,
+  netWorthHistoryFor,
+  upsertValuation,
+} from '@db/repos/insights'
 import { createRecurring } from '@db/repos/planning'
 import { updateSettings } from '@db/repos/settings'
 import { createTransaction, createTransfer } from '@db/repos/transactions'
@@ -18,8 +24,10 @@ let card: string
 let fund: string
 let loan: string
 
-const recurring = (input: Partial<Parameters<typeof createRecurring>[1]> & Pick<Parameters<typeof createRecurring>[1], 'name' | 'kind' | 'amountMinor' | 'anchorDate'>) =>
-  createRecurring(db, { accountId: bank, frequency: 'monthly', ...input }, TODAY).item
+const recurring = (
+  input: Partial<Parameters<typeof createRecurring>[1]> &
+    Pick<Parameters<typeof createRecurring>[1], 'name' | 'kind' | 'amountMinor' | 'anchorDate'>,
+) => createRecurring(db, { accountId: bank, frequency: 'monthly', ...input }, TODAY).item
 
 beforeEach(() => {
   db = testDb()
@@ -31,12 +39,25 @@ beforeEach(() => {
   loan = acct('Car loan', 'loan', 30_000_000)
 
   // ₹500 of everyday spending every day from 1 Aug to yesterday (100 days).
-  for (let d = '2026-08-01'; d < TODAY; d = addDays(d, 1)) createTransaction(db, { accountId: bank, postedDate: d, amountMinor: -50_000, payee: 'Groceries' })
+  for (let d = '2026-08-01'; d < TODAY; d = addDays(d, 1))
+    createTransaction(db, { accountId: bank, postedDate: d, amountMinor: -50_000, payee: 'Groceries' })
 
   recurring({ name: 'Rent', kind: 'bill', amountMinor: 2_500_000, anchorDate: '2026-08-01' })
   recurring({ name: 'Salary', kind: 'income', amountMinor: 10_000_000, anchorDate: '2026-08-28' })
-  recurring({ name: 'Card bill', kind: 'transfer', toAccountId: card, amountMinor: 1_000_000, anchorDate: '2026-08-15' })
-  recurring({ name: 'Netflix', kind: 'subscription', accountId: card, amountMinor: 64_900, anchorDate: '2026-08-20' })
+  recurring({
+    name: 'Card bill',
+    kind: 'transfer',
+    toAccountId: card,
+    amountMinor: 1_000_000,
+    anchorDate: '2026-08-15',
+  })
+  recurring({
+    name: 'Netflix',
+    kind: 'subscription',
+    accountId: card,
+    amountMinor: 64_900,
+    anchorDate: '2026-08-20',
+  })
   for (const d of ['2026-08-01', '2026-09-01', '2026-10-01', '2026-11-01'])
     createTransaction(db, { accountId: bank, postedDate: d, amountMinor: -2_500_000, payee: 'Rent' })
   for (const d of ['2026-08-28', '2026-09-28', '2026-10-28'])
@@ -92,13 +113,34 @@ describe('forecast (US7 scenarios 1–4)', () => {
   })
 
   it('counts a payment already made early as paid, and a recent overdue one today', () => {
-    createTransfer(db, { fromAccountId: bank, toAccountId: card, postedDate: '2026-11-13', amountMinor: 1_000_000 })
+    createTransfer(db, {
+      fromAccountId: bank,
+      toAccountId: card,
+      postedDate: '2026-11-13',
+      amountMinor: 1_000_000,
+    })
     expect(forecast(db, 30, TODAY).events.map((e) => e.name)).not.toContain('Card bill')
     // On 18 Nov the 15 Nov bill would be 3 days overdue without that payment.
     const db2 = db
     db = testDb()
-    const b = createAccount(db, { name: 'Bank', type: 'bank', openingBalanceMinor: 100_000, openingDate: '2026-11-01' }).account.id
-    createRecurring(db, { name: 'Phone', kind: 'bill', accountId: b, amountMinor: 59_900, frequency: 'monthly', anchorDate: '2026-11-05' }, TODAY)
+    const b = createAccount(db, {
+      name: 'Bank',
+      type: 'bank',
+      openingBalanceMinor: 100_000,
+      openingDate: '2026-11-01',
+    }).account.id
+    createRecurring(
+      db,
+      {
+        name: 'Phone',
+        kind: 'bill',
+        accountId: b,
+        amountMinor: 59_900,
+        frequency: 'monthly',
+        anchorDate: '2026-11-05',
+      },
+      TODAY,
+    )
     const f = forecast(db, 30, TODAY)
     expect(f.events[0]).toMatchObject({ name: 'Phone', dueDate: '2026-11-05', date: TODAY, overdue: true })
     expect(f.points[0]!.balanceMinor).toBe(100_000 - 59_900)
@@ -109,7 +151,12 @@ describe('forecast (US7 scenarios 1–4)', () => {
     const fresh = testDb()
     const empty = forecast(fresh, 30, TODAY)
     expect(empty).toMatchObject({ hasCashAccounts: false, startMinor: 0, confidence: 'low', historyDays: 0 })
-    const b = createAccount(fresh, { name: 'Bank', type: 'bank', openingBalanceMinor: 100_000, openingDate: '2026-10-20' }).account.id
+    const b = createAccount(fresh, {
+      name: 'Bank',
+      type: 'bank',
+      openingBalanceMinor: 100_000,
+      openingDate: '2026-10-20',
+    }).account.id
     createTransaction(fresh, { accountId: b, postedDate: '2026-10-20', amountMinor: -1_000, payee: 'Tea' })
     expect(forecast(fresh, 30, TODAY)).toMatchObject({ historyDays: 20, confidence: 'low' })
   })
@@ -123,11 +170,28 @@ describe('net worth and valuations (US7)', () => {
     expect(before.current.netMinor).toBe(bankNow + 20_000_000 - (30_000_000 - 3_000_000))
 
     upsertValuation(db, { accountId: fund, date: '2026-09-30', valueMinor: 22_000_000 }, TODAY)
-    upsertValuation(db, { accountId: loan, date: '2026-10-31', valueMinor: 29_000_000, note: 'Statement' }, TODAY)
+    upsertValuation(
+      db,
+      { accountId: loan, date: '2026-10-31', valueMinor: 29_000_000, note: 'Statement' },
+      TODAY,
+    )
     const nw = netWorthHistoryFor(db, TODAY)
-    expect(nw.current).toMatchObject({ date: TODAY, assetsMinor: bankNow + 22_000_000, liabilitiesMinor: 29_000_000 - 3_000_000 })
-    expect(dashboardSummary(db, TODAY).netWorth).toMatchObject({ valueMinor: nw.current.netMinor, drill: { page: 'networth' } })
-    expect(nw.accounts.find((a) => a.id === fund)).toMatchObject({ valueMinor: 22_000_000, source: 'valuation', valuationDate: '2026-09-30', ledgerMinor: 20_000_000, canValue: true })
+    expect(nw.current).toMatchObject({
+      date: TODAY,
+      assetsMinor: bankNow + 22_000_000,
+      liabilitiesMinor: 29_000_000 - 3_000_000,
+    })
+    expect(dashboardSummary(db, TODAY).netWorth).toMatchObject({
+      valueMinor: nw.current.netMinor,
+      drill: { page: 'networth' },
+    })
+    expect(nw.accounts.find((a) => a.id === fund)).toMatchObject({
+      valueMinor: 22_000_000,
+      source: 'valuation',
+      valuationDate: '2026-09-30',
+      ledgerMinor: 20_000_000,
+      canValue: true,
+    })
     expect(nw.accounts.find((a) => a.id === bank)).toMatchObject({ source: 'ledger', canValue: false })
     // Month ends from August, the last point being today.
     expect(nw.points.map((p) => p.date)).toEqual(['2026-08-31', '2026-09-30', '2026-10-31', TODAY])
@@ -144,12 +208,20 @@ describe('net worth and valuations (US7)', () => {
     const del = deleteValuation(db, listValuations(db, fund)[0]!.id)
     expect(listValuations(db, fund)).toEqual([])
     undoGroup(db, del.auditGroupId)
-    expect(exportJson(db).valuations).toMatchObject([{ accountId: fund, date: '2026-10-31', valueMinor: 21_000_000 }])
+    expect(exportJson(db).valuations).toMatchObject([
+      { accountId: fund, date: '2026-10-31', valueMinor: 21_000_000 },
+    ])
   })
 
   it('refuses values for cash, bank and card accounts, and for future dates', () => {
-    expect(() => upsertValuation(db, { accountId: bank, date: TODAY, valueMinor: 1 }, TODAY)).toThrow(/comes from its transactions/)
-    expect(() => upsertValuation(db, { accountId: card, date: TODAY, valueMinor: 1 }, TODAY)).toThrow(/comes from its transactions/)
-    expect(() => upsertValuation(db, { accountId: fund, date: '2026-11-10', valueMinor: 1 }, TODAY)).toThrow(/today or earlier/)
+    expect(() => upsertValuation(db, { accountId: bank, date: TODAY, valueMinor: 1 }, TODAY)).toThrow(
+      /comes from its transactions/,
+    )
+    expect(() => upsertValuation(db, { accountId: card, date: TODAY, valueMinor: 1 }, TODAY)).toThrow(
+      /comes from its transactions/,
+    )
+    expect(() => upsertValuation(db, { accountId: fund, date: '2026-11-10', valueMinor: 1 }, TODAY)).toThrow(
+      /today or earlier/,
+    )
   })
 })

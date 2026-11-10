@@ -9,10 +9,15 @@ test.skip(!process.env.SCREENSHOTS, 'Set SCREENSHOTS=1 to capture screenshots')
 test('capture main screens', async () => {
   const dataDir = mkdtempSync(join(tmpdir(), 'fin-shots-'))
   const { ELECTRON_RUN_AS_NODE: _ignored, ...env } = process.env
-  const app = await electron.launch({ args: ['.'], env: { ...env, FIN_DATA_DIR: dataDir } as Record<string, string> })
+  const app = await electron.launch({
+    args: ['.'],
+    env: { ...env, FIN_DATA_DIR: dataDir } as Record<string, string>,
+  })
   const page = await app.firstWindow()
   await page.setViewportSize({ width: 1320, height: 860 })
-  page.on('pageerror', (e) => console.log('PAGEERROR', e.message, e.stack?.split('\n').slice(0, 4).join(' | ')))
+  page.on('pageerror', (e) =>
+    console.log('PAGEERROR', e.message, e.stack?.split('\n').slice(0, 4).join(' | ')),
+  )
   page.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text().slice(0, 400)))
   const out = (name: string) => join('test-results', 'screens', `${name}.png`)
   const toast = (t: string) => page.locator('[data-sonner-toast]', { hasText: t }).last()
@@ -81,7 +86,10 @@ test('capture main screens', async () => {
   await page.getByLabel('Protect with a passphrase').click()
   await page.screenshot({ path: out('14-backup-dialog') })
   await page.keyboard.press('Escape')
-  await page.getByRole('button', { name: /^Restore backup/ }).first().click()
+  await page
+    .getByRole('button', { name: /^Restore backup/ })
+    .first()
+    .click()
   await expect(page.getByRole('button', { name: 'Replace my data' })).toBeVisible()
   await page.screenshot({ path: out('15-restore-confirm') })
   await page.keyboard.press('Escape')

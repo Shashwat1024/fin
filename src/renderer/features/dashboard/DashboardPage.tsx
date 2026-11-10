@@ -1,5 +1,14 @@
 import { Link } from 'react-router-dom'
-import { ArrowDownLeftIcon, ArrowUpRightIcon, CreditCardIcon, PercentIcon, PiggyBankIcon, PlusIcon, ScaleIcon, WalletIcon } from 'lucide-react'
+import {
+  ArrowDownLeftIcon,
+  ArrowUpRightIcon,
+  CreditCardIcon,
+  PercentIcon,
+  PiggyBankIcon,
+  PlusIcon,
+  ScaleIcon,
+  WalletIcon,
+} from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { FreshnessBadge } from '@renderer/components/FreshnessBadge'
 import { ErrorState, LoadingState, Page, PageHeader, ShortcutHint } from '@renderer/components/layout'
@@ -19,7 +28,9 @@ import { MonthlyFlowChart } from './MonthlyFlowChart'
 
 /** "1–9 Oct": the comparison window for month-to-date spending. */
 function previousWindow(spent: DashboardSummary['spent']) {
-  const month = new Intl.DateTimeFormat('en-IN', { month: 'short', timeZone: 'UTC' }).format(new Date(`${spent.previousFrom}T00:00:00Z`))
+  const month = new Intl.DateTimeFormat('en-IN', { month: 'short', timeZone: 'UTC' }).format(
+    new Date(`${spent.previousFrom}T00:00:00Z`),
+  )
   return `1–${Number(spent.previousTo.slice(8))} ${month}`
 }
 
@@ -42,13 +53,16 @@ export function DashboardPage() {
   const recent = useTxnSummary({}, 'recent')
 
   if (accounts.isPending || dashboard.isPending) return <LoadingState />
-  if (dashboard.isError) return <ErrorState error={dashboard.error} onRetry={() => void dashboard.refetch()} />
+  if (dashboard.isError)
+    return <ErrorState error={dashboard.error} onRetry={() => void dashboard.refetch()} />
   const list = accounts.data ?? []
   if (list.length === 0) return <DashboardEmpty />
 
   const d = dashboard.data
   const { spent, income, cash, cardDues, netWorth } = d
-  const fresh = (m: Metric, label: string) => <FreshnessBadge asOf={m.asOf} sources={m.sources} today={d.today} label={label} />
+  const fresh = (m: Metric, label: string) => (
+    <FreshnessBadge asOf={m.asOf} sources={m.sources} today={d.today} label={label} />
+  )
 
   return (
     <Page>
@@ -57,7 +71,11 @@ export function DashboardPage() {
         description={`Today is ${formatDate(d.today)}`}
         actions={
           <Button onClick={() => txnDialog.open({ mode: 'expense' })}>
-            <PlusIcon /> Add transaction <ShortcutHint combo="mod+n" className="ml-1 *:bg-transparent *:text-primary-foreground *:ring-1 *:ring-primary-foreground/50" />
+            <PlusIcon /> Add transaction{' '}
+            <ShortcutHint
+              combo="mod+n"
+              className="ml-1 *:bg-transparent *:text-primary-foreground *:ring-1 *:ring-primary-foreground/50"
+            />
           </Button>
         }
       />
@@ -90,7 +108,11 @@ export function DashboardPage() {
           icon={<PercentIcon className="size-4" />}
           label="Savings rate"
           value={d.savingsRate.percent === null ? '—' : `${d.savingsRate.percent}%`}
-          detail={d.savingsRate.percent === null ? 'No income recorded yet this month' : 'Share of this month’s income not spent'}
+          detail={
+            d.savingsRate.percent === null
+              ? 'No income recorded yet this month'
+              : 'Share of this month’s income not spent'
+          }
           to={drillHref(d.savingsRate.drill)}
           footer={fresh(income, 'Savings rate')}
         />
@@ -98,7 +120,11 @@ export function DashboardPage() {
           icon={<CreditCardIcon className="size-4" />}
           label="Card dues"
           value={<MoneyText minor={cardDues.valueMinor} />}
-          detail={cardDues.cardCount === 0 ? 'No credit cards added' : `Owed across ${plural(cardDues.cardCount, 'card')}`}
+          detail={
+            cardDues.cardCount === 0
+              ? 'No credit cards added'
+              : `Owed across ${plural(cardDues.cardCount, 'card')}`
+          }
           to={drillHref(cardDues.drill)}
           footer={fresh(cardDues, 'Card dues')}
         />
@@ -142,11 +168,19 @@ export function DashboardPage() {
                     onClick={() => txnDialog.open({ txnId: t.id })}
                     className="flex w-full items-center gap-4 rounded-md px-2 py-2.5 text-left text-sm outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
-                    <span className="w-24 shrink-0 text-muted-foreground tabular-nums">{formatDate(t.postedDate)}</span>
+                    <span className="w-24 shrink-0 text-muted-foreground tabular-nums">
+                      {formatDate(t.postedDate)}
+                    </span>
                     <span className="min-w-0 flex-1">
                       <TxnDescription txn={t} showAccount />
                     </span>
-                    <MoneyText minor={t.amountMinor} currency={t.currency} tone="auto" showPlus className="font-medium" />
+                    <MoneyText
+                      minor={t.amountMinor}
+                      currency={t.currency}
+                      tone="auto"
+                      showPlus
+                      className="font-medium"
+                    />
                   </button>
                 </li>
               ))}
@@ -187,7 +221,9 @@ function AccountsCard({ accounts }: { accounts: AccountDto[] }) {
                 </span>
                 <span className="text-right">
                   <MoneyText minor={a.balanceMinor} currency={a.currency} className="font-medium" />
-                  {a.nature === 'liability' && <span className="block text-xs text-muted-foreground">owed</span>}
+                  {a.nature === 'liability' && (
+                    <span className="block text-xs text-muted-foreground">owed</span>
+                  )}
                 </span>
               </Link>
             </li>

@@ -41,11 +41,19 @@ export type ParsedRow =
   /** Lines that carry no transaction (totals, notes, blank amounts). Reported, never imported. */
   | { rowNumber: number; raw: string[]; status: 'ignored'; message: string }
 
-export type MappingResult = { headers: string[]; rows: ParsedRow[]; missingColumns: (keyof Mapping['columns'])[] }
+export type MappingResult = {
+  headers: string[]
+  rows: ParsedRow[]
+  missingColumns: (keyof Mapping['columns'])[]
+}
 
 export function requiredColumns(m: Mapping): (keyof Mapping['columns'])[] {
   const amount: (keyof Mapping['columns'])[] =
-    m.amountMode === 'single' ? ['amount'] : m.amountMode === 'debit_credit' ? ['debit', 'credit'] : ['amount', 'indicator']
+    m.amountMode === 'single'
+      ? ['amount']
+      : m.amountMode === 'debit_credit'
+        ? ['debit', 'credit']
+        : ['amount', 'indicator']
   return ['date', 'description', ...amount]
 }
 
@@ -62,7 +70,11 @@ function cellAmount(cell: string): number | null | 'invalid' {
 }
 
 /** Apply a mapping to a parsed table. Pure and fast enough to run on every keystroke of the mapper. */
-export function applyMapping(table: readonly string[][], m: Mapping, lineNumbers?: readonly number[]): MappingResult {
+export function applyMapping(
+  table: readonly string[][],
+  m: Mapping,
+  lineNumbers?: readonly number[],
+): MappingResult {
   const headers = table[m.headerRow] ?? []
   const idx = {
     date: findColumn(headers, m.columns.date),
@@ -113,7 +125,13 @@ export function applyMapping(table: readonly string[][], m: Mapping, lineNumbers
       continue
     }
     if (date === null) {
-      rows.push({ rowNumber, raw, status: 'error', code: 'DATE_INVALID', message: dateCell ? `"${dateCell}" is not a valid date` : 'Date is missing' })
+      rows.push({
+        rowNumber,
+        raw,
+        status: 'error',
+        code: 'DATE_INVALID',
+        message: dateCell ? `"${dateCell}" is not a valid date` : 'Date is missing',
+      })
       continue
     }
     if (error) {
@@ -121,7 +139,13 @@ export function applyMapping(table: readonly string[][], m: Mapping, lineNumbers
       continue
     }
     if (amount === 'invalid') {
-      rows.push({ rowNumber, raw, status: 'error', code: 'AMOUNT_INVALID', message: 'Amount is not a valid number' })
+      rows.push({
+        rowNumber,
+        raw,
+        status: 'error',
+        code: 'AMOUNT_INVALID',
+        message: 'Amount is not a valid number',
+      })
       continue
     }
     if (amount === null) {
@@ -162,15 +186,20 @@ export function suggestMapping(table: readonly string[][], headerRow: number): M
     pick((h) => has(h, 'txn date', 'transaction date', 'tran date', 'posting date')) ??
     pick((h) => normalizeHeader(h) === 'date') ??
     pick((h) => has(h, 'date', 'dt') && !has(h, 'value'))
-  const description = pick((h) => has(h, 'narration', 'description', 'particulars', 'remarks', 'details', 'merchant'))
+  const description = pick((h) =>
+    has(h, 'narration', 'description', 'particulars', 'remarks', 'details', 'merchant'),
+  )
   const debit = pick((h) => has(h, 'withdrawal', 'debit', 'dr') && !has(h, 'cr'))
   const credit = pick((h) => has(h, 'deposit', 'credit', 'cr') && !has(h, 'dr'))
   const indicator = pick((h) => (has(h, 'dr') && has(h, 'cr')) || normalizeHeader(h) === 'type')
   const amount = pick((h) => has(h, 'amount', 'amt') && !has(h, 'withdrawal', 'deposit', 'debit', 'credit'))
   const balance = pick((h) => has(h, 'balance', 'bal'))
   const reference = pick((h) => has(h, 'ref', 'chq', 'cheque', 'chqno', 'utr'))
-  const amountMode: AmountMode = debit && credit ? 'debit_credit' : amount && indicator ? 'indicator' : 'single'
-  const dateSamples = table.slice(headerRow + 1, headerRow + 40).map((r) => r[headers.indexOf(date ?? '')] ?? '')
+  const amountMode: AmountMode =
+    debit && credit ? 'debit_credit' : amount && indicator ? 'indicator' : 'single'
+  const dateSamples = table
+    .slice(headerRow + 1, headerRow + 40)
+    .map((r) => r[headers.indexOf(date ?? '')] ?? '')
   return {
     headerRow,
     dateOrder: detectDateOrder(dateSamples),
@@ -192,11 +221,16 @@ export function suggestMapping(table: readonly string[][], headerRow: number): M
  * Statement closing balance: the balance on the latest-dated row — the last such row for
  * oldest-first statements, the first for newest-first ones.
  */
-export function closingBalance(rows: readonly ParsedRow[]): { date: CalendarDate; balanceMinor: number } | null {
+export function closingBalance(
+  rows: readonly ParsedRow[],
+): { date: CalendarDate; balanceMinor: number } | null {
   const ok = rows.filter((r): r is Extract<ParsedRow, { status: 'ok' }> => r.status === 'ok')
   const withBalance = ok.filter((r) => r.values.balanceMinor !== null)
   if (withBalance.length === 0) return null
-  const latest = withBalance.reduce((d, r) => (r.values.date > d ? r.values.date : d), withBalance[0]!.values.date)
+  const latest = withBalance.reduce(
+    (d, r) => (r.values.date > d ? r.values.date : d),
+    withBalance[0]!.values.date,
+  )
   const onLatest = withBalance.filter((r) => r.values.date === latest)
   const oldestFirst = ok[0]!.values.date <= ok[ok.length - 1]!.values.date
   const chosen = oldestFirst ? onLatest[onLatest.length - 1]! : onLatest[0]!

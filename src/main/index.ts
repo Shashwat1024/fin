@@ -35,7 +35,8 @@ function hardenSession(): void {
   ses.setPermissionRequestHandler((_wc, _permission, callback) => callback(false))
   ses.setPermissionCheckHandler(() => false)
   ses.webRequest.onBeforeRequest((details, callback) => {
-    const ok = isAppUrl(details.url) || details.url.startsWith('devtools://') || details.url.startsWith('data:')
+    const ok =
+      isAppUrl(details.url) || details.url.startsWith('devtools://') || details.url.startsWith('data:')
     const wsDev = isDev && devOrigin !== null && details.url.replace(/^ws/, 'http').startsWith(devOrigin)
     if (!ok && !wsDev) log.warn('net.blocked')
     callback({ cancel: !ok && !wsDev })

@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { ShortcutHint } from '@renderer/components/layout'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import { SHORTCUT_GROUPS, SHOW_SHORTCUTS_EVENT, useHotkey } from '@renderer/lib/hotkeys'
 import { cn } from '@renderer/lib/utils'
 
@@ -9,8 +15,15 @@ export function ShortcutGroups({ className }: { className?: string }) {
   return (
     <div className={cn('grid grid-cols-1 gap-x-10 gap-y-6 md:grid-cols-2', className)}>
       {SHORTCUT_GROUPS.map((g) => (
-        <section key={g.title} aria-labelledby={`sc-${g.title}`} className={g.title === 'Anywhere' ? 'md:row-span-3' : undefined}>
-          <h3 id={`sc-${g.title}`} className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <section
+          key={g.title}
+          aria-labelledby={`sc-${g.title}`}
+          className={g.title === 'Anywhere' ? 'md:row-span-3' : undefined}
+        >
+          <h3
+            id={`sc-${g.title}`}
+            className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+          >
             {g.title}
           </h3>
           <dl className="flex flex-col gap-1.5 text-sm">
@@ -49,7 +62,9 @@ export function ShortcutsSheet() {
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader className="mb-2">
           <DialogTitle>Keyboard shortcuts</DialogTitle>
-          <DialogDescription>Everything in Fin can be done from the keyboard. Press ? or Ctrl+/ to open this again.</DialogDescription>
+          <DialogDescription>
+            Everything in Fin can be done from the keyboard. Press ? or Ctrl+/ to open this again.
+          </DialogDescription>
         </DialogHeader>
         <ShortcutGroups />
       </DialogContent>

@@ -58,22 +58,30 @@ test('US3: every dashboard card equals the total of its drill-down', async () =>
   // Spending and income drill to this month's transactions, transfers excluded
   await card('Spent this month').click()
   await expect(page.getByRole('button', { name: 'Include transfers' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Transactions' }).locator('..')).toContainText(`Out ${expected['Spent this month']}`)
+  await expect(page.getByRole('heading', { name: 'Transactions' }).locator('..')).toContainText(
+    `Out ${expected['Spent this month']}`,
+  )
   await expect(page.getByRole('row', { name: /Swiggy/ })).toHaveCount(1)
   await page.keyboard.press('Control+1')
   await card('Income this month').click()
-  await expect(page.getByRole('heading', { name: 'Transactions' }).locator('..')).toContainText(`In ${expected['Income this month']}`)
+  await expect(page.getByRole('heading', { name: 'Transactions' }).locator('..')).toContainText(
+    `In ${expected['Income this month']}`,
+  )
 
   // Balance cards drill to the matching group of accounts
   for (const label of ['Cash position', 'Card dues'] as const) {
     await page.keyboard.press('Control+1')
     await card(label).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Showing' })).toContainText(`Total ${expected[label]}`)
+    await expect(page.getByRole('status').filter({ hasText: 'Showing' })).toContainText(
+      `Total ${expected[label]}`,
+    )
   }
   await page.keyboard.press('Control+1')
   await card('Net worth').click()
   await expect(page.getByRole('heading', { name: 'Net worth' })).toBeVisible()
-  await expect(page.locator('[data-slot="card"]', { hasText: 'Net worth today' })).toContainText(expected['Net worth'])
+  await expect(page.locator('[data-slot="card"]', { hasText: 'Net worth today' })).toContainText(
+    expected['Net worth'],
+  )
 
   // Freshness: each card says how current its data is and where it came from
   await page.keyboard.press('Control+1')

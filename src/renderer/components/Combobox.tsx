@@ -72,7 +72,11 @@ export function Combobox({
           aria-expanded={open}
           aria-invalid={invalid || undefined}
           aria-label={aria['aria-label']}
-          className={cn('w-full justify-between font-normal', !selected && 'text-muted-foreground', className)}
+          className={cn(
+            'w-full justify-between font-normal',
+            !selected && 'text-muted-foreground',
+            className,
+          )}
         >
           <span className="truncate">{selected ? selected.label : placeholder}</span>
           <ChevronsUpDownIcon className="opacity-50" />

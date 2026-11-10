@@ -17,7 +17,13 @@ import {
   setOccurrence,
   updateGoal,
 } from '@db/repos/planning'
-import { createTransaction, createTransfer, deleteTransactions, queryTransactions, updateTransaction } from '@db/repos/transactions'
+import {
+  createTransaction,
+  createTransfer,
+  deleteTransactions,
+  queryTransactions,
+  updateTransaction,
+} from '@db/repos/transactions'
 import type { BudgetMonthDto } from '@shared/types'
 import { categoryId, testDb } from './helpers'
 
@@ -39,7 +45,16 @@ beforeEach(() => {
 const rent = (extra = {}) =>
   createRecurring(
     db,
-    { name: 'Rent', kind: 'bill', accountId: bank, amountMinor: 1_800_000, frequency: 'monthly', anchorDate: '2026-08-31', categoryId: rentCat, ...extra },
+    {
+      name: 'Rent',
+      kind: 'bill',
+      accountId: bank,
+      amountMinor: 1_800_000,
+      frequency: 'monthly',
+      anchorDate: '2026-08-31',
+      categoryId: rentCat,
+      ...extra,
+    },
     TODAY,
   ).item
 const pay = (postedDate: string, amountMinor: number, accountId = bank) =>
@@ -50,7 +65,12 @@ const states = (from = '2026-09-01', to = '2026-12-31') =>
 describe('recurring items (US5 scenarios 1–2)', () => {
   it('lists occurrences on valid dates, labelled expected until a payment matches', () => {
     const item = rent()
-    expect(item).toMatchObject({ direction: 'out', amountMinor: 1_800_000, scheduleText: 'Every month on the 31st (or the last day)', nextDue: '2026-11-30' })
+    expect(item).toMatchObject({
+      direction: 'out',
+      amountMinor: 1_800_000,
+      scheduleText: 'Every month on the 31st (or the last day)',
+      nextDue: '2026-11-30',
+    })
     expect(states()).toEqual([
       ['2026-09-30', 'overdue', null],
       ['2026-10-31', 'overdue', null],
@@ -83,7 +103,18 @@ describe('recurring items (US5 scenarios 1–2)', () => {
   })
 
   it('gives each payment to one occurrence, the same in every window', () => {
-    createRecurring(db, { name: 'Maid', kind: 'bill', accountId: bank, amountMinor: 100_000, frequency: 'weekly', anchorDate: '2026-10-05' }, TODAY)
+    createRecurring(
+      db,
+      {
+        name: 'Maid',
+        kind: 'bill',
+        accountId: bank,
+        amountMinor: 100_000,
+        frequency: 'weekly',
+        anchorDate: '2026-10-05',
+      },
+      TODAY,
+    )
     const t1 = pay('2026-10-06', -100_000)
     pay('2026-10-13', -100_000)
     const wide = listOccurrences(db, '2026-10-01', '2026-10-31', TODAY)
@@ -94,11 +125,29 @@ describe('recurring items (US5 scenarios 1–2)', () => {
   })
 
   it('matches transfers for savings items with a destination account', () => {
-    const funds = createAccount(db, { name: 'Index fund', type: 'investment', openingDate: '2026-08-01' }).account.id
-    createRecurring(db, { name: 'SIP', kind: 'savings', accountId: bank, toAccountId: funds, amountMinor: 500_000, frequency: 'monthly', anchorDate: '2026-10-16' }, TODAY)
+    const funds = createAccount(db, { name: 'Index fund', type: 'investment', openingDate: '2026-08-01' })
+      .account.id
+    createRecurring(
+      db,
+      {
+        name: 'SIP',
+        kind: 'savings',
+        accountId: bank,
+        toAccountId: funds,
+        amountMinor: 500_000,
+        frequency: 'monthly',
+        anchorDate: '2026-10-16',
+      },
+      TODAY,
+    )
     pay('2026-10-16', -500_000) // a standard payment is not the SIP transfer
     expect(listOccurrences(db, '2026-10-01', '2026-10-31', TODAY)[0]!.state).toBe('overdue')
-    createTransfer(db, { fromAccountId: bank, toAccountId: funds, postedDate: '2026-10-17', amountMinor: 500_000 })
+    createTransfer(db, {
+      fromAccountId: bank,
+      toAccountId: funds,
+      postedDate: '2026-10-17',
+      amountMinor: 500_000,
+    })
     expect(listOccurrences(db, '2026-10-01', '2026-10-31', TODAY)[0]!.state).toBe('paid')
   })
 
@@ -113,8 +162,12 @@ describe('recurring items (US5 scenarios 1–2)', () => {
       ['2026-10-31', 'skipped', null],
     ])
     expect(listOccurrences(db, '2026-09-01', '2026-09-30', TODAY)[0]!.manual).toBe(true)
-    expect(() => setOccurrence(db, { itemId: item.id, dueDate: '2026-11-30', action: 'match', txnId: early })).toThrow(/already linked/)
-    expect(() => setOccurrence(db, { itemId: item.id, dueDate: '2026-11-15', action: 'skip' })).toThrow(/not on this schedule/)
+    expect(() =>
+      setOccurrence(db, { itemId: item.id, dueDate: '2026-11-30', action: 'match', txnId: early }),
+    ).toThrow(/already linked/)
+    expect(() => setOccurrence(db, { itemId: item.id, dueDate: '2026-11-15', action: 'skip' })).toThrow(
+      /not on this schedule/,
+    )
     expect(occurrenceCandidates(db, item.id, '2026-10-31')).toEqual([])
     undoGroup(db, skip.auditGroupId)
     expect(states('2026-10-01', '2026-10-31')).toEqual([['2026-10-31', 'overdue', null]])
@@ -127,29 +180,62 @@ describe('recurring items (US5 scenarios 1–2)', () => {
     expect(listOccurrences(db, '2026-09-01', '2026-12-31', TODAY)).toEqual([])
     expect(listRecurring(db, TODAY)[0]!.active).toBe(false)
     expect(() =>
-      createRecurring(db, { name: 'Move', kind: 'transfer', accountId: bank, amountMinor: 1, frequency: 'monthly', anchorDate: TODAY }, TODAY),
+      createRecurring(
+        db,
+        {
+          name: 'Move',
+          kind: 'transfer',
+          accountId: bank,
+          amountMinor: 1,
+          frequency: 'monthly',
+          anchorDate: TODAY,
+        },
+        TODAY,
+      ),
     ).toThrow(/account the money goes to/)
   })
 })
 
 describe('zero-based budget (US5 scenarios 3–4)', () => {
-  const row = (m: BudgetMonthDto, name: string) => m.groups.flatMap((g) => g.rows).find((r) => r.name === name)!
+  const row = (m: BudgetMonthDto, name: string) =>
+    m.groups.flatMap((g) => g.rows).find((r) => r.name === name)!
   const spend = (postedDate: string, amountMinor: number, path: string) =>
-    createTransaction(db, { accountId: card, postedDate, amountMinor, payee: path, categoryId: categoryId(db, path) })
+    createTransaction(db, {
+      accountId: card,
+      postedDate,
+      amountMinor,
+      payee: path,
+      categoryId: categoryId(db, path),
+    })
 
   beforeEach(() => {
-    createTransaction(db, { accountId: bank, postedDate: '2026-10-01', amountMinor: 9_500_000, payee: 'Salary', categoryId: categoryId(db, 'Income › Salary') })
+    createTransaction(db, {
+      accountId: bank,
+      postedDate: '2026-10-01',
+      amountMinor: 9_500_000,
+      payee: 'Salary',
+      categoryId: categoryId(db, 'Income › Salary'),
+    })
   })
 
   it('reaches To assign ₹0 exactly and shows assigned, spent and available', () => {
     expect(budgetMonth(db, '2026-10').toAssignMinor).toBe(9_500_000)
     assignBudget(db, '2026-10', rentCat, 1_800_000)
     assignBudget(db, '2026-10', categoryId(db, 'Food › Groceries'), 1_200_000)
-    const done = assignBudget(db, '2026-10', categoryId(db, 'Savings & investments › Emergency fund'), 6_500_000).month
+    const done = assignBudget(
+      db,
+      '2026-10',
+      categoryId(db, 'Savings & investments › Emergency fund'),
+      6_500_000,
+    ).month
     expect(done.toAssignMinor).toBe(0)
     spend('2026-10-10', -845_050, 'Food › Groceries')
     const oct = budgetMonth(db, '2026-10')
-    expect(row(oct, 'Groceries')).toMatchObject({ assignedMinor: 1_200_000, spentMinor: 845_050, availableMinor: 354_950 })
+    expect(row(oct, 'Groceries')).toMatchObject({
+      assignedMinor: 1_200_000,
+      spentMinor: 845_050,
+      availableMinor: 354_950,
+    })
     const food = oct.groups.find((g) => g.name === 'Food')!
     expect(food).toMatchObject({ assignedMinor: 1_200_000, spentMinor: 845_050 })
     expect(oct.toAssignMinor).toBe(0)
@@ -185,7 +271,12 @@ describe('zero-based budget (US5 scenarios 3–4)', () => {
     expect(row(oct, 'Household').spentMinor).toBe(200_000)
     expect(oct.uncategorizedMinor).toBe(70_000)
     // The drill-down to the ledger shows the same amount for the category (SC-005).
-    const page = queryTransactions(db, { from: oct.from, to: oct.to, categoryIds: [categoryId(db, 'Food › Groceries')], kind: 'standard' })
+    const page = queryTransactions(db, {
+      from: oct.from,
+      to: oct.to,
+      categoryIds: [categoryId(db, 'Food › Groceries')],
+      kind: 'standard',
+    })
     expect(-page.totals.netMinor).toBe(row(oct, 'Groceries').spentMinor)
   })
 
@@ -202,7 +293,11 @@ describe('zero-based budget (US5 scenarios 3–4)', () => {
 
 describe('goals (US5 scenario 5)', () => {
   it('shows progress, projection and the monthly amount needed', () => {
-    const g = createGoal(db, { name: 'Emergency fund', targetMinor: 30_000_000, targetDate: '2027-11-30' }, TODAY).goal
+    const g = createGoal(
+      db,
+      { name: 'Emergency fund', targetMinor: 30_000_000, targetDate: '2027-11-30' },
+      TODAY,
+    ).goal
     expect(g).toMatchObject({ savedMinor: 0, percent: 0, status: 'no_pace', requiredMonthlyMinor: 2_500_000 })
     contribute(db, { goalId: g.id, date: '2026-05-01', amountMinor: 3_000_000 }, TODAY) // outside the pace window
     contribute(db, { goalId: g.id, date: '2026-09-01', amountMinor: 1_500_000 }, TODAY)
@@ -218,22 +313,46 @@ describe('goals (US5 scenario 5)', () => {
       projectedDate: '2028-02-09',
       status: 'off_track',
     })
-    expect(after.contributions.map((c) => c.date)).toEqual(['2026-11-01', '2026-10-01', '2026-09-01', '2026-05-01'])
+    expect(after.contributions.map((c) => c.date)).toEqual([
+      '2026-11-01',
+      '2026-10-01',
+      '2026-09-01',
+      '2026-05-01',
+    ])
   })
 
   it('follows a linked account’s balance instead of contributions', () => {
-    const fd = createAccount(db, { name: 'FD', type: 'bank', openingBalanceMinor: 5_000_000, openingDate: '2026-08-01' }).account.id
-    createTransaction(db, { accountId: fd, postedDate: '2026-10-01', amountMinor: 1_000_000, payee: 'Deposit' })
+    const fd = createAccount(db, {
+      name: 'FD',
+      type: 'bank',
+      openingBalanceMinor: 5_000_000,
+      openingDate: '2026-08-01',
+    }).account.id
+    createTransaction(db, {
+      accountId: fd,
+      postedDate: '2026-10-01',
+      amountMinor: 1_000_000,
+      payee: 'Deposit',
+    })
     const g = createGoal(db, { name: 'House', targetMinor: 12_000_000, linkedAccountId: fd }, TODAY).goal
-    expect(g).toMatchObject({ savedMinor: 6_000_000, percent: 50, linkedAccountName: 'FD', paceMonthlyMinor: 333_333 })
+    expect(g).toMatchObject({
+      savedMinor: 6_000_000,
+      percent: 50,
+      linkedAccountName: 'FD',
+      paceMonthlyMinor: 333_333,
+    })
     expect(() => contribute(db, { goalId: g.id, date: TODAY, amountMinor: 100 }, TODAY)).toThrow(/follows FD/)
-    expect(() => createGoal(db, { name: 'x', targetMinor: 1, linkedAccountId: card }, TODAY)).toThrow(/not a card or loan/)
+    expect(() => createGoal(db, { name: 'x', targetMinor: 1, linkedAccountId: card }, TODAY)).toThrow(
+      /not a card or loan/,
+    )
   })
 
   it('deletes a goal with its entries and undoes it', () => {
     const g = createGoal(db, { name: 'Trip', targetMinor: 6_000_000 }, TODAY).goal
     contribute(db, { goalId: g.id, date: TODAY, amountMinor: 1_000_000 }, TODAY)
-    expect(() => updateGoal(db, g.id, { name: 'Trip', targetMinor: 6_000_000, linkedAccountId: bank }, TODAY)).toThrow(/added by hand/)
+    expect(() =>
+      updateGoal(db, g.id, { name: 'Trip', targetMinor: 6_000_000, linkedAccountId: bank }, TODAY),
+    ).toThrow(/added by hand/)
     const del = deleteGoal(db, g.id)
     expect(listGoals(db, TODAY)).toEqual([])
     undoGroup(db, del.auditGroupId)
@@ -247,7 +366,9 @@ it('exports planning data in the JSON export', () => {
   const g = createGoal(db, { name: 'Trip', targetMinor: 6_000_000 }, TODAY).goal
   contribute(db, { goalId: g.id, date: TODAY, amountMinor: 1_000_000 }, TODAY)
   const out = exportJson(db)
-  expect(out.recurringItems).toMatchObject([{ name: 'Rent', amountMinor: -1_800_000, interval: 1, active: true }])
+  expect(out.recurringItems).toMatchObject([
+    { name: 'Rent', amountMinor: -1_800_000, interval: 1, active: true },
+  ])
   expect(out.budgets).toEqual([{ month: '2026-11', categoryId: rentCat, assignedMinor: 1_800_000 }])
   expect(out.goals).toMatchObject([{ name: 'Trip', targetMinor: 6_000_000 }])
   expect(out.goalContributions).toMatchObject([{ goalId: g.id, amountMinor: 1_000_000 }])

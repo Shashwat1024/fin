@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { FlaskConicalIcon, LockIcon } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
 import { AccountFields, useAccountForm } from '@renderer/features/accounts/AccountForm'
 import { useDemoMode } from '@renderer/features/demo/useDemoMode'
 import { PreferenceFields } from '@renderer/features/settings/PreferenceFields'
@@ -30,8 +37,8 @@ export function Onboarding({ settings }: { settings: Settings }) {
             <CardHeader>
               <CardTitle className="text-xl">Welcome to Fin</CardTitle>
               <CardDescription className="flex items-start gap-2">
-                <LockIcon className="mt-0.5 size-4 shrink-0" />
-                A private money tracker. Everything stays on this computer, with no account, bank login or internet needed.
+                <LockIcon className="mt-0.5 size-4 shrink-0" />A private money tracker. Everything stays on
+                this computer, with no account, bank login or internet needed.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -62,7 +69,9 @@ export function Onboarding({ settings }: { settings: Settings }) {
           >
             <CardHeader className="mb-4">
               <CardTitle className="text-xl">Add your first account</CardTitle>
-              <CardDescription>Your main bank account is a good start. Use today’s balance so totals match your bank.</CardDescription>
+              <CardDescription>
+                Your main bank account is a good start. Use today’s balance so totals match your bank.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <AccountFields form={account} />

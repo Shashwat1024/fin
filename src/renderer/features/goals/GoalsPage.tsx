@@ -1,14 +1,37 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle2Icon, MinusIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, TargetIcon, Trash2Icon, XIcon } from 'lucide-react'
+import {
+  CheckCircle2Icon,
+  MinusIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  PlusIcon,
+  TargetIcon,
+  Trash2Icon,
+  XIcon,
+} from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { formatMoney, money } from '@domain/money'
 import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
 import { EmptyState, ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
 import { MoneyText } from '@renderer/components/MoneyText'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@renderer/components/ui/dropdown-menu'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@renderer/components/ui/dropdown-menu'
 import { Progress } from '@renderer/components/ui/progress'
 import { useFinMutation, useGoals } from '@renderer/lib/queries'
 import type { GoalDto } from '@shared/types'
@@ -41,8 +64,8 @@ export function GoalProgress({ g, className }: { g: GoalDto; className?: string 
     <div className={className}>
       <div className="mb-1.5 flex items-baseline justify-between gap-2 text-sm">
         <span>
-          <MoneyText minor={g.savedMinor} className="font-semibold" /> <span className="text-muted-foreground">of</span>{' '}
-          <MoneyText minor={g.targetMinor} />
+          <MoneyText minor={g.savedMinor} className="font-semibold" />{' '}
+          <span className="text-muted-foreground">of</span> <MoneyText minor={g.targetMinor} />
         </span>
         <span className="font-medium tabular-nums">{g.percent}%</span>
       </div>
@@ -56,7 +79,10 @@ export function GoalsPage() {
   const [editing, setEditing] = useState<{ goal?: GoalDto } | null>(null)
   const [contributing, setContributing] = useState<ContributeTarget | null>(null)
   const [deleting, setDeleting] = useState<GoalDto | null>(null)
-  const remove = useFinMutation('goals.delete', { success: 'Goal deleted', onSuccess: () => setDeleting(null) })
+  const remove = useFinMutation('goals.delete', {
+    success: 'Goal deleted',
+    onSuccess: () => setDeleting(null),
+  })
   const removeEntry = useFinMutation('goals.deleteContribution', { success: 'Entry removed' })
 
   const newButton = (
@@ -66,7 +92,11 @@ export function GoalsPage() {
   )
   return (
     <Page>
-      <PageHeader title="Goals" description="Savings targets, with what is needed each month to reach them on time." actions={newButton} />
+      <PageHeader
+        title="Goals"
+        description="Savings targets, with what is needed each month to reach them on time."
+        actions={newButton}
+      />
       {goals.isPending ? (
         <LoadingState />
       ) : goals.isError ? (
@@ -84,7 +114,9 @@ export function GoalsPage() {
             <Card key={g.id} aria-label={g.name} role="region">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {g.status === 'achieved' && <CheckCircle2Icon className="size-4 text-positive" aria-hidden />}
+                  {g.status === 'achieved' && (
+                    <CheckCircle2Icon className="size-4 text-positive" aria-hidden />
+                  )}
                   {g.name}
                 </CardTitle>
                 <CardDescription>
@@ -92,7 +124,10 @@ export function GoalsPage() {
                   {g.linkedAccountName && (
                     <>
                       {' · follows '}
-                      <Link className="underline underline-offset-4" to={`/transactions?account=${g.linkedAccountId}`}>
+                      <Link
+                        className="underline underline-offset-4"
+                        to={`/transactions?account=${g.linkedAccountId}`}
+                      >
                         {g.linkedAccountName}
                       </Link>
                     </>
@@ -133,7 +168,9 @@ export function GoalsPage() {
                     <ul className="mt-2 divide-y">
                       {g.contributions.slice(0, 8).map((c) => (
                         <li key={c.id} className="flex items-center gap-3 py-1.5">
-                          <span className="w-24 text-muted-foreground tabular-nums">{formatDate(c.date)}</span>
+                          <span className="w-24 text-muted-foreground tabular-nums">
+                            {formatDate(c.date)}
+                          </span>
                           <span className="min-w-0 flex-1 truncate text-muted-foreground">{c.note}</span>
                           <MoneyText minor={c.amountMinor} showPlus tone="auto" />
                           <Button

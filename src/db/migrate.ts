@@ -57,7 +57,13 @@ export function migrate(db: Db, opts: MigrateOptions = {}): { from: number; to: 
     db.exec('BEGIN IMMEDIATE')
     try {
       db.exec(m.sql)
-      run(db, 'INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)', m.version, m.name, nowIso())
+      run(
+        db,
+        'INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)',
+        m.version,
+        m.name,
+        nowIso(),
+      )
       db.exec('COMMIT')
     } catch (err) {
       db.exec('ROLLBACK')

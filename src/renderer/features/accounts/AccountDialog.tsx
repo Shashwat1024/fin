@@ -1,6 +1,13 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import type { AccountDto } from '@shared/types'
 import { AccountFields, useAccountForm } from './AccountForm'
 
@@ -15,7 +22,9 @@ export function AccountDialogProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider value={value}>
       {children}
       <Dialog open={state !== null} onOpenChange={(o) => !o && setState(null)}>
-        {state && <AccountDialogBody key={state.nonce} account={state.account} onDone={() => setState(null)} />}
+        {state && (
+          <AccountDialogBody key={state.nonce} account={state.account} onDone={() => setState(null)} />
+        )}
       </Dialog>
     </Ctx.Provider>
   )
@@ -34,7 +43,9 @@ function AccountDialogBody({ account, onDone }: { account?: AccountDto; onDone: 
       >
         <DialogHeader className="mb-4">
           <DialogTitle>{account ? 'Edit account' : 'New account'}</DialogTitle>
-          <DialogDescription>Balances are calculated from the start balance plus every transaction.</DialogDescription>
+          <DialogDescription>
+            Balances are calculated from the start balance plus every transaction.
+          </DialogDescription>
         </DialogHeader>
         <AccountFields form={form} />
         <DialogFooter className="mt-6">

@@ -65,7 +65,16 @@ test('every core flow works with no network requests', async () => {
 test('the log file holds no financial details', async () => {
   const log = readFileSync(join(fin.dataDir, 'logs', 'fin.log'), 'utf8')
   expect(log).toContain('app.ready')
-  for (const secret of ['HDFC Savings', 'Demo Savings Bank', '50000', '50,000', 'SWIGGY', 'Swiggy', 'Chai Point', 'hdfc_savings.csv']) {
+  for (const secret of [
+    'HDFC Savings',
+    'Demo Savings Bank',
+    '50000',
+    '50,000',
+    'SWIGGY',
+    'Swiggy',
+    'Chai Point',
+    'hdfc_savings.csv',
+  ]) {
     expect(log, `log mentions ${secret}`).not.toContain(secret)
   }
 })

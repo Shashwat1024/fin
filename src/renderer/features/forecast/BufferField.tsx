@@ -9,14 +9,19 @@ import { formatMoney, money } from '@domain/money'
  * The minimum balance the user wants to keep in cash and bank accounts. The forecast warns about
  * any day projected below it. Used on the Forecast page and in Settings.
  */
-export function BufferField({ description = 'The forecast warns you about any day your cash and bank balance is projected below this.' }: { description?: string }) {
+export function BufferField({
+  description = 'The forecast warns you about any day your cash and bank balance is projected below this.',
+}: {
+  description?: string
+}) {
   const id = useId()
   const settings = useSettings()
   const saved = settings.data?.bufferMinor ?? 0
   const [text, setText] = useState<string | null>(null)
   const [error, setError] = useState<string>()
   const save = useFinMutation('settings.update', {
-    success: (s) => (s.bufferMinor > 0 ? `Buffer set to ${formatMoney(money(s.bufferMinor))}` : 'Buffer removed'),
+    success: (s) =>
+      s.bufferMinor > 0 ? `Buffer set to ${formatMoney(money(s.bufferMinor))}` : 'Buffer removed',
     onSuccess: () => setText(null),
   })
   const value = text ?? amountToText(saved)
@@ -33,7 +38,14 @@ export function BufferField({ description = 'The forecast warns you about any da
     <form noValidate onSubmit={submit}>
       <FormField label="Minimum buffer" htmlFor={`${id}-buffer`} description={description} error={error}>
         <div className="flex gap-2">
-          <AmountInput id={`${id}-buffer`} value={value} onChange={setText} invalid={Boolean(error)} placeholder="0" className="max-w-56" />
+          <AmountInput
+            id={`${id}-buffer`}
+            value={value}
+            onChange={setText}
+            invalid={Boolean(error)}
+            placeholder="0"
+            className="max-w-56"
+          />
           <Button type="submit" variant="outline" disabled={save.isPending || text === null}>
             Save buffer
           </Button>

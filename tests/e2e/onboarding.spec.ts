@@ -36,8 +36,14 @@ test('the sidebar has its own Settings button and a quick appearance switch', as
   await page.getByRole('navigation', { name: 'App' }).getByRole('link', { name: 'Settings' }).click()
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
   // The Settings page shows the same choice, and changing it there updates the sidebar
-  await expect(page.getByRole('main').getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('main').getByRole('radio', { name: 'Light' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
   await page.getByRole('main').getByRole('radio', { name: 'Dark' }).click()
   await expect(html).toHaveClass(/\bdark\b/)
-  await expect(sidebarTheme.getByRole('radio', { name: 'Dark theme' })).toHaveAttribute('aria-checked', 'true')
+  await expect(sidebarTheme.getByRole('radio', { name: 'Dark theme' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
 })

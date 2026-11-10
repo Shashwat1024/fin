@@ -28,13 +28,22 @@ let groceries: string
 
 beforeEach(() => {
   db = testDb()
-  bank = createAccount(db, { name: 'HDFC', type: 'bank', openingBalanceMinor: 5_000_000, openingDate: '2026-09-01' }).account.id
+  bank = createAccount(db, {
+    name: 'HDFC',
+    type: 'bank',
+    openingBalanceMinor: 5_000_000,
+    openingDate: '2026-09-01',
+  }).account.id
   delivery = categoryId(db, 'Food › Food delivery')
   groceries = categoryId(db, 'Food › Groceries')
 })
 
-const txn = (payee: string, amountMinor = -45_000, categoryId: string | null = null, postedDate = '2026-10-05') =>
-  createTransaction(db, { accountId: bank, postedDate, amountMinor, payee, categoryId }).txn.id
+const txn = (
+  payee: string,
+  amountMinor = -45_000,
+  categoryId: string | null = null,
+  postedDate = '2026-10-05',
+) => createTransaction(db, { accountId: bank, postedDate, amountMinor, payee, categoryId }).txn.id
 const cat = (id: string) => getTransaction(db, id).categoryId
 
 describe('categories (US6 scenario 1)', () => {
@@ -43,10 +52,15 @@ describe('categories (US6 scenario 1)', () => {
     const food = createCategory(db, { name: 'Pet food', parentId: pets.id }).category
     expect(food).toMatchObject({ path: 'Pets › Pet food', group: 'wants' })
     expect(() => createCategory(db, { name: 'Too deep', parentId: food.id })).toThrow(/two levels/)
-    expect(() => updateCategory(db, { id: pets.id, parentId: categoryId(db, 'Food') })).toThrow(/subcategories/)
+    expect(() => updateCategory(db, { id: pets.id, parentId: categoryId(db, 'Food') })).toThrow(
+      /subcategories/,
+    )
     expect(() => createCategory(db, { name: 'Pet food', parentId: pets.id })).toThrow(/already exists/)
     updateCategory(db, { id: pets.id, name: 'Pet care', group: 'needs' })
-    expect(listCategories(db).find((c) => c.id === food.id)).toMatchObject({ path: 'Pet care › Pet food', group: 'needs' })
+    expect(listCategories(db).find((c) => c.id === food.id)).toMatchObject({
+      path: 'Pet care › Pet food',
+      group: 'needs',
+    })
     // Moving a leaf under another parent keeps its transactions
     const t = txn('Vet', -150_000, food.id)
     updateCategory(db, { id: food.id, parentId: categoryId(db, 'Health') })
@@ -67,9 +81,32 @@ describe('categories (US6 scenario 1)', () => {
     }).txn.id
     assignBudget(db, '2026-10', delivery, 300_000)
     assignBudget(db, '2026-10', groceries, 1_000_000)
-    createRecurring(db, { name: 'Swiggy One', kind: 'subscription', accountId: bank, amountMinor: 9_900, frequency: 'monthly', anchorDate: '2026-10-01', categoryId: delivery }, '2026-10-10')
-    createRule(db, { name: 'Swiggy', conditions: [{ field: 'description', op: 'contains', value: 'swiggy' }], categoryId: delivery })
-    expect(categoryUsage(db, delivery)).toEqual({ transactions: 1, splits: 1, budgets: 1, recurring: 1, rules: 1, children: 0 })
+    createRecurring(
+      db,
+      {
+        name: 'Swiggy One',
+        kind: 'subscription',
+        accountId: bank,
+        amountMinor: 9_900,
+        frequency: 'monthly',
+        anchorDate: '2026-10-01',
+        categoryId: delivery,
+      },
+      '2026-10-10',
+    )
+    createRule(db, {
+      name: 'Swiggy',
+      conditions: [{ field: 'description', op: 'contains', value: 'swiggy' }],
+      categoryId: delivery,
+    })
+    expect(categoryUsage(db, delivery)).toEqual({
+      transactions: 1,
+      splits: 1,
+      budgets: 1,
+      recurring: 1,
+      rules: 1,
+      children: 0,
+    })
 
     expect(() => deleteCategory(db, delivery, null)).toThrow(/in use/)
     expect(() => deleteCategory(db, categoryId(db, 'Food'), groceries)).toThrow(/subcategories first/)
@@ -77,13 +114,23 @@ describe('categories (US6 scenario 1)', () => {
     expect(merge.moved).toBe(2)
     expect(cat(swiggy)).toBe(groceries)
     expect(getTransaction(db, split).splits.map((s) => s.categoryId)).toEqual([groceries, groceries])
-    expect(budgetMonth(db, '2026-10').groups.flatMap((g) => g.rows).find((r) => r.categoryId === groceries)!.assignedMinor).toBe(1_300_000)
+    expect(
+      budgetMonth(db, '2026-10')
+        .groups.flatMap((g) => g.rows)
+        .find((r) => r.categoryId === groceries)!.assignedMinor,
+    ).toBe(1_300_000)
     expect(listRules(db)[0]!.categoryId).toBe(groceries)
     expect(listCategories(db).some((c) => c.id === delivery)).toBe(false)
 
     undoGroup(db, merge.auditGroupId)
     expect(cat(swiggy)).toBe(delivery)
-    expect(categoryUsage(db, delivery)).toMatchObject({ transactions: 1, splits: 1, budgets: 1, recurring: 1, rules: 1 })
+    expect(categoryUsage(db, delivery)).toMatchObject({
+      transactions: 1,
+      splits: 1,
+      budgets: 1,
+      recurring: 1,
+      rules: 1,
+    })
 
     const unused = createCategory(db, { name: 'Unused', parentId: categoryId(db, 'Food') }).category.id
     deleteCategory(db, unused, null)
@@ -97,7 +144,11 @@ describe('rules (US6 scenario 2)', () => {
     const b = txn('UPI/428811110000/Swiggy/swiggy@icici/Payment', -32_000)
     const c = txn('SWIGGY INSTAMART', -120_000, groceries) // already categorised
     txn('Zomato')
-    const rule = createRule(db, { name: 'Swiggy', conditions: [{ field: 'description', op: 'contains', value: 'swiggy' }], categoryId: delivery }).rule
+    const rule = createRule(db, {
+      name: 'Swiggy',
+      conditions: [{ field: 'description', op: 'contains', value: 'swiggy' }],
+      categoryId: delivery,
+    }).rule
     expect(rule.categoryPath).toBe('Food › Food delivery')
 
     const preview = previewSavedRule(db, rule.id)
@@ -125,10 +176,18 @@ describe('rules (US6 scenario 2)', () => {
       ],
       categoryId: delivery,
     }).rule
-    expect(previewRule(db, draftRule({ ...rule, conditions: rule.conditions })).matches.map((m) => m.id)).toEqual([small])
+    expect(
+      previewRule(db, draftRule({ ...rule, conditions: rule.conditions })).matches.map((m) => m.id),
+    ).toEqual([small])
     expect(applyRule(db, rule.id, [small, big])).toMatchObject({ count: 1, skipped: 1 })
     expect(cat(big)).toBeNull()
-    expect(() => createRule(db, { name: 'Bad', conditions: [{ field: 'description', op: 'regex', value: '(' }], categoryId: delivery })).toThrow(/not a valid pattern/)
+    expect(() =>
+      createRule(db, {
+        name: 'Bad',
+        conditions: [{ field: 'description', op: 'regex', value: '(' }],
+        categoryId: delivery,
+      }),
+    ).toThrow(/not a valid pattern/)
   })
 })
 
@@ -140,25 +199,56 @@ describe('suggestions (US6 scenarios 3–4)', () => {
     const fresh = txn('UPI-SWIGGY-SWIGGY@ICICI-428812349999')
     const refund = txn('UPI-SWIGGY-SWIGGY@ICICI-428812340000', 45_000)
     const [s] = suggestForTxns(db, [fresh, refund])
-    expect(s).toMatchObject({ txnId: fresh, categoryId: delivery, source: 'merchant', reason: 'You chose this for Swiggy 2 times' })
+    expect(s).toMatchObject({
+      txnId: fresh,
+      categoryId: delivery,
+      source: 'merchant',
+      reason: 'You chose this for Swiggy 2 times',
+    })
     expect(suggestForTxns(db, [refund])).toEqual([]) // money in: no history in that direction
     expect(cat(fresh)).toBeNull()
 
     // A rule wins over learned history
-    createRule(db, { name: 'Groceries by Swiggy', conditions: [{ field: 'merchant', op: 'contains', value: 'swiggy' }], categoryId: groceries })
-    expect(suggestForTxns(db, [fresh])[0]).toMatchObject({ categoryId: groceries, source: 'rule', reason: 'Rule: Groceries by Swiggy' })
+    createRule(db, {
+      name: 'Groceries by Swiggy',
+      conditions: [{ field: 'merchant', op: 'contains', value: 'swiggy' }],
+      categoryId: groceries,
+    })
+    expect(suggestForTxns(db, [fresh])[0]).toMatchObject({
+      categoryId: groceries,
+      source: 'rule',
+      reason: 'Rule: Groceries by Swiggy',
+    })
   })
 
   it('shows merchants and suggestions in the import preview and applies only accepted ones', () => {
     txn('Swiggy', -45_000, delivery, '2026-09-05')
-    createRule(db, { name: 'Salary', conditions: [{ field: 'description', op: 'contains', value: 'salary' }], categoryId: categoryId(db, 'Income › Salary') })
+    createRule(db, {
+      name: 'Salary',
+      conditions: [{ field: 'description', op: 'contains', value: 'salary' }],
+      categoryId: categoryId(db, 'Income › Salary'),
+    })
     const rows = [
-      { rowNumber: 2, raw: ['a'], date: '2026-10-01', amountMinor: -45_000, description: 'UPI-SWIGGY-SWIGGY@ICICI-ICIC0DC0099-428812345678-ORDER' },
-      { rowNumber: 3, raw: ['b'], date: '2026-10-01', amountMinor: 8_500_000, description: 'NEFT CR-ACME TECHNOLOGIES PVT LTD-SALARY OCT' },
+      {
+        rowNumber: 2,
+        raw: ['a'],
+        date: '2026-10-01',
+        amountMinor: -45_000,
+        description: 'UPI-SWIGGY-SWIGGY@ICICI-ICIC0DC0099-428812345678-ORDER',
+      },
+      {
+        rowNumber: 3,
+        raw: ['b'],
+        date: '2026-10-01',
+        amountMinor: 8_500_000,
+        description: 'NEFT CR-ACME TECHNOLOGIES PVT LTD-SALARY OCT',
+      },
       { rowNumber: 4, raw: ['c'], date: '2026-10-02', amountMinor: -9_900, description: 'MAKEMYTRIP INDIA' },
     ]
     const preview = previewImport(db, { accountId: bank, rows })
-    expect(preview.rows.map((r) => [r.merchant, r.suggestion?.source ?? null, r.suggestion?.categoryPath ?? null])).toEqual([
+    expect(
+      preview.rows.map((r) => [r.merchant, r.suggestion?.source ?? null, r.suggestion?.categoryPath ?? null]),
+    ).toEqual([
       ['Swiggy', 'merchant', 'Food › Food delivery'],
       ['Acme Technologies Pvt Ltd', 'rule', 'Income › Salary'],
       ['Makemytrip India', null, null],
@@ -166,7 +256,12 @@ describe('suggestions (US6 scenarios 3–4)', () => {
     const r = commitImport(db, {
       accountId: bank,
       fileName: 'x.csv',
-      mapping: { headerRow: 0, dateOrder: 'dmy', amountMode: 'single', columns: { date: 'Date', description: 'Narration', amount: 'Amount' } },
+      mapping: {
+        headerRow: 0,
+        dateOrder: 'dmy',
+        amountMode: 'single',
+        columns: { date: 'Date', description: 'Narration', amount: 'Amount' },
+      },
       rows,
       rejected: [],
       importPossibleDuplicates: [],

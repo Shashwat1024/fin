@@ -25,8 +25,12 @@ describe('migrate', () => {
     expect(r).toEqual({ from: 0, to: LATEST_SCHEMA_VERSION, applied: MIGRATIONS.map((m) => m.version) })
     expect(currentSchemaVersion(db)).toBe(LATEST_SCHEMA_VERSION)
     expect(all<{ application_id: number }>(db, 'PRAGMA application_id')[0]?.application_id).toBe(APP_ID)
-    const tables = all<{ name: string }>(db, "SELECT name FROM sqlite_master WHERE type = 'table'").map((t) => t.name)
-    expect(tables).toEqual(expect.arrayContaining(['accounts', 'transactions', 'splits', 'audit_log', 'txn_fts']))
+    const tables = all<{ name: string }>(db, "SELECT name FROM sqlite_master WHERE type = 'table'").map(
+      (t) => t.name,
+    )
+    expect(tables).toEqual(
+      expect.arrayContaining(['accounts', 'transactions', 'splits', 'audit_log', 'txn_fts']),
+    )
   })
 
   it('is idempotent', () => {
@@ -38,7 +42,10 @@ describe('migrate', () => {
   it('rolls back a failing migration completely', () => {
     const db = openDatabase(':memory:')
     migrate(db)
-    const broken = [...MIGRATIONS, { version: 99, name: 'broken', sql: 'CREATE TABLE half (a); THIS IS NOT SQL;' }]
+    const broken = [
+      ...MIGRATIONS,
+      { version: 99, name: 'broken', sql: 'CREATE TABLE half (a); THIS IS NOT SQL;' },
+    ]
     const before = vi.fn()
     expect(() => migrate(db, { migrations: broken, beforeMigrate: before })).toThrow(MigrationError)
     expect(before).toHaveBeenCalledOnce()

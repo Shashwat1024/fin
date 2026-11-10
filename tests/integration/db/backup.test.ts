@@ -48,9 +48,19 @@ beforeEach(() => {
   backups = join(dir, 'backups')
   work = join(dir, 'tmp')
   db = openFin()
-  const bank = createAccount(db, { name: 'HDFC', type: 'bank', openingBalanceMinor: 5_000_000, openingDate: '2026-10-01' }).account.id
+  const bank = createAccount(db, {
+    name: 'HDFC',
+    type: 'bank',
+    openingBalanceMinor: 5_000_000,
+    openingDate: '2026-10-01',
+  }).account.id
   createTransaction(db, { accountId: bank, postedDate: '2026-10-02', amountMinor: -45_000, payee: 'Swiggy' })
-  createTransaction(db, { accountId: bank, postedDate: '2026-10-05', amountMinor: 8_500_000, payee: 'Salary' })
+  createTransaction(db, {
+    accountId: bank,
+    postedDate: '2026-10-05',
+    amountMinor: 8_500_000,
+    payee: 'Salary',
+  })
 })
 
 afterEach(() => {
@@ -107,7 +117,12 @@ describe('backups', () => {
     const before = fingerprint(db)
     const backup = await createBackup(db, backups, 'manual')
     const bank = listAccounts(db)[0]!.id
-    createTransaction(db, { accountId: bank, postedDate: '2026-10-09', amountMinor: -1_800_000, payee: 'Rent' })
+    createTransaction(db, {
+      accountId: bank,
+      postedDate: '2026-10-09',
+      amountMinor: -1_800_000,
+      payee: 'Rent',
+    })
     createAccount(db, { name: 'Wallet', type: 'cash', openingBalanceMinor: 100, openingDate: '2026-10-01' })
     const changed = fingerprint(db)
     expect(changed).not.toEqual(before)
@@ -125,9 +140,19 @@ describe('backups', () => {
     const enc = await createBackup(db, backups, 'manual', { passphrase: 'long enough', kdf: FAST })
     expect(enc).toMatchObject({ encrypted: true })
     expect(enc.fileName.endsWith('.finbackup')).toBe(true)
-    expect(await inspectBackup(enc.path, undefined, work)).toMatchObject({ valid: false, reason: 'NEEDS_PASSPHRASE' })
-    expect(await inspectBackup(enc.path, 'wrong one!', work)).toMatchObject({ valid: false, reason: 'WRONG_PASSPHRASE' })
-    expect(await inspectBackup(enc.path, 'long enough', work)).toMatchObject({ valid: true, encrypted: true, counts: before.counts })
+    expect(await inspectBackup(enc.path, undefined, work)).toMatchObject({
+      valid: false,
+      reason: 'NEEDS_PASSPHRASE',
+    })
+    expect(await inspectBackup(enc.path, 'wrong one!', work)).toMatchObject({
+      valid: false,
+      reason: 'WRONG_PASSPHRASE',
+    })
+    expect(await inspectBackup(enc.path, 'long enough', work)).toMatchObject({
+      valid: true,
+      encrypted: true,
+      counts: before.counts,
+    })
 
     createAccount(db, { name: 'Wallet', type: 'cash', openingBalanceMinor: 100, openingDate: '2026-10-01' })
     await restore(enc.path, 'long enough')
@@ -151,7 +176,10 @@ describe('backups', () => {
     expect(await inspectBackup(text, undefined, work)).toMatchObject({ valid: false, reason: 'NOT_FIN' })
     expect(await inspectBackup(other, undefined, work)).toMatchObject({ valid: false, reason: 'NOT_FIN' })
     expect((await inspectBackup(truncated, undefined, work)).valid).toBe(false)
-    expect(await inspectBackup(join(dir, 'nope.db'), undefined, work)).toMatchObject({ valid: false, reason: 'NOT_FOUND' })
+    expect(await inspectBackup(join(dir, 'nope.db'), undefined, work)).toMatchObject({
+      valid: false,
+      reason: 'NOT_FOUND',
+    })
     await expect(restore(text)).rejects.toThrow('not a Fin backup')
     expect(fingerprint(db)).toEqual(before)
   })
@@ -161,7 +189,12 @@ describe('backups', () => {
     const old = openDatabase(oldFile)
     migrate(old, { migrations: MIGRATIONS.slice(0, 1) })
     seedDefaultCategories(old)
-    createAccount(old, { name: 'Old bank', type: 'bank', openingBalanceMinor: 123_400, openingDate: '2025-04-01' })
+    createAccount(old, {
+      name: 'Old bank',
+      type: 'bank',
+      openingBalanceMinor: 123_400,
+      openingDate: '2025-04-01',
+    })
     const oldBackup = snapshotDatabase(old, backups, 'manual')
     old.close()
 
@@ -175,8 +208,15 @@ describe('backups', () => {
   it('refuses a backup from a newer version of the app', async () => {
     const newer = await createBackup(db, backups, 'manual')
     const d = openDatabase(newer.path)
-    d.prepare('INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)').run(LATEST_SCHEMA_VERSION + 1, 'future', 'x')
+    d.prepare('INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)').run(
+      LATEST_SCHEMA_VERSION + 1,
+      'future',
+      'x',
+    )
     d.close()
-    expect(await inspectBackup(newer.path, undefined, work)).toMatchObject({ valid: false, reason: 'TOO_NEW' })
+    expect(await inspectBackup(newer.path, undefined, work)).toMatchObject({
+      valid: false,
+      reason: 'TOO_NEW',
+    })
   })
 })

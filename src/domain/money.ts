@@ -11,7 +11,8 @@ export class MoneyError extends Error {
 }
 
 function assertMinor(minor: number): void {
-  if (!Number.isSafeInteger(minor)) throw new MoneyError(`Amount must be a safe integer of minor units, got ${minor}`)
+  if (!Number.isSafeInteger(minor))
+    throw new MoneyError(`Amount must be a safe integer of minor units, got ${minor}`)
 }
 
 export function money(minor: number, currency: string = DEFAULT_CURRENCY): Money {
@@ -50,7 +51,9 @@ export function sumMinor(values: readonly number[]): number {
 
 /** Number of minor-unit digits for a currency (INR → 2, JPY → 0). */
 export function minorDigits(currency: string): number {
-  return new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2
+  return (
+    new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2
+  )
 }
 
 /**
@@ -116,7 +119,9 @@ export function toMajorString(minor: number, currency: string = DEFAULT_CURRENCY
   assertMinor(minor)
   const digits = minorDigits(currency)
   const sign = minor < 0 ? '-' : ''
-  const abs = Math.abs(minor).toString().padStart(digits + 1, '0')
+  const abs = Math.abs(minor)
+    .toString()
+    .padStart(digits + 1, '0')
   if (digits === 0) return sign + abs
   return `${sign}${abs.slice(0, -digits)}.${abs.slice(-digits)}`
 }

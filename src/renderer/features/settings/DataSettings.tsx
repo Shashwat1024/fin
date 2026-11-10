@@ -13,7 +13,14 @@ import {
 } from 'lucide-react'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@renderer/components/ui/table'
 import { useAppStatus, useBackups, useFinMutation } from '@renderer/lib/queries'
 import type { BackupKind } from '@shared/types'
@@ -39,9 +46,15 @@ export function DataSettings() {
   const demo = useDemoMode()
   const [backupOpen, setBackupOpen] = useState(false)
   const [restoreTarget, setRestoreTarget] = useState<RestoreTarget | null>(null)
-  const pick = useFinMutation('backup.pickFile', { onSuccess: (r) => r && setRestoreTarget({ path: r.path, label: r.path }) })
-  const chooseFolder = useFinMutation('backup.chooseFolder', { onSuccess: (r) => r && toast.success('Backups will be saved in the new folder') })
-  const resetFolder = useFinMutation('settings.update', { success: 'Backups will be saved in the default folder' })
+  const pick = useFinMutation('backup.pickFile', {
+    onSuccess: (r) => r && setRestoreTarget({ path: r.path, label: r.path }),
+  })
+  const chooseFolder = useFinMutation('backup.chooseFolder', {
+    onSuccess: (r) => r && toast.success('Backups will be saved in the new folder'),
+  })
+  const resetFolder = useFinMutation('settings.update', {
+    success: 'Backups will be saved in the default folder',
+  })
   const openFolder = useFinMutation('backup.openFolder')
   const saved = (r: { path: string } | null) => r && toast.success(`Saved to ${r.path}`)
   const exportJson = useFinMutation('export.json', { onSuccess: saved })
@@ -59,8 +72,8 @@ export function DataSettings() {
             <DatabaseBackupIcon className="size-4" /> Backups
           </CardTitle>
           <CardDescription>
-            Fin makes a backup each day you open it and keeps the last 14 daily ones. Manual backups and the copies made
-            before a restore are kept until you delete them.
+            Fin makes a backup each day you open it and keeps the last 14 daily ones. Manual backups and the
+            copies made before a restore are kept until you delete them.
           </CardDescription>
           <CardAction className="flex gap-2">
             <Button variant="outline" onClick={() => pick.mutate(undefined)} disabled={inDemo}>
@@ -72,7 +85,9 @@ export function DataSettings() {
           </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {inDemo && <p className="text-sm text-muted-foreground">Backups are paused while you explore demo data.</p>}
+          {inDemo && (
+            <p className="text-sm text-muted-foreground">Backups are paused while you explore demo data.</p>
+          )}
           <div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm">
             <span className="text-muted-foreground">Folder</span>
             <code className="min-w-0 flex-1 truncate text-xs" title={s?.backupDir}>
@@ -81,18 +96,29 @@ export function DataSettings() {
             <Button variant="ghost" size="sm" onClick={() => openFolder.mutate(undefined)}>
               <FolderOpenIcon /> Open
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => chooseFolder.mutate(undefined)} disabled={inDemo}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => chooseFolder.mutate(undefined)}
+              disabled={inDemo}
+            >
               <FolderPenIcon /> Change…
             </Button>
             {custom && (
-              <Button variant="ghost" size="sm" onClick={() => resetFolder.mutate({ backupDir: null })} disabled={inDemo}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => resetFolder.mutate({ backupDir: null })}
+                disabled={inDemo}
+              >
                 <RotateCcwIcon /> Use default
               </Button>
             )}
           </div>
           {custom && (
             <p className="text-xs text-muted-foreground">
-              If this folder is synced to a cloud drive, copies of your data leave this computer through that service.
+              If this folder is synced to a cloud drive, copies of your data leave this computer through that
+              service.
             </p>
           )}
           {backups.data && backups.data.length > 0 ? (
@@ -114,11 +140,20 @@ export function DataSettings() {
                       </TableCell>
                       <TableCell>
                         <span className="flex items-center gap-2">
-                          <Badge variant={b.kind === 'manual' ? 'secondary' : 'outline'}>{KIND_LABEL[b.kind]}</Badge>
-                          {b.encrypted && <LockIcon className="size-3.5 text-muted-foreground" aria-label="Protected with a passphrase" />}
+                          <Badge variant={b.kind === 'manual' ? 'secondary' : 'outline'}>
+                            {KIND_LABEL[b.kind]}
+                          </Badge>
+                          {b.encrypted && (
+                            <LockIcon
+                              className="size-3.5 text-muted-foreground"
+                              aria-label="Protected with a passphrase"
+                            />
+                          )}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground tabular-nums">{size(b.sizeBytes)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground tabular-nums">
+                        {size(b.sizeBytes)}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"
@@ -136,7 +171,9 @@ export function DataSettings() {
               </Table>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No backups yet. The first daily backup is made the next time Fin opens.</p>
+            <p className="text-sm text-muted-foreground">
+              No backups yet. The first daily backup is made the next time Fin opens.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -145,14 +182,23 @@ export function DataSettings() {
         <CardHeader>
           <CardTitle>Export</CardTitle>
           <CardDescription>
-            Take your data anywhere. The JSON file contains everything; the CSV has your transactions for spreadsheets.
+            Take your data anywhere. The JSON file contains everything; the CSV has your transactions for
+            spreadsheets.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => exportCsv.mutate(undefined)} disabled={exportCsv.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => exportCsv.mutate(undefined)}
+            disabled={exportCsv.isPending}
+          >
             <FileSpreadsheetIcon /> Transactions (CSV)
           </Button>
-          <Button variant="outline" onClick={() => exportJson.mutate(undefined)} disabled={exportJson.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => exportJson.mutate(undefined)}
+            disabled={exportJson.isPending}
+          >
             <FileJsonIcon /> Everything (JSON)
           </Button>
         </CardContent>
@@ -164,8 +210,8 @@ export function DataSettings() {
             <FlaskConicalIcon className="size-4" /> Demo data
           </CardTitle>
           <CardDescription>
-            Explore Fin with a made-up household. Your own data is set aside, untouched, until you leave the demo, and
-            anything you change in the demo is thrown away.
+            Explore Fin with a made-up household. Your own data is set aside, untouched, until you leave the
+            demo, and anything you change in the demo is thrown away.
           </CardDescription>
           <CardAction>
             {inDemo ? (

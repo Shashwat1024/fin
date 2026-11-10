@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { undoGroup } from '@db/audit'
 import type { Db } from '@db/connection'
-import { createAccount, getAccount, listAccounts, setAccountArchived, updateAccount } from '@db/repos/accounts'
+import {
+  createAccount,
+  getAccount,
+  listAccounts,
+  setAccountArchived,
+  updateAccount,
+} from '@db/repos/accounts'
 import { listTags } from '@db/repos/categories'
 import { getSettings, updateSettings } from '@db/repos/settings'
 import {
@@ -25,11 +31,24 @@ let card: string
 
 beforeEach(() => {
   db = testDb()
-  bank = createAccount(db, { name: 'HDFC Savings', type: 'bank', openingBalanceMinor: 5_000_000, openingDate: '2026-10-01' })
-    .account.id
-  cash = createAccount(db, { name: 'Cash', type: 'cash', openingBalanceMinor: 200_000, openingDate: '2026-10-01' }).account.id
-  card = createAccount(db, { name: 'Card', type: 'credit_card', openingBalanceMinor: 1_200_000, openingDate: '2026-10-01' })
-    .account.id
+  bank = createAccount(db, {
+    name: 'HDFC Savings',
+    type: 'bank',
+    openingBalanceMinor: 5_000_000,
+    openingDate: '2026-10-01',
+  }).account.id
+  cash = createAccount(db, {
+    name: 'Cash',
+    type: 'cash',
+    openingBalanceMinor: 200_000,
+    openingDate: '2026-10-01',
+  }).account.id
+  card = createAccount(db, {
+    name: 'Card',
+    type: 'credit_card',
+    openingBalanceMinor: 1_200_000,
+    openingDate: '2026-10-01',
+  }).account.id
 })
 
 const balance = (id: string) => getAccount(db, id).balanceMinor
@@ -37,7 +56,10 @@ const balance = (id: string) => getAccount(db, id).balanceMinor
 describe('settings', () => {
   it('returns defaults and persists patches', () => {
     expect(getSettings(db)).toMatchObject({ currency: 'INR', timezone: 'Asia/Kolkata', fyStartMonth: 4 })
-    expect(updateSettings(db, { fyStartMonth: 1, onboarded: true })).toMatchObject({ fyStartMonth: 1, onboarded: true })
+    expect(updateSettings(db, { fyStartMonth: 1, onboarded: true })).toMatchObject({
+      fyStartMonth: 1,
+      onboarded: true,
+    })
     expect(getSettings(db).fyStartMonth).toBe(1)
   })
 })
@@ -48,11 +70,17 @@ describe('accounts', () => {
     expect(list.map((a) => a.name)).toEqual(['HDFC Savings', 'Cash', 'Card'])
     expect(balance(card)).toBe(1_200_000)
     expect(getAccount(db, card).ledgerBalanceMinor).toBe(-1_200_000)
-    expect(getAccount(db, card)).toMatchObject({ nature: 'liability', isLiquid: false, openingBalanceMinor: 1_200_000 })
+    expect(getAccount(db, card)).toMatchObject({
+      nature: 'liability',
+      isLiquid: false,
+      openingBalanceMinor: 1_200_000,
+    })
   })
 
   it('enforces unique active names and supports archive/restore', () => {
-    expect(() => createAccount(db, { name: 'cash', type: 'cash', openingDate: '2026-10-01' })).toThrow(/already exists/)
+    expect(() => createAccount(db, { name: 'cash', type: 'cash', openingDate: '2026-10-01' })).toThrow(
+      /already exists/,
+    )
     setAccountArchived(db, cash, true)
     expect(listAccounts(db).map((a) => a.name)).not.toContain('Cash')
     expect(listAccounts(db, true).find((a) => a.id === cash)?.archived).toBe(true)
@@ -157,7 +185,12 @@ describe('transactions', () => {
     expect(balance(card)).toBe(1_200_000)
 
     expect(() =>
-      createTransfer(db, { fromAccountId: bank, toAccountId: bank, postedDate: '2026-10-07', amountMinor: 1 }),
+      createTransfer(db, {
+        fromAccountId: bank,
+        toAccountId: bank,
+        postedDate: '2026-10-07',
+        amountMinor: 1,
+      }),
     ).toThrow(/different accounts/)
   })
 })
@@ -168,9 +201,27 @@ describe('query', () => {
     const dining = categoryId(db, 'Food › Dining out')
     const household = categoryId(db, 'Shopping › Household')
     const salary = categoryId(db, 'Income › Salary')
-    createTransaction(db, { accountId: bank, postedDate: '2026-10-01', amountMinor: 9_000_000, payee: 'ACME Payroll', categoryId: salary })
-    createTransaction(db, { accountId: bank, postedDate: '2026-10-03', amountMinor: -45_000, payee: 'Swiggy order', categoryId: dining, tags: ['late'] })
-    createTransaction(db, { accountId: cash, postedDate: '2026-10-04', amountMinor: -12_000, payee: 'Chai stall' })
+    createTransaction(db, {
+      accountId: bank,
+      postedDate: '2026-10-01',
+      amountMinor: 9_000_000,
+      payee: 'ACME Payroll',
+      categoryId: salary,
+    })
+    createTransaction(db, {
+      accountId: bank,
+      postedDate: '2026-10-03',
+      amountMinor: -45_000,
+      payee: 'Swiggy order',
+      categoryId: dining,
+      tags: ['late'],
+    })
+    createTransaction(db, {
+      accountId: cash,
+      postedDate: '2026-10-04',
+      amountMinor: -12_000,
+      payee: 'Chai stall',
+    })
     createTransaction(db, {
       accountId: bank,
       postedDate: '2026-10-05',
@@ -181,12 +232,24 @@ describe('query', () => {
         { categoryId: household, amountMinor: -90_000 },
       ],
     })
-    createTransfer(db, { fromAccountId: bank, toAccountId: cash, postedDate: '2026-10-06', amountMinor: 100_000 })
+    createTransfer(db, {
+      fromAccountId: bank,
+      toAccountId: cash,
+      postedDate: '2026-10-06',
+      amountMinor: 100_000,
+    })
   })
 
   it('returns rows newest first with totals', () => {
     const page = queryTransactions(db, {})
-    expect(page.rows.map((r) => r.postedDate)).toEqual(['2026-10-06', '2026-10-06', '2026-10-05', '2026-10-04', '2026-10-03', '2026-10-01'])
+    expect(page.rows.map((r) => r.postedDate)).toEqual([
+      '2026-10-06',
+      '2026-10-06',
+      '2026-10-05',
+      '2026-10-04',
+      '2026-10-03',
+      '2026-10-01',
+    ])
     expect(page.totals).toEqual({ count: 6, inMinor: 9_100_000, outMinor: -397_000, netMinor: 8_703_000 })
   })
 
@@ -216,7 +279,9 @@ describe('query', () => {
     // Only the grocery part of the split counts toward the Food total.
     expect(foodPage.totals.outMinor).toBe(-195_000)
     expect(queryTransactions(db, { categoryIds: [household] }).totals.outMinor).toBe(-90_000)
-    expect(queryTransactions(db, { categoryIds: ['uncategorized'] }).rows.map((r) => r.payee)).toEqual(['Chai stall'])
+    expect(queryTransactions(db, { categoryIds: ['uncategorized'] }).rows.map((r) => r.payee)).toEqual([
+      'Chai stall',
+    ])
   })
 
   it('paginates with a stable cursor', () => {

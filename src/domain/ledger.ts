@@ -58,7 +58,11 @@ export type SplitPart = { categoryId: string; amountMinor: number }
 
 export type SplitValidation =
   | { ok: true }
-  | { ok: false; reason: 'TOO_FEW_PARTS' | 'ZERO_PART' | 'SIGN_MISMATCH' | 'SUM_MISMATCH'; remainingMinor: number }
+  | {
+      ok: false
+      reason: 'TOO_FEW_PARTS' | 'ZERO_PART' | 'SIGN_MISMATCH' | 'SUM_MISMATCH'
+      remainingMinor: number
+    }
 
 /** Splits need ≥ 2 non-zero parts with the parent's sign that sum exactly to the parent amount. */
 export function validateSplits(totalMinor: number, parts: readonly SplitPart[]): SplitValidation {

@@ -59,10 +59,14 @@ test('US6: categories, a rule previewed and applied with undo, and suggestions o
   await ruleDialog.getByLabel('Name').fill('Swiggy')
   await ruleDialog.getByLabel('Condition 1 text').fill('swiggy')
   await pickCategory(ruleDialog.getByRole('combobox', { name: 'Category' }), 'Food delivery')
-  await expect(ruleDialog.getByTestId('rule-live-count')).toHaveText('Matches 2 past uncategorised transactions.')
+  await expect(ruleDialog.getByTestId('rule-live-count')).toHaveText(
+    'Matches 2 past uncategorised transactions.',
+  )
   await ruleDialog.getByRole('button', { name: 'Add rule' }).click()
   const apply = page.getByRole('dialog', { name: /Apply “Swiggy”/ })
-  await expect(apply.getByRole('list', { name: 'Transactions that would change' }).getByRole('listitem')).toHaveCount(2)
+  await expect(
+    apply.getByRole('list', { name: 'Transactions that would change' }).getByRole('listitem'),
+  ).toHaveCount(2)
   await apply.getByRole('button', { name: 'Categorise 2 transactions' }).click()
   const applied = toast(page, 'Categorised 2 transactions as Food › Food delivery')
   await expect(applied).toBeVisible()
@@ -106,7 +110,12 @@ test('US6: categories, a rule previewed and applied with undo, and suggestions o
   await expect(toast(page, 'Imported')).toBeVisible()
   await page.keyboard.press('Control+2')
   await expect(row('Chai Point').first()).toContainText('Uncategorized')
-  await expect(page.getByRole('row').filter({ hasText: /^.*Swiggy.*Dining out/ }).first()).toBeVisible()
+  await expect(
+    page
+      .getByRole('row')
+      .filter({ hasText: /^.*Swiggy.*Dining out/ })
+      .first(),
+  ).toBeVisible()
 })
 
 test('offline throughout categorisation', async () => {

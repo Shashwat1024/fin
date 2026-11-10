@@ -78,7 +78,15 @@ export function StatusCell({ row }: { row: ParsedRow }) {
 }
 
 /** Parsed lines as the importer reads them; used while mapping and in the review step. */
-export function ParsedRowsTable({ rows, limit = 200, extra }: { rows: ParsedRow[]; limit?: number; extra?: (row: ParsedRow) => React.ReactNode }) {
+export function ParsedRowsTable({
+  rows,
+  limit = 200,
+  extra,
+}: {
+  rows: ParsedRow[]
+  limit?: number
+  extra?: (row: ParsedRow) => React.ReactNode
+}) {
   const shown = rows.slice(0, limit)
   return (
     <div className="max-h-[28rem] overflow-auto rounded-lg border">
@@ -94,13 +102,20 @@ export function ParsedRowsTable({ rows, limit = 200, extra }: { rows: ParsedRow[
         </TableHeader>
         <TableBody>
           {shown.map((r) => (
-            <TableRow key={r.rowNumber} className={r.status === 'error' ? 'bg-destructive/5' : r.status === 'ignored' ? 'opacity-60' : undefined}>
+            <TableRow
+              key={r.rowNumber}
+              className={
+                r.status === 'error' ? 'bg-destructive/5' : r.status === 'ignored' ? 'opacity-60' : undefined
+              }
+            >
               <TableCell className="text-muted-foreground tabular-nums">{r.rowNumber}</TableCell>
               {r.status === 'ok' ? (
                 <>
                   <TableCell className="tabular-nums">{formatDate(r.values.date)}</TableCell>
                   <TableCell className="max-w-0 truncate" title={r.values.description}>
-                    {r.values.description || <span className="italic text-muted-foreground">No description</span>}
+                    {r.values.description || (
+                      <span className="italic text-muted-foreground">No description</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     <MoneyText minor={r.values.amountMinor} tone="auto" showPlus />
@@ -109,7 +124,9 @@ export function ParsedRowsTable({ rows, limit = 200, extra }: { rows: ParsedRow[
               ) : (
                 <TableCell colSpan={3} className="max-w-0 truncate">
                   <StatusCell row={r} />
-                  <span className="ml-2 text-xs text-muted-foreground">{r.raw.filter(Boolean).join(' · ')}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {r.raw.filter(Boolean).join(' · ')}
+                  </span>
                 </TableCell>
               )}
               {extra && <TableCell>{extra(r)}</TableCell>}
@@ -118,7 +135,9 @@ export function ParsedRowsTable({ rows, limit = 200, extra }: { rows: ParsedRow[
         </TableBody>
       </Table>
       {rows.length > limit && (
-        <p className="border-t px-3 py-2 text-xs text-muted-foreground">Showing the first {limit} of {rows.length} lines.</p>
+        <p className="border-t px-3 py-2 text-xs text-muted-foreground">
+          Showing the first {limit} of {rows.length} lines.
+        </p>
       )}
     </div>
   )
@@ -131,15 +150,20 @@ export function MappingStep({ wizard }: { wizard: ImportWizard }) {
   if (!file || !mapping || !result) return null
   const headers = result.headers
   const set = (patch: Partial<Mapping>) => wizard.setMapping({ ...mapping, ...patch })
-  const setColumn = (key: ColumnKey, v: string | undefined) => set({ columns: { ...mapping.columns, [key]: v } })
+  const setColumn = (key: ColumnKey, v: string | undefined) =>
+    set({ columns: { ...mapping.columns, [key]: v } })
   const missing = new Set(result.missingColumns)
   const counts = {
     ok: result.rows.filter((r) => r.status === 'ok').length,
     error: result.rows.filter((r) => r.status === 'error').length,
     ignored: result.rows.filter((r) => r.status === 'ignored').length,
   }
-  const amountColumns: ColumnKey[] = requiredColumns(mapping).filter((k) => k !== 'date' && k !== 'description')
-  const headerOptions = file.table.rows.slice(0, 30).map((row, i) => ({ i, text: row.filter(Boolean).slice(0, 4).join(' · ') }))
+  const amountColumns: ColumnKey[] = requiredColumns(mapping).filter(
+    (k) => k !== 'date' && k !== 'description',
+  )
+  const headerOptions = file.table.rows
+    .slice(0, 30)
+    .map((row, i) => ({ i, text: row.filter(Boolean).slice(0, 4).join(' · ') }))
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[22rem_1fr]">
@@ -152,7 +176,11 @@ export function MappingStep({ wizard }: { wizard: ImportWizard }) {
         </CardHeader>
         <CardContent>
           <FieldGroup className="gap-4">
-            <FormField label="Bank layout" htmlFor={`${id}-preset`} description={wizard.edited ? 'Changed from the saved layout' : undefined}>
+            <FormField
+              label="Bank layout"
+              htmlFor={`${id}-preset`}
+              description={wizard.edited ? 'Changed from the saved layout' : undefined}
+            >
               <Select
                 value={wizard.preset?.id ?? CUSTOM}
                 onValueChange={(v) => wizard.applyPreset(wizard.presets.find((p) => p.id === v) ?? null)}
@@ -199,7 +227,13 @@ export function MappingStep({ wizard }: { wizard: ImportWizard }) {
                 </SelectContent>
               </Select>
             </FormField>
-            <ColumnSelect label="Date" headers={headers} value={mapping.columns.date} onChange={(v) => setColumn('date', v)} missing={missing.has('date')} />
+            <ColumnSelect
+              label="Date"
+              headers={headers}
+              value={mapping.columns.date}
+              onChange={(v) => setColumn('date', v)}
+              missing={missing.has('date')}
+            />
             <ColumnSelect
               label="Description"
               headers={headers}
@@ -229,15 +263,38 @@ export function MappingStep({ wizard }: { wizard: ImportWizard }) {
               </ToggleGroup>
             </div>
             {amountColumns.map((k) => (
-              <ColumnSelect key={k} label={COLUMN_LABELS[k]} headers={headers} value={mapping.columns[k]} onChange={(v) => setColumn(k, v)} missing={missing.has(k)} />
+              <ColumnSelect
+                key={k}
+                label={COLUMN_LABELS[k]}
+                headers={headers}
+                value={mapping.columns[k]}
+                onChange={(v) => setColumn(k, v)}
+                missing={missing.has(k)}
+              />
             ))}
-            <ColumnSelect label={COLUMN_LABELS.balance} headers={headers} value={mapping.columns.balance} onChange={(v) => setColumn('balance', v)} optional />
-            <ColumnSelect label={COLUMN_LABELS.reference} headers={headers} value={mapping.columns.reference} onChange={(v) => setColumn('reference', v)} optional />
+            <ColumnSelect
+              label={COLUMN_LABELS.balance}
+              headers={headers}
+              value={mapping.columns.balance}
+              onChange={(v) => setColumn('balance', v)}
+              optional
+            />
+            <ColumnSelect
+              label={COLUMN_LABELS.reference}
+              headers={headers}
+              value={mapping.columns.reference}
+              onChange={(v) => setColumn('reference', v)}
+              optional
+            />
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor={`${id}-invert`} className="font-normal">
                 Flip signs (purchases shown as positive)
               </Label>
-              <Switch id={`${id}-invert`} checked={Boolean(mapping.signInverted)} onCheckedChange={(v) => set({ signInverted: v })} />
+              <Switch
+                id={`${id}-invert`}
+                checked={Boolean(mapping.signInverted)}
+                onCheckedChange={(v) => set({ signInverted: v })}
+              />
             </div>
           </FieldGroup>
         </CardContent>
@@ -251,12 +308,17 @@ export function MappingStep({ wizard }: { wizard: ImportWizard }) {
               <AlertTriangleIcon /> {plural(counts.error, 'line')} with problems
             </Badge>
           )}
-          {counts.ignored > 0 && <Badge variant="outline">{plural(counts.ignored, 'other line')} skipped</Badge>}
-          <span className="text-muted-foreground">Money out shows with a minus sign; money in shows with a plus.</span>
+          {counts.ignored > 0 && (
+            <Badge variant="outline">{plural(counts.ignored, 'other line')} skipped</Badge>
+          )}
+          <span className="text-muted-foreground">
+            Money out shows with a minus sign; money in shows with a plus.
+          </span>
         </div>
         {result.missingColumns.length > 0 ? (
           <p role="alert" className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-            Choose the {result.missingColumns.map((k) => COLUMN_LABELS[k].toLowerCase()).join(', ')} column to see a preview.
+            Choose the {result.missingColumns.map((k) => COLUMN_LABELS[k].toLowerCase()).join(', ')} column to
+            see a preview.
           </p>
         ) : (
           <ParsedRowsTable rows={result.rows} />
@@ -265,7 +327,10 @@ export function MappingStep({ wizard }: { wizard: ImportWizard }) {
           <Button variant="outline" onClick={() => wizard.setStep('file')}>
             <ArrowLeftIcon /> Back
           </Button>
-          <Button disabled={result.missingColumns.length > 0 || counts.ok === 0} onClick={() => wizard.setStep('review')}>
+          <Button
+            disabled={result.missingColumns.length > 0 || counts.ok === 0}
+            onClick={() => wizard.setStep('review')}
+          >
             Check for duplicates <ArrowRightIcon />
           </Button>
         </div>

@@ -1,14 +1,29 @@
 import type { ReactNode } from 'react'
 import { AlertTriangleIcon } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@renderer/components/ui/empty'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@renderer/components/ui/empty'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@renderer/components/ui/field'
 import { Kbd, KbdGroup } from '@renderer/components/ui/kbd'
 import { Spinner } from '@renderer/components/ui/spinner'
 import { comboLabel } from '@renderer/lib/hotkeys'
 import { cn } from '@renderer/lib/utils'
 
-export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string
+  description?: ReactNode
+  actions?: ReactNode
+}) {
   return (
     <header className="flex flex-wrap items-end justify-between gap-4 pb-6">
       <div className="min-w-0">
@@ -62,8 +77,16 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
     <EmptyState
       icon={<AlertTriangleIcon />}
       title="Something went wrong"
-      description={error instanceof Error ? error.message : 'This view could not be loaded. Your data was not changed.'}
-      action={onRetry && <Button variant="outline" onClick={onRetry}>Try again</Button>}
+      description={
+        error instanceof Error ? error.message : 'This view could not be loaded. Your data was not changed.'
+      }
+      action={
+        onRetry && (
+          <Button variant="outline" onClick={onRetry}>
+            Try again
+          </Button>
+        )
+      }
     />
   )
 }

@@ -12,7 +12,12 @@ function isChannel(c: unknown): c is Channel {
  * Validate and execute one request from the (untrusted) renderer. Never throws: every failure
  * becomes a typed error result. Logs carry only the channel, timing and error code.
  */
-export async function dispatch(ctx: HandlerContext, channel: unknown, payload: unknown, log?: Logger): Promise<Result<unknown>> {
+export async function dispatch(
+  ctx: HandlerContext,
+  channel: unknown,
+  payload: unknown,
+  log?: Logger,
+): Promise<Result<unknown>> {
   const started = performance.now()
   if (!isChannel(channel)) {
     log?.warn('ipc.unknown_channel')
@@ -41,6 +46,9 @@ export async function dispatch(ctx: HandlerContext, channel: unknown, payload: u
       return { ok: false, error: { code: err.code, message: err.message, issues: err.issues } }
     }
     log?.error('ipc.internal_error', { channel, kind: err instanceof Error ? err.name : typeof err })
-    return { ok: false, error: { code: 'INTERNAL', message: 'Something went wrong. Your data was not changed.' } }
+    return {
+      ok: false,
+      error: { code: 'INTERNAL', message: 'Something went wrong. Your data was not changed.' },
+    }
   }
 }

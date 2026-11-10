@@ -4,7 +4,16 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { undoGroup } from '@db/audit'
 import type { Db } from '@db/connection'
 import { createAccount, getAccount } from '@db/repos/accounts'
-import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
+import {
+  batchRows,
+  commitImport,
+  listBatches,
+  listPresets,
+  previewImport,
+  reconcile,
+  savePreset,
+  undoImport,
+} from '@db/repos/imports'
 import { createTransaction, queryTransactions, updateTransaction } from '@db/repos/transactions'
 import { detectHeaderRow, parseTable } from '@domain/import/csv'
 import { decodeBytes } from '@domain/import/decode'
@@ -18,7 +27,12 @@ let bank: string
 
 beforeEach(() => {
   db = testDb()
-  bank = createAccount(db, { name: 'HDFC', type: 'bank', openingBalanceMinor: 5_000_000, openingDate: '2026-09-30' }).account.id
+  bank = createAccount(db, {
+    name: 'HDFC',
+    type: 'bank',
+    openingBalanceMinor: 5_000_000,
+    openingDate: '2026-09-30',
+  }).account.id
 })
 
 /** What the renderer sends after mapping a fixture file. */
@@ -29,7 +43,9 @@ function prepare(file: string, accountId = bank, importPossibleDuplicates: numbe
   const mapping: Mapping = { ...preset.mapping, headerRow }
   const { rows } = applyMapping(table.rows, mapping, table.lineNumbers)
   const ok = rows.filter((r): r is Extract<ParsedRow, { status: 'ok' }> => r.status === 'ok')
-  const rejected = rows.flatMap((r) => (r.status === 'ok' ? [] : [{ rowNumber: r.rowNumber, raw: r.raw, status: r.status, message: r.message }]))
+  const rejected = rows.flatMap((r) =>
+    r.status === 'ok' ? [] : [{ rowNumber: r.rowNumber, raw: r.raw, status: r.status, message: r.message }],
+  )
   return {
     accountId,
     fileName: file,
@@ -58,8 +74,19 @@ describe('import', () => {
     expect(reconcile(db, bank, '2026-10-05', 11_647_000).differenceMinor).toBe(0)
 
     const rows = batchRows(db, batchId)
-    expect(rows.map((r) => r.outcome)).toEqual(['imported', 'imported', 'imported', 'imported', 'failed', 'imported', 'ignored'])
-    expect(rows.find((r) => r.outcome === 'failed')).toMatchObject({ rowNumber: 10, message: '"32/10/26" is not a valid date' })
+    expect(rows.map((r) => r.outcome)).toEqual([
+      'imported',
+      'imported',
+      'imported',
+      'imported',
+      'failed',
+      'imported',
+      'ignored',
+    ])
+    expect(rows.find((r) => r.outcome === 'failed')).toMatchObject({
+      rowNumber: 10,
+      message: '"32/10/26" is not a valid date',
+    })
     expect(queryTransactions(db, { importBatchId: batchId }).totals.count).toBe(5)
   })
 
@@ -75,7 +102,12 @@ describe('import', () => {
   })
 
   it('flags a manually entered transaction as a possible duplicate and respects the choice', () => {
-    createTransaction(db, { accountId: bank, postedDate: '2026-10-04', amountMinor: -1_800_000, payee: 'Rent' })
+    createTransaction(db, {
+      accountId: bank,
+      postedDate: '2026-10-04',
+      amountMinor: -1_800_000,
+      payee: 'Rent',
+    })
     const input = prepare('hdfc_savings.csv')
     const preview = previewImport(db, { accountId: bank, rows: input.rows })
     const rent = preview.rows.find((r) => r.status === 'possible_duplicate')
@@ -91,7 +123,12 @@ describe('import', () => {
 
   it('undoes a batch exactly, keeping edited transactions unless asked', () => {
     const before = { balance: balance(), count: txnCount() }
-    const manual = createTransaction(db, { accountId: bank, postedDate: '2026-10-20', amountMinor: -100, payee: 'Manual' }).txn.id
+    const manual = createTransaction(db, {
+      accountId: bank,
+      postedDate: '2026-10-20',
+      amountMinor: -100,
+      payee: 'Manual',
+    }).txn.id
     const { batchId } = commitImport(db, prepare('hdfc_savings.csv'))
     const swiggy = queryTransactions(db, { importBatchId: batchId, text: 'swiggy' }).rows[0]!
     updateTransaction(db, swiggy.id, { categoryId: categoryId(db, 'Food › Food delivery') })
@@ -116,7 +153,12 @@ describe('import', () => {
   })
 
   it('imports a credit card statement into a liability account', () => {
-    const card = createAccount(db, { name: 'Card', type: 'credit_card', openingBalanceMinor: 0, openingDate: '2026-09-30' }).account.id
+    const card = createAccount(db, {
+      name: 'Card',
+      type: 'credit_card',
+      openingBalanceMinor: 0,
+      openingDate: '2026-09-30',
+    }).account.id
     commitImport(db, prepare('card_statement.csv', card))
     expect(getAccount(db, card).balanceMinor).toBe(749_900) // owed: 12,499 − 5,000
   })
@@ -124,9 +166,12 @@ describe('import', () => {
   it('rejects empty or inconsistent imports', () => {
     const input = prepare('hdfc_savings.csv')
     expect(() => commitImport(db, { ...input, rows: [] })).toThrow(/nothing to import/)
-    expect(() => commitImport(db, { ...input, rejected: [...input.rejected, { ...input.rejected[0]!, rowNumber: input.rows[0]!.rowNumber }] })).toThrow(
-      /only once/,
-    )
+    expect(() =>
+      commitImport(db, {
+        ...input,
+        rejected: [...input.rejected, { ...input.rejected[0]!, rowNumber: input.rows[0]!.rowNumber }],
+      }),
+    ).toThrow(/only once/)
   })
 
   it('saves presets (also during commit) and lists them before built-ins', () => {
@@ -140,7 +185,15 @@ describe('import', () => {
   })
 
   it('reconciles liabilities in "owed" terms', () => {
-    const card = createAccount(db, { name: 'Card', type: 'credit_card', openingBalanceMinor: 1_000, openingDate: '2026-09-30' }).account.id
-    expect(reconcile(db, card, '2026-10-31', 1_500)).toMatchObject({ computedBalanceMinor: 1_000, differenceMinor: 500 })
+    const card = createAccount(db, {
+      name: 'Card',
+      type: 'credit_card',
+      openingBalanceMinor: 1_000,
+      openingDate: '2026-09-30',
+    }).account.id
+    expect(reconcile(db, card, '2026-10-31', 1_500)).toMatchObject({
+      computedBalanceMinor: 1_000,
+      differenceMinor: 500,
+    })
   })
 })

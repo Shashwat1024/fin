@@ -5,8 +5,16 @@ import { useAppStatus, useFinMutation } from '@renderer/lib/queries'
 export function useDemoMode() {
   const navigate = useNavigate()
   const status = useAppStatus()
-  const enter = useFinMutation('demo.enter', { reloadAll: true, success: 'Showing demo data', onSuccess: () => navigate('/') })
-  const exit = useFinMutation('demo.exit', { reloadAll: true, success: 'Back to your own data', onSuccess: () => navigate('/') })
+  const enter = useFinMutation('demo.enter', {
+    reloadAll: true,
+    success: 'Showing demo data',
+    onSuccess: () => navigate('/'),
+  })
+  const exit = useFinMutation('demo.exit', {
+    reloadAll: true,
+    success: 'Back to your own data',
+    onSuccess: () => navigate('/'),
+  })
   return {
     active: status.data?.demo ?? false,
     pending: enter.isPending || exit.isPending,

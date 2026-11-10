@@ -45,7 +45,13 @@ export type ScenarioBase = {
   loans: readonly LoanBase[]
 }
 
-export type GoalEffect = { id: string; name: string; before: GoalProjection; after: GoalProjection; extraMonthlyMinor: number }
+export type GoalEffect = {
+  id: string
+  name: string
+  before: GoalProjection
+  after: GoalProjection
+  extraMonthlyMinor: number
+}
 export type LoanEffect = { id: string; name: string; beforeMinor: number; afterMinor: number }
 
 export type ScenarioResult = {
@@ -63,7 +69,9 @@ const SCENARIO_ID = 'what-if'
 
 /** Monthly dates from `from` (same day each month) up to `to`. */
 const monthly = (from: CalendarDate, to: CalendarDate) =>
-  compareDates(from, to) > 0 ? [] : occurrencesBetween({ frequency: 'monthly', interval: 1, anchorDate: from }, from, to)
+  compareDates(from, to) > 0
+    ? []
+    : occurrencesBetween({ frequency: 'monthly', interval: 1, anchorDate: from }, from, to)
 
 /** Never before today: a change dated in the past starts today. */
 const notBefore = (d: CalendarDate, today: CalendarDate) => (compareDates(d, today) < 0 ? today : d)
@@ -87,21 +95,31 @@ export function runScenario(base: ScenarioBase, changes: readonly ScenarioChange
     switch (c.kind) {
       case 'new_bill': {
         const start = c.startDate
-        const dates = occurrencesBetween({ frequency: c.frequency, interval: 1, anchorDate: start }, today, end)
+        const dates = occurrencesBetween(
+          { frequency: c.frequency, interval: 1, anchorDate: start },
+          today,
+          end,
+        )
         for (const d of dates) added.push(event(c.name, d, -c.amountMinor, n))
-        notes.push(`${c.name}: ${dates.length} payment${dates.length === 1 ? '' : 's'} in the next ${input.days} days.`)
+        notes.push(
+          `${c.name}: ${dates.length} payment${dates.length === 1 ? '' : 's'} in the next ${input.days} days.`,
+        )
         break
       }
       case 'large_purchase':
-        if (compareDates(c.date, end) <= 0) added.push(event(c.name, notBefore(c.date, today), -c.amountMinor, n))
+        if (compareDates(c.date, end) <= 0)
+          added.push(event(c.name, notBefore(c.date, today), -c.amountMinor, n))
         notes.push(`${c.name}: one payment, paid from your cash and bank accounts.`)
         break
       case 'loan_prepayment': {
         const loan = base.loans.find((l) => l.id === c.loanId)
         const name = `Prepay ${loan?.name ?? 'loan'}`
-        if (compareDates(c.date, end) <= 0) added.push(event(name, notBefore(c.date, today), -c.amountMinor, n))
+        if (compareDates(c.date, end) <= 0)
+          added.push(event(name, notBefore(c.date, today), -c.amountMinor, n))
         loanPaid.set(c.loanId, (loanPaid.get(c.loanId) ?? 0) + c.amountMinor)
-        notes.push(`${name}: your EMIs stay as they are here, so the loan ends sooner rather than costing less each month.`)
+        notes.push(
+          `${name}: your EMIs stay as they are here, so the loan ends sooner rather than costing less each month.`,
+        )
         break
       }
       case 'income_change': {
@@ -109,7 +127,9 @@ export function runScenario(base: ScenarioBase, changes: readonly ScenarioChange
         // On the first income payment of each month; on the 1st when no income is set up as recurring.
         const months = new Set<string>()
         const paydays = input.events
-          .filter((e) => income.has(e.itemId) && compareDates(e.date, from) >= 0 && compareDates(e.date, end) <= 0)
+          .filter(
+            (e) => income.has(e.itemId) && compareDates(e.date, from) >= 0 && compareDates(e.date, end) <= 0,
+          )
           .sort((a, b) => compareDates(a.date, b.date))
           .filter((e) => {
             const m = e.date.slice(0, 7)
@@ -118,8 +138,15 @@ export function runScenario(base: ScenarioBase, changes: readonly ScenarioChange
             return true
           })
           .map((e) => e.date)
-        const dates = paydays.length > 0 ? paydays : monthly(compareDates(startOfMonth(from), from) === 0 ? from : addMonths(startOfMonth(from), 1), end)
-        for (const d of dates) added.push(event(c.amountMinor >= 0 ? 'Pay rise' : 'Pay cut', d, c.amountMinor, n))
+        const dates =
+          paydays.length > 0
+            ? paydays
+            : monthly(
+                compareDates(startOfMonth(from), from) === 0 ? from : addMonths(startOfMonth(from), 1),
+                end,
+              )
+        for (const d of dates)
+          added.push(event(c.amountMinor >= 0 ? 'Pay rise' : 'Pay cut', d, c.amountMinor, n))
         notes.push(
           paydays.length > 0
             ? `Pay change applied on each payday from your recurring income (${dates.length} in this period).`
@@ -132,12 +159,16 @@ export function runScenario(base: ScenarioBase, changes: readonly ScenarioChange
         extraForGoal.set(goal?.id ?? null, (extraForGoal.get(goal?.id ?? null) ?? 0) + c.amountMinor)
         const name = goal ? `Save for ${goal.name}` : 'Extra savings'
         if (goal?.liquid) {
-          notes.push(`${name}: ${goal.name} is saved in a cash or bank account, so your cash and bank total does not change.`)
+          notes.push(
+            `${name}: ${goal.name} is saved in a cash or bank account, so your cash and bank total does not change.`,
+          )
           break
         }
         const dates = monthly(notBefore(c.fromDate, today), end)
         for (const d of dates) added.push(event(name, d, -c.amountMinor, n))
-        notes.push(`${name}: moved out of cash and bank each month (${dates.length} time${dates.length === 1 ? '' : 's'} in this period).`)
+        notes.push(
+          `${name}: moved out of cash and bank each month (${dates.length} time${dates.length === 1 ? '' : 's'} in this period).`,
+        )
         break
       }
     }
@@ -150,12 +181,29 @@ export function runScenario(base: ScenarioBase, changes: readonly ScenarioChange
   const goals = base.goals.map((g): GoalEffect => {
     const extra = extraForGoal.get(g.id) ?? 0
     const project = (recentMinor: number) =>
-      projectGoal({ targetMinor: g.targetMinor, targetDate: g.targetDate, savedMinor: g.savedMinor, recentMinor, today })
-    return { id: g.id, name: g.name, before: project(g.recentMinor), after: project(g.recentMinor + extra * PACE_MONTHS), extraMonthlyMinor: extra }
+      projectGoal({
+        targetMinor: g.targetMinor,
+        targetDate: g.targetDate,
+        savedMinor: g.savedMinor,
+        recentMinor,
+        today,
+      })
+    return {
+      id: g.id,
+      name: g.name,
+      before: project(g.recentMinor),
+      after: project(g.recentMinor + extra * PACE_MONTHS),
+      extraMonthlyMinor: extra,
+    }
   })
   const loans = base.loans
     .filter((l) => loanPaid.has(l.id))
-    .map((l): LoanEffect => ({ id: l.id, name: l.name, beforeMinor: l.owedMinor, afterMinor: Math.max(0, l.owedMinor - loanPaid.get(l.id)!) }))
+    .map((l): LoanEffect => ({
+      id: l.id,
+      name: l.name,
+      beforeMinor: l.owedMinor,
+      afterMinor: Math.max(0, l.owedMinor - loanPaid.get(l.id)!),
+    }))
 
   return { before, after, added, goals, loans, notes }
 }

@@ -19,7 +19,10 @@ export function categoryId(db: Db, path: string): string {
 }
 
 /** An AppEnv for handler tests: real folders under `dir`, no dialogs (answers come from `answers`). */
-export function fakeEnv(dir = '', answers: { file?: string | null; save?: string | null; folder?: string | null } = {}): AppEnv {
+export function fakeEnv(
+  dir = '',
+  answers: { file?: string | null; save?: string | null; folder?: string | null } = {},
+): AppEnv {
   return {
     dataDir: dir,
     defaultBackupDir: join(dir, 'backups'),

@@ -62,7 +62,9 @@ test('US8: a what-if scenario shows its effect on the forecast and goals without
   await form.getByLabel('Name').fill('New laptop')
   await form.getByLabel('Amount').fill('1,50,000')
   await form.getByRole('button', { name: 'Add to scenario' }).click()
-  await expect(page.getByRole('region', { name: 'Changes in this scenario' })).toContainText('New laptop: ₹1,50,000.00')
+  await expect(page.getByRole('region', { name: 'Changes in this scenario' })).toContainText(
+    'New laptop: ₹1,50,000.00',
+  )
   await expect(result).toContainText('₹1,50,000.00 lower than the')
 
   // Saving more for a goal brings its date forward
@@ -74,8 +76,12 @@ test('US8: a what-if scenario shows its effect on the forecast and goals without
   await form.getByRole('button', { name: 'Add to scenario' }).click()
   const goalRow = result.getByRole('row').filter({ hasText: 'Emergency fund' })
   await expect(goalRow.getByRole('cell').nth(2)).toContainText('a month')
-  expect(await goalRow.getByRole('cell').nth(1).textContent()).not.toBe(await goalRow.getByRole('cell').nth(2).textContent())
-  await expect(page.getByRole('region', { name: 'How this was worked out' })).toContainText('Save for Emergency fund')
+  expect(await goalRow.getByRole('cell').nth(1).textContent()).not.toBe(
+    await goalRow.getByRole('cell').nth(2).textContent(),
+  )
+  await expect(page.getByRole('region', { name: 'How this was worked out' })).toContainText(
+    'Save for Emergency fund',
+  )
 
   // Nothing was stored: the real forecast and goals are as they were
   await page.keyboard.press('Control+7')

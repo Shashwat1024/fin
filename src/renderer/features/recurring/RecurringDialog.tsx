@@ -5,7 +5,14 @@ import { AmountInput, amountToText, parseAmountText } from '@renderer/components
 import { FormField } from '@renderer/components/layout'
 import { AccountSelect, CategoryPicker } from '@renderer/components/pickers'
 import { Button } from '@renderer/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog'
 import { FieldGroup } from '@renderer/components/ui/field'
 import { Input } from '@renderer/components/ui/input'
 import { Label } from '@renderer/components/ui/label'
@@ -24,7 +31,11 @@ export const KIND_LABELS: Record<RecurringKind, string> = {
   savings: 'Savings or investment',
 }
 const KINDS = Object.keys(KIND_LABELS) as RecurringKind[]
-const UNITS: Record<Frequency, [string, string]> = { weekly: ['week', 'weeks'], monthly: ['month', 'months'], yearly: ['year', 'years'] }
+const UNITS: Record<Frequency, [string, string]> = {
+  weekly: ['week', 'weeks'],
+  monthly: ['month', 'months'],
+  yearly: ['year', 'years'],
+}
 const TOLERANCES = [
   [0, 'Exact amount'],
   [500, 'Within 5%'],
@@ -52,7 +63,12 @@ type Values = {
 }
 
 /** Starting values for a new item, e.g. from a "looks recurring" suggestion. */
-export type RecurringDraft = Partial<Pick<RecurringItemDto, 'name' | 'kind' | 'amountMinor' | 'accountId' | 'categoryId' | 'frequency' | 'anchorDate' | 'toleranceBp'>>
+export type RecurringDraft = Partial<
+  Pick<
+    RecurringItemDto,
+    'name' | 'kind' | 'amountMinor' | 'accountId' | 'categoryId' | 'frequency' | 'anchorDate' | 'toleranceBp'
+  >
+>
 
 function initial(item: RecurringItemDto | undefined, today: string, draft: RecurringDraft = {}): Values {
   const from = item ?? draft
@@ -88,20 +104,36 @@ export function RecurringDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {open && <RecurringForm key={item?.id ?? 'new'} item={item} draft={draft} onDone={() => onOpenChange(false)} />}
+      {open && (
+        <RecurringForm key={item?.id ?? 'new'} item={item} draft={draft} onDone={() => onOpenChange(false)} />
+      )}
     </Dialog>
   )
 }
 
-function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft?: RecurringDraft; onDone: () => void }) {
+function RecurringForm({
+  item,
+  draft,
+  onDone,
+}: {
+  item?: RecurringItemDto
+  draft?: RecurringDraft
+  onDone: () => void
+}) {
   const id = useId()
   const { data: settings } = useSettings()
   const [v, setValues] = useState(() => initial(item, todayIn(settings?.timezone ?? 'Asia/Kolkata'), draft))
   const set = <K extends keyof Values>(k: K, value: Values[K]) => setValues((s) => ({ ...s, [k]: value }))
   const [submitted, setSubmitted] = useState(false)
   const [server, setServer] = useState<Record<string, string>>({})
-  const create = useFinMutation('recurring.create', { success: (r) => `Added ${r.item.name}`, toastErrors: false })
-  const update = useFinMutation('recurring.update', { success: (r) => `Saved ${r.item.name}`, toastErrors: false })
+  const create = useFinMutation('recurring.create', {
+    success: (r) => `Added ${r.item.name}`,
+    toastErrors: false,
+  })
+  const update = useFinMutation('recurring.update', {
+    success: (r) => `Saved ${r.item.name}`,
+    toastErrors: false,
+  })
 
   const isTransfer = v.kind === 'transfer'
   const canMoveToAccount = v.kind === 'transfer' || v.kind === 'savings'
@@ -112,11 +144,21 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
     name: v.name.trim() ? server['name'] : 'Give it a name, like Rent or Netflix',
     amount: 'error' in amount ? amount.error : server['amountMinor'],
     accountId: v.accountId ? server['accountId'] : 'Choose an account',
-    toAccountId: isTransfer && !v.toAccountId ? 'Choose the account the money goes to' : server['toAccountId'],
-    interval: Number.isInteger(interval) && interval >= 1 && interval <= 52 ? server['interval'] : 'Enter a whole number from 1 to 52',
+    toAccountId:
+      isTransfer && !v.toAccountId ? 'Choose the account the money goes to' : server['toAccountId'],
+    interval:
+      Number.isInteger(interval) && interval >= 1 && interval <= 52
+        ? server['interval']
+        : 'Enter a whole number from 1 to 52',
     anchorDate: v.anchorDate ? server['anchorDate'] : 'Choose a date',
-    endDate: v.ends === 'date' && (!v.endDate || v.endDate < v.anchorDate) ? 'Choose a date on or after the first date' : server['endDate'],
-    count: v.ends === 'count' && !(Number.isInteger(count) && count >= 1 && count <= 1000) ? 'Enter how many times, 1 to 1000' : server['count'],
+    endDate:
+      v.ends === 'date' && (!v.endDate || v.endDate < v.anchorDate)
+        ? 'Choose a date on or after the first date'
+        : server['endDate'],
+    count:
+      v.ends === 'count' && !(Number.isInteger(count) && count >= 1 && count <= 1000)
+        ? 'Enter how many times, 1 to 1000'
+        : server['count'],
     form: server['_form'],
   }
   const shown: Partial<typeof errors> = submitted ? errors : { form: errors.form }
@@ -151,8 +193,14 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
       else await create.mutateAsync(input)
       onDone()
     } catch (err) {
-      const issues = Object.fromEntries(Object.entries(fieldIssues(err)).map(([k, m]) => [k.replace(/^input\./, ''), m]))
-      setServer(Object.keys(issues).length ? issues : { _form: err instanceof Error ? err.message : 'Could not save' })
+      const issues = Object.fromEntries(
+        Object.entries(fieldIssues(err)).map(([k, m]) => [k.replace(/^input\./, ''), m]),
+      )
+      setServer(
+        Object.keys(issues).length
+          ? issues
+          : { _form: err instanceof Error ? err.message : 'Could not save' },
+      )
     }
   }
 
@@ -161,12 +209,20 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
       <form noValidate onSubmit={submit}>
         <DialogHeader className="mb-4">
           <DialogTitle>{item ? 'Edit recurring item' : 'New recurring item'}</DialogTitle>
-          <DialogDescription>Fin expects it on each date and marks it paid when a matching transaction appears.</DialogDescription>
+          <DialogDescription>
+            Fin expects it on each date and marks it paid when a matching transaction appears.
+          </DialogDescription>
         </DialogHeader>
         <FieldGroup className="gap-4">
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Name" htmlFor={`${id}-name`} error={shown.name}>
-              <Input id={`${id}-name`} autoFocus placeholder="e.g. Rent" value={v.name} onChange={(e) => set('name', e.target.value)} />
+              <Input
+                id={`${id}-name`}
+                autoFocus
+                placeholder="e.g. Rent"
+                value={v.name}
+                onChange={(e) => set('name', e.target.value)}
+              />
             </FormField>
             <FormField label="Type" htmlFor={`${id}-kind`}>
               <Select value={v.kind} onValueChange={(k) => set('kind', k as RecurringKind)}>
@@ -185,7 +241,12 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
           </div>
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Expected amount" htmlFor={`${id}-amount`} error={shown.amount}>
-              <AmountInput id={`${id}-amount`} value={v.amount} onChange={(t) => set('amount', t)} invalid={Boolean(shown.amount)} />
+              <AmountInput
+                id={`${id}-amount`}
+                value={v.amount}
+                onChange={(t) => set('amount', t)}
+                invalid={Boolean(shown.amount)}
+              />
             </FormField>
             <FormField label="Amount can vary" htmlFor={`${id}-tol`}>
               <Select value={String(v.toleranceBp)} onValueChange={(t) => set('toleranceBp', Number(t))}>
@@ -203,8 +264,17 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
             </FormField>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormField label={v.kind === 'income' ? 'Paid into' : 'Paid from'} htmlFor={`${id}-account`} error={shown.accountId}>
-              <AccountSelect id={`${id}-account`} value={v.accountId} onChange={(a) => set('accountId', a)} invalid={Boolean(shown.accountId)} />
+            <FormField
+              label={v.kind === 'income' ? 'Paid into' : 'Paid from'}
+              htmlFor={`${id}-account`}
+              error={shown.accountId}
+            >
+              <AccountSelect
+                id={`${id}-account`}
+                value={v.accountId}
+                onChange={(a) => set('accountId', a)}
+                invalid={Boolean(shown.accountId)}
+              />
             </FormField>
             {canMoveToAccount ? (
               <FormField
@@ -223,7 +293,11 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
               </FormField>
             ) : (
               <FormField label="Category" htmlFor={`${id}-cat`}>
-                <CategoryPicker id={`${id}-cat`} value={v.categoryId} onChange={(c) => set('categoryId', c)} />
+                <CategoryPicker
+                  id={`${id}-cat`}
+                  value={v.categoryId}
+                  onChange={(c) => set('categoryId', c)}
+                />
               </FormField>
             )}
           </div>
@@ -251,8 +325,19 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
                 </Select>
               </div>
             </FormField>
-            <FormField label="First date" htmlFor={`${id}-anchor`} error={shown.anchorDate} description={preview ?? undefined}>
-              <Input id={`${id}-anchor`} type="date" max="9999-12-31" value={v.anchorDate} onChange={(e) => set('anchorDate', e.target.value)} />
+            <FormField
+              label="First date"
+              htmlFor={`${id}-anchor`}
+              error={shown.anchorDate}
+              description={preview ?? undefined}
+            >
+              <Input
+                id={`${id}-anchor`}
+                type="date"
+                max="9999-12-31"
+                value={v.anchorDate}
+                onChange={(e) => set('anchorDate', e.target.value)}
+              />
             </FormField>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -270,12 +355,29 @@ function RecurringForm({ item, draft, onDone }: { item?: RecurringItemDto; draft
             </FormField>
             {v.ends === 'date' && (
               <FormField label="Last date" htmlFor={`${id}-end`} error={shown.endDate}>
-                <Input id={`${id}-end`} type="date" max="9999-12-31" value={v.endDate} onChange={(e) => set('endDate', e.target.value)} />
+                <Input
+                  id={`${id}-end`}
+                  type="date"
+                  max="9999-12-31"
+                  value={v.endDate}
+                  onChange={(e) => set('endDate', e.target.value)}
+                />
               </FormField>
             )}
             {v.ends === 'count' && (
-              <FormField label="Number of times" htmlFor={`${id}-count`} error={shown.count} description="e.g. the EMIs left, counted from the first date">
-                <Input id={`${id}-count`} inputMode="numeric" className="tabular-nums" value={v.count} onChange={(e) => set('count', e.target.value)} />
+              <FormField
+                label="Number of times"
+                htmlFor={`${id}-count`}
+                error={shown.count}
+                description="e.g. the EMIs left, counted from the first date"
+              >
+                <Input
+                  id={`${id}-count`}
+                  inputMode="numeric"
+                  className="tabular-nums"
+                  value={v.count}
+                  onChange={(e) => set('count', e.target.value)}
+                />
               </FormField>
             )}
           </div>

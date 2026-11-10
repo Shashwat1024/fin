@@ -54,7 +54,9 @@ describe('splits', () => {
   })
 
   it('rejects too few, zero and wrong-sign parts', () => {
-    expect(validateSplits(-100, [{ categoryId: 'a', amountMinor: -100 }])).toMatchObject({ reason: 'TOO_FEW_PARTS' })
+    expect(validateSplits(-100, [{ categoryId: 'a', amountMinor: -100 }])).toMatchObject({
+      reason: 'TOO_FEW_PARTS',
+    })
     expect(
       validateSplits(-100, [
         { categoryId: 'a', amountMinor: -100 },

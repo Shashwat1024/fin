@@ -5,3 +5,5 @@ coverage
 .github
 specs
 docs
+# Markdown is hand-wrapped prose
+*.md

@@ -30,8 +30,8 @@ export function FileStep({ wizard }: { wizard: ImportWizard }) {
       <CardHeader>
         <CardTitle>Choose a statement</CardTitle>
         <CardDescription>
-          Download a CSV statement from your bank’s website, then pick it here. The file is read on this computer and
-          nothing is saved until you confirm.
+          Download a CSV statement from your bank’s website, then pick it here. The file is read on this
+          computer and nothing is saved until you confirm.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
@@ -59,7 +59,12 @@ export function FileStep({ wizard }: { wizard: ImportWizard }) {
           <p className="text-sm text-muted-foreground">
             {needsAccount ? 'Choose an account first.' : 'Drop a .csv or .tsv file here, or'}
           </p>
-          <Button type="button" variant="outline" disabled={needsAccount || loading} onClick={() => inputRef.current?.click()}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={needsAccount || loading}
+            onClick={() => inputRef.current?.click()}
+          >
             <UploadIcon /> {loading ? 'Reading…' : 'Choose file'}
           </Button>
           <input
@@ -80,8 +85,8 @@ export function FileStep({ wizard }: { wizard: ImportWizard }) {
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          Built-in layouts: HDFC, ICICI, SBI, Axis, Kotak and credit-card exports. Other banks work too: you’ll map the
-          columns once and can save the layout.
+          Built-in layouts: HDFC, ICICI, SBI, Axis, Kotak and credit-card exports. Other banks work too:
+          you’ll map the columns once and can save the layout.
         </p>
       </CardContent>
     </Card>

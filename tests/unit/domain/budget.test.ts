@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { monthSpan, nextMonth, previousMonth, runBudget, type BudgetMonthInput } from '@domain/budget'
 
-const month = (m: string, income: number, assigned: Record<string, number> = {}, spent: Record<string, number> = {}): BudgetMonthInput => ({
+const month = (
+  m: string,
+  income: number,
+  assigned: Record<string, number> = {},
+  spent: Record<string, number> = {},
+): BudgetMonthInput => ({
   month: m,
   incomeMinor: income,
   assigned: new Map(Object.entries(assigned)),
@@ -19,15 +24,30 @@ describe('zero-based budget', () => {
     const [oct] = runBudget([month('2026-10', 5000000, { food: 1200000 }, { food: 845050 })], ['rent'])
     expect(oct!.lines).toEqual([
       { categoryId: 'rent', carryMinor: 0, assignedMinor: 0, spentMinor: 0, availableMinor: 0 },
-      { categoryId: 'food', carryMinor: 0, assignedMinor: 1200000, spentMinor: 845050, availableMinor: 354950 },
+      {
+        categoryId: 'food',
+        carryMinor: 0,
+        assignedMinor: 1200000,
+        spentMinor: 845050,
+        availableMinor: 354950,
+      },
     ])
     expect(oct!.toAssignMinor).toBe(3800000)
   })
 
   it('carries unspent money forward in its category', () => {
-    const [, nov] = runBudget([month('2026-10', 1000000, { food: 1000000 }, { food: 600000 }), month('2026-11', 0, { food: 500000 }, { food: 200000 })])
+    const [, nov] = runBudget([
+      month('2026-10', 1000000, { food: 1000000 }, { food: 600000 }),
+      month('2026-11', 0, { food: 500000 }, { food: 200000 }),
+    ])
     const food = nov!.lines.find((l) => l.categoryId === 'food')!
-    expect(food).toEqual({ categoryId: 'food', carryMinor: 400000, assignedMinor: 500000, spentMinor: 200000, availableMinor: 700000 })
+    expect(food).toEqual({
+      categoryId: 'food',
+      carryMinor: 400000,
+      assignedMinor: 500000,
+      spentMinor: 200000,
+      availableMinor: 700000,
+    })
     expect(nov!.overspentMinor).toBe(0)
     expect(nov!.toAssignMinor).toBe(-500000)
   })

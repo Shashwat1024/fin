@@ -24,13 +24,28 @@ const MONTH = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric',
 const monthOf = (d: string) => MONTH.format(new Date(`${d}T00:00:00Z`))
 
 const COLUMNS = (today: string): ChartColumn<NetWorthPoint>[] => [
-  { key: 'date', header: 'Month end', cell: (p) => (p.date === today ? `Today (${formatDate(p.date)})` : monthOf(p.date)) },
+  {
+    key: 'date',
+    header: 'Month end',
+    cell: (p) => (p.date === today ? `Today (${formatDate(p.date)})` : monthOf(p.date)),
+  },
   { key: 'assets', header: 'Assets', numeric: true, cell: (p) => <MoneyText minor={p.assetsMinor} /> },
   { key: 'owed', header: 'Owed', numeric: true, cell: (p) => <MoneyText minor={p.liabilitiesMinor} /> },
-  { key: 'net', header: 'Net worth', numeric: true, cell: (p) => <MoneyText minor={p.netMinor} className="font-medium" /> },
+  {
+    key: 'net',
+    header: 'Net worth',
+    numeric: true,
+    cell: (p) => <MoneyText minor={p.netMinor} className="font-medium" />,
+  },
 ]
 
-function AccountRows({ rows, onValue }: { rows: NetWorthAccountRow[]; onValue: (a: NetWorthAccountRow) => void }) {
+function AccountRows({
+  rows,
+  onValue,
+}: {
+  rows: NetWorthAccountRow[]
+  onValue: (a: NetWorthAccountRow) => void
+}) {
   return (
     <ul className="divide-y">
       {rows.map((a) => (
@@ -56,7 +71,12 @@ function AccountRows({ rows, onValue }: { rows: NetWorthAccountRow[]; onValue: (
           </div>
           <MoneyText minor={a.valueMinor} />
           {a.canValue ? (
-            <Button variant="ghost" size="icon-sm" aria-label={`Update value of ${a.name}`} onClick={() => onValue(a)}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Update value of ${a.name}`}
+              onClick={() => onValue(a)}
+            >
               <PencilIcon />
             </Button>
           ) : (
@@ -131,8 +151,22 @@ export function NetWorthPage() {
               )
             }
           />
-          <StatCard icon={<TrendingUpIcon className="size-4" />} label="Assets" value={<MoneyText minor={d.current.assetsMinor} />} detail={plural(assets.length, 'account')} />
-          <StatCard icon={<TrendingDownIcon className="size-4" />} label="Owed" value={<MoneyText minor={d.current.liabilitiesMinor} />} detail={owed.length === 0 ? 'No cards or loans' : `Across ${plural(owed.length, 'card or loan', 'cards and loans')}`} />
+          <StatCard
+            icon={<TrendingUpIcon className="size-4" />}
+            label="Assets"
+            value={<MoneyText minor={d.current.assetsMinor} />}
+            detail={plural(assets.length, 'account')}
+          />
+          <StatCard
+            icon={<TrendingDownIcon className="size-4" />}
+            label="Owed"
+            value={<MoneyText minor={d.current.liabilitiesMinor} />}
+            detail={
+              owed.length === 0
+                ? 'No cards or loans'
+                : `Across ${plural(owed.length, 'card or loan', 'cards and loans')}`
+            }
+          />
         </div>
         <ChartCard
           title="Net worth by month"
@@ -160,22 +194,37 @@ export function NetWorthPage() {
               }}
             />
           }
-          table={<ChartTable caption="Net worth by month" columns={COLUMNS(d.today)} rows={d.points} rowKey={(p) => p.date} />}
+          table={
+            <ChartTable
+              caption="Net worth by month"
+              columns={COLUMNS(d.today)}
+              rows={d.points}
+              rowKey={(p) => p.date}
+            />
+          }
         />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Card role="region" aria-label="Assets">
             <CardHeader>
               <CardTitle>Assets</CardTitle>
-              <CardDescription>Use the pencil to record what an investment or other asset is worth.</CardDescription>
+              <CardDescription>
+                Use the pencil to record what an investment or other asset is worth.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {assets.length ? <AccountRows rows={assets} onValue={setValuing} /> : <p className="text-sm text-muted-foreground">No asset accounts.</p>}
+              {assets.length ? (
+                <AccountRows rows={assets} onValue={setValuing} />
+              ) : (
+                <p className="text-sm text-muted-foreground">No asset accounts.</p>
+              )}
             </CardContent>
           </Card>
           <Card role="region" aria-label="Owed">
             <CardHeader>
               <CardTitle>Owed</CardTitle>
-              <CardDescription>Card balances come from transactions; loans can be updated from statements.</CardDescription>
+              <CardDescription>
+                Card balances come from transactions; loans can be updated from statements.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {owed.length ? (
@@ -195,7 +244,11 @@ export function NetWorthPage() {
 
   return (
     <Page>
-      <PageHeader title="Net worth" description="What you own minus what you owe, month by month." actions={picker} />
+      <PageHeader
+        title="Net worth"
+        description="What you own minus what you owe, month by month."
+        actions={picker}
+      />
       {body}
     </Page>
   )

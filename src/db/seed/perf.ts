@@ -12,10 +12,14 @@ import { createTransfer } from '../repos/transactions'
  * inserts in one transaction, since replaying 50k audited creates would only measure the seed.
  * Everything is fictional and deterministic.
  */
-export function seedPerfData(db: Db, today: string, count = 50_000): { accounts: number; transactions: number } {
+export function seedPerfData(
+  db: Db,
+  today: string,
+  count = 50_000,
+): { accounts: number; transactions: number } {
   let s = 424242
-  const rand = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32)
-  const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)]!
+  const rand = () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32
+  const pick = <T>(xs: readonly T[]): T => xs[Math.floor(rand() * xs.length)]!
 
   const start = addMonths(startOfMonth(today), -36)
   const acct = (name: string, type: Parameters<typeof createAccount>[1]['type'], opening: number) =>
@@ -26,7 +30,9 @@ export function seedPerfData(db: Db, today: string, count = 50_000): { accounts:
   const card = acct('Perf Card', 'credit_card', 0)
   const fund = acct('Perf Fund', 'investment', 100_000_000)
 
-  const leaves = listCategories(db).filter((c) => c.parentId && c.group !== 'income' && c.group !== 'transfer')
+  const leaves = listCategories(db).filter(
+    (c) => c.parentId && c.group !== 'income' && c.group !== 'transfer',
+  )
   const salaryCat = listCategories(db).find((c) => c.path === 'Income › Salary')!.id
   const payees = [
     'UPI/4288{n}/Swiggy/swiggy@icici/Payment',
@@ -52,7 +58,17 @@ export function seedPerfData(db: Db, today: string, count = 50_000): { accounts:
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     for (let m = 0; m < 36; m++) {
-      insert.run(newId('txn'), salary, addDays(addMonths(start, m), 0), 15_000_000, 'ACME Technologies salary', salaryCat, null, now, now)
+      insert.run(
+        newId('txn'),
+        salary,
+        addDays(addMonths(start, m), 0),
+        15_000_000,
+        'ACME Technologies salary',
+        salaryCat,
+        null,
+        now,
+        now,
+      )
       inserted++
     }
     while (inserted < count) {
@@ -61,7 +77,17 @@ export function seedPerfData(db: Db, today: string, count = 50_000): { accounts:
       const accountId = pick([bank, bank, card, card, wallet])
       const amount = -Math.round(1_000 + rand() * rand() * 500_000)
       const categoryId = rand() < 0.85 ? pick(leaves).id : null
-      insert.run(newId('txn'), accountId, date, amount, payee, categoryId, rand() < 0.05 ? 'perf note' : null, now, now)
+      insert.run(
+        newId('txn'),
+        accountId,
+        date,
+        amount,
+        payee,
+        categoryId,
+        rand() < 0.05 ? 'perf note' : null,
+        now,
+        now,
+      )
       inserted++
     }
   })
@@ -70,22 +96,58 @@ export function seedPerfData(db: Db, today: string, count = 50_000): { accounts:
     const d = addDays(addMonths(start, m), 24)
     if (d > today) break
     createTransfer(db, { fromAccountId: bank, toAccountId: card, postedDate: d, amountMinor: 3_000_000 })
-    createTransfer(db, { fromAccountId: salary, toAccountId: bank, postedDate: addDays(d, -20), amountMinor: 10_000_000 })
+    createTransfer(db, {
+      fromAccountId: salary,
+      toAccountId: bank,
+      postedDate: addDays(d, -20),
+      amountMinor: 10_000_000,
+    })
   }
   backfillMerchants(db)
 
-  const monthly = (name: string, kind: Parameters<typeof createRecurring>[1]['kind'], accountId: string, amountMinor: number, day: number, extra = {}) =>
-    createRecurring(db, { name, kind, accountId, amountMinor, frequency: 'monthly', anchorDate: addDays(start, day - 1), ...extra }, today)
+  const monthly = (
+    name: string,
+    kind: Parameters<typeof createRecurring>[1]['kind'],
+    accountId: string,
+    amountMinor: number,
+    day: number,
+    extra = {},
+  ) =>
+    createRecurring(
+      db,
+      {
+        name,
+        kind,
+        accountId,
+        amountMinor,
+        frequency: 'monthly',
+        anchorDate: addDays(start, day - 1),
+        ...extra,
+      },
+      today,
+    )
   monthly('Salary', 'income', salary, 15_000_000, 1)
   monthly('Rent', 'bill', bank, 3_000_000, 3)
   monthly('Card bill', 'transfer', bank, 3_000_000, 25, { toAccountId: card, toleranceBp: 5000 })
   monthly('Sweep', 'transfer', salary, 10_000_000, 5, { toAccountId: bank })
   monthly('SIP', 'savings', bank, 2_000_000, 10, { toAccountId: fund })
-  createRule(db, { name: 'Swiggy', conditions: [{ field: 'description', op: 'contains', value: 'swiggy' }], categoryId: leaves[0]!.id })
-  createRule(db, { name: 'Uber', conditions: [{ field: 'merchant', op: 'contains', value: 'uber' }], categoryId: leaves[1]!.id })
-  for (let m = 0; m < 36; m++) assignBudget(db, addMonths(start, m).slice(0, 7), leaves[m % leaves.length]!.id, 1_000_000)
+  createRule(db, {
+    name: 'Swiggy',
+    conditions: [{ field: 'description', op: 'contains', value: 'swiggy' }],
+    categoryId: leaves[0]!.id,
+  })
+  createRule(db, {
+    name: 'Uber',
+    conditions: [{ field: 'merchant', op: 'contains', value: 'uber' }],
+    categoryId: leaves[1]!.id,
+  })
+  for (let m = 0; m < 36; m++)
+    assignBudget(db, addMonths(start, m).slice(0, 7), leaves[m % leaves.length]!.id, 1_000_000)
   createGoal(db, { name: 'Perf goal', targetMinor: 100_000_000, linkedAccountId: fund }, today)
   updateSettings(db, { onboarded: true, bufferMinor: 2_000_000 })
-  const transactions = all<{ n: number }>(db, 'SELECT COUNT(*) AS n FROM transactions WHERE deleted_at IS NULL')[0]!.n
+  const transactions = all<{ n: number }>(
+    db,
+    'SELECT COUNT(*) AS n FROM transactions WHERE deleted_at IS NULL',
+  )[0]!.n
   return { accounts: 5, transactions }
 }

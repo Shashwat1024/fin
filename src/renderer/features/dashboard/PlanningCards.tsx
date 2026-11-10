@@ -65,7 +65,12 @@ export function PlanningCards() {
               {upcoming.map((o) => (
                 <li key={o.id} className="flex justify-between gap-2">
                   <span className="truncate">
-                    {o.itemName} · {new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${o.dueDate}T00:00:00Z`))}
+                    {o.itemName} ·{' '}
+                    {new Intl.DateTimeFormat('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      timeZone: 'UTC',
+                    }).format(new Date(`${o.dueDate}T00:00:00Z`))}
                   </span>
                   <MoneyText minor={-o.expectedMinor} />
                 </li>
@@ -112,7 +117,11 @@ export function PlanningCards() {
             </p>
           ) : (
             goals.data!.slice(0, 3).map((g) => (
-              <Link key={g.id} to="/goals" className="rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+              <Link
+                key={g.id}
+                to="/goals"
+                className="rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
                 <span className="mb-1 block truncate text-sm font-medium">{g.name}</span>
                 <GoalProgress g={g} />
               </Link>

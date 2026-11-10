@@ -1,6 +1,13 @@
 import { addMonths, endOfMonth, startOfMonth } from '@domain/dates'
 import { inAccountGroup } from '@domain/ledger'
-import type { AccountDto, AccountGroup, DashboardSummary, Metric, MetricSource, MonthFlow } from '@shared/types'
+import type {
+  AccountDto,
+  AccountGroup,
+  DashboardSummary,
+  Metric,
+  MetricSource,
+  MonthFlow,
+} from '@shared/types'
 import { all, type Db } from '../connection'
 import { listAccounts } from './accounts'
 import { netWorthNow } from './insights'
@@ -29,7 +36,10 @@ function sources(db: Db, accounts: readonly AccountDto[], today: string): Metric
   )
   // A recorded value (investments, loans) is data too: it brings the account up to that date.
   const valued = new Map(
-    all<{ account_id: string; d: string }>(db, 'SELECT account_id, MAX(date) AS d FROM valuations GROUP BY account_id').map((r) => [r.account_id, r.d]),
+    all<{ account_id: string; d: string }>(
+      db,
+      'SELECT account_id, MAX(date) AS d FROM valuations GROUP BY account_id',
+    ).map((r) => [r.account_id, r.d]),
   )
   return accounts.map((a) => {
     const dates = [a.openingDate, a.lastTxnDate, valued.get(a.id)].filter((d): d is string => Boolean(d))
@@ -44,7 +54,9 @@ function sources(db: Db, accounts: readonly AccountDto[], today: string): Metric
 }
 
 function metric(valueMinor: number, src: MetricSource[], drill: Metric['drill']): Metric {
-  const asOf = src.length ? src.reduce((min, s) => (s.lastDataDate < min ? s.lastDataDate : min), src[0]!.lastDataDate) : null
+  const asOf = src.length
+    ? src.reduce((min, s) => (s.lastDataDate < min ? s.lastDataDate : min), src[0]!.lastDataDate)
+    : null
   return { valueMinor, asOf, sources: src, drill }
 }
 
@@ -61,7 +73,8 @@ export function dashboardSummary(db: Db, today: string): DashboardSummary {
     const ids = new Set(accounts.filter(ACCOUNT_GROUPS[group]).map((a) => a.id))
     return allSources.filter((s) => ids.has(s.accountId))
   }
-  const sumGroup = (group: AccountGroup) => accounts.filter(ACCOUNT_GROUPS[group]).reduce((t, a) => t + a.balanceMinor, 0)
+  const sumGroup = (group: AccountGroup) =>
+    accounts.filter(ACCOUNT_GROUPS[group]).reduce((t, a) => t + a.balanceMinor, 0)
 
   // Spending and income happen in cash, bank and card accounts; an investment or loan that is only
   // updated occasionally should not make this month's spending look out of date.

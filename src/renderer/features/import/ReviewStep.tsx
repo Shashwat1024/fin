@@ -35,7 +35,12 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
       call('import.preview', {
         accountId: accountId!,
         fileHash: file?.hash,
-        rows: okRows.map((r) => ({ rowNumber: r.rowNumber, date: r.values.date, amountMinor: r.values.amountMinor, description: r.values.description })),
+        rows: okRows.map((r) => ({
+          rowNumber: r.rowNumber,
+          date: r.values.date,
+          amountMinor: r.values.amountMinor,
+          description: r.values.description,
+        })),
       }),
     enabled: Boolean(accountId && file),
     gcTime: 0,
@@ -66,14 +71,19 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
   const willImport = counts.new + possible.filter((p) => importPossible.has(p.rowNumber)).length
   const importedSum = okRows.reduce((sum, r) => {
     const s = status.get(r.rowNumber)?.status
-    return s === 'new' || (s === 'possible_duplicate' && importPossible.has(r.rowNumber)) ? sum + r.values.amountMinor : sum
+    return s === 'new' || (s === 'possible_duplicate' && importPossible.has(r.rowNumber))
+      ? sum + r.values.amountMinor
+      : sum
   }, 0)
   const projected = displayBalance(account.type, preview.data.account.ledgerBalanceMinor + importedSum)
   const closing = wizard.closing
-  const laterActivity = closing && preview.data.account.lastTxnDate && preview.data.account.lastTxnDate > closing.date
+  const laterActivity =
+    closing && preview.data.account.lastTxnDate && preview.data.account.lastTxnDate > closing.date
 
   const suggested = rows.filter(
-    (r) => r.suggestion && (r.status === 'new' || (r.status === 'possible_duplicate' && importPossible.has(r.rowNumber))),
+    (r) =>
+      r.suggestion &&
+      (r.status === 'new' || (r.status === 'possible_duplicate' && importPossible.has(r.rowNumber))),
   )
   const acceptedShown = suggested.filter((r) => accepted.has(r.rowNumber))
   const toggleAccepted = (rowNumber: number, on: boolean) => {
@@ -97,31 +107,51 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
       fileHash: file.hash,
       mapping,
       rows: okRows.map((r) => ({ rowNumber: r.rowNumber, raw: r.raw, ...r.values })),
-      rejected: result.rows.flatMap((r) => (r.status === 'ok' ? [] : [{ rowNumber: r.rowNumber, raw: r.raw, status: r.status, message: r.message }])),
+      rejected: result.rows.flatMap((r) =>
+        r.status === 'ok'
+          ? []
+          : [{ rowNumber: r.rowNumber, raw: r.raw, status: r.status, message: r.message }],
+      ),
       importPossibleDuplicates: [...importPossible],
       statementClosing: closing,
-      categories: acceptedShown.map((r) => ({ rowNumber: r.rowNumber, categoryId: r.suggestion!.categoryId })),
+      categories: acceptedShown.map((r) => ({
+        rowNumber: r.rowNumber,
+        categoryId: r.suggestion!.categoryId,
+      })),
       savePresetAs: wizard.savePresetAs.trim() || null,
     })
 
   return (
     <div className="flex flex-col gap-6">
       {preview.data.sameFile && (
-        <div role="status" className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm"
+        >
           <CopyCheckIcon className="mt-0.5 size-4 shrink-0" />
           <span>
             You imported this exact file on {formatDate(preview.data.sameFile.importedAt.slice(0, 10))}
-            {preview.data.sameFile.undone ? ' and later undid that import.' : '. Lines already in Fin will be skipped.'}
+            {preview.data.sameFile.undone
+              ? ' and later undid that import.'
+              : '. Lines already in Fin will be skipped.'}
           </span>
         </div>
       )}
 
       <div className="flex flex-wrap gap-2 text-sm">
         <Badge>{counts.new} new</Badge>
-        {counts.duplicate > 0 && <Badge variant="secondary">{counts.duplicate} already in Fin (skipped)</Badge>}
-        {possible.length > 0 && <Badge variant="outline">{plural(possible.length, 'possible duplicate')} to check</Badge>}
-        {counts.error > 0 && <Badge variant="destructive">{plural(counts.error, 'line')} with problems (not imported)</Badge>}
-        {counts.ignored > 0 && <Badge variant="outline">{plural(counts.ignored, 'other line')} skipped</Badge>}
+        {counts.duplicate > 0 && (
+          <Badge variant="secondary">{counts.duplicate} already in Fin (skipped)</Badge>
+        )}
+        {possible.length > 0 && (
+          <Badge variant="outline">{plural(possible.length, 'possible duplicate')} to check</Badge>
+        )}
+        {counts.error > 0 && (
+          <Badge variant="destructive">{plural(counts.error, 'line')} with problems (not imported)</Badge>
+        )}
+        {counts.ignored > 0 && (
+          <Badge variant="outline">{plural(counts.ignored, 'other line')} skipped</Badge>
+        )}
       </div>
 
       {possible.length > 0 && (
@@ -129,8 +159,8 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
           <CardHeader>
             <CardTitle>Possible duplicates</CardTitle>
             <CardDescription>
-              These have the same amount as a transaction within two days. Leave them unticked if they are the same
-              transaction.
+              These have the same amount as a transaction within two days. Leave them unticked if they are the
+              same transaction.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -146,7 +176,9 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
                     />
                     <label htmlFor={`${id}-p${p.rowNumber}`} className="grid flex-1 grid-cols-2 gap-4">
                       <span>
-                        <span className="block font-medium">Line {p.rowNumber}: {line.values.description}</span>
+                        <span className="block font-medium">
+                          Line {p.rowNumber}: {line.values.description}
+                        </span>
                         <span className="text-muted-foreground">
                           {formatDate(line.values.date)} · <MoneyText minor={line.values.amountMinor} />
                         </span>
@@ -155,7 +187,8 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
                         <span className="block text-muted-foreground">Already in Fin:</span>
                         {p.match && (
                           <span>
-                            {p.match.payee || 'No payee'} · {formatDate(p.match.postedDate)} · <MoneyText minor={p.match.amountMinor} />
+                            {p.match.payee || 'No payee'} · {formatDate(p.match.postedDate)} ·{' '}
+                            <MoneyText minor={p.match.amountMinor} />
                           </span>
                         )}
                       </span>
@@ -178,16 +211,24 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
               <SparklesIcon className="size-4 text-primary" aria-hidden /> Suggested categories
             </CardTitle>
             <CardDescription>
-              From your rules and what you chose before for the same merchant. Only the ticked ones are used; the rest are imported
-              without a category.
+              From your rules and what you chose before for the same merchant. Only the ticked ones are used;
+              the rest are imported without a category.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             <div className="flex items-center gap-3 border-b pb-2 text-sm">
               <Checkbox
                 id={`${id}-all`}
-                checked={acceptedShown.length === suggested.length ? true : acceptedShown.length > 0 ? 'indeterminate' : false}
-                onCheckedChange={(v) => setAccepted(v === true ? new Set(suggested.map((r) => r.rowNumber)) : new Set())}
+                checked={
+                  acceptedShown.length === suggested.length
+                    ? true
+                    : acceptedShown.length > 0
+                      ? 'indeterminate'
+                      : false
+                }
+                onCheckedChange={(v) =>
+                  setAccepted(v === true ? new Set(suggested.map((r) => r.rowNumber)) : new Set())
+                }
               />
               <label htmlFor={`${id}-all`} className="font-medium">
                 Use all {plural(suggested.length, 'suggestion')}
@@ -203,16 +244,23 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
                       checked={accepted.has(r.rowNumber)}
                       onCheckedChange={(v) => toggleAccepted(r.rowNumber, v === true)}
                     />
-                    <label htmlFor={`${id}-s${r.rowNumber}`} className="grid flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+                    <label
+                      htmlFor={`${id}-s${r.rowNumber}`}
+                      className="grid flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4"
+                    >
                       <span className="min-w-0">
-                        <span className="block truncate font-medium">{r.merchant ?? line.values.description}</span>
+                        <span className="block truncate font-medium">
+                          {r.merchant ?? line.values.description}
+                        </span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {formatDate(line.values.date)} · <MoneyText minor={line.values.amountMinor} />
                         </span>
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate">{r.suggestion!.categoryPath}</span>
-                        <span className="block truncate text-xs text-muted-foreground">{r.suggestion!.reason}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {r.suggestion!.reason}
+                        </span>
                       </span>
                     </label>
                   </li>
@@ -227,7 +275,9 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">Balance check</CardTitle>
-            <CardDescription>Compares the statement’s closing balance with {account.name} after this import.</CardDescription>
+            <CardDescription>
+              Compares the statement’s closing balance with {account.name} after this import.
+            </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-4 text-sm">
             <div>
@@ -242,7 +292,11 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
               <div className="text-muted-foreground">Difference</div>
               <MoneyText
                 minor={closing.balanceMinor - projected}
-                className={closing.balanceMinor === projected ? 'text-lg font-semibold text-positive' : 'text-lg font-semibold text-warning'}
+                className={
+                  closing.balanceMinor === projected
+                    ? 'text-lg font-semibold text-positive'
+                    : 'text-lg font-semibold text-warning'
+                }
               />
             </div>
             {(closing.balanceMinor !== projected || laterActivity) && (
@@ -264,7 +318,11 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
           const s = status.get(r.rowNumber)
           if (!s) return null
           return (
-            <Badge variant={s.status === 'new' ? 'default' : s.status === 'duplicate' ? 'secondary' : 'outline'}>{STATUS_LABEL[s.status]}</Badge>
+            <Badge
+              variant={s.status === 'new' ? 'default' : s.status === 'duplicate' ? 'secondary' : 'outline'}
+            >
+              {STATUS_LABEL[s.status]}
+            </Badge>
           )
         }}
       />
@@ -276,7 +334,12 @@ export function ReviewStep({ wizard }: { wizard: ImportWizard }) {
           description="Next time a file with these columns is chosen, it will be read the same way."
           className="max-w-md"
         >
-          <Input id={`${id}-preset`} placeholder="e.g. My bank savings" value={wizard.savePresetAs} onChange={(e) => wizard.setSavePresetAs(e.target.value)} />
+          <Input
+            id={`${id}-preset`}
+            placeholder="e.g. My bank savings"
+            value={wizard.savePresetAs}
+            onChange={(e) => wizard.setSavePresetAs(e.target.value)}
+          />
         </FormField>
       )}
 

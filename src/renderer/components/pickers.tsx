@@ -1,13 +1,24 @@
 import { useMemo } from 'react'
 import { ACCOUNT_TYPE_LABELS } from '@domain/ledger'
 import { Combobox, type ComboOption } from '@renderer/components/Combobox'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@renderer/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@renderer/components/ui/select'
 import { useAccounts, useCategories } from '@renderer/lib/queries'
 import type { AccountDto, CategoryDto } from '@shared/types'
 
 export const UNCATEGORIZED = 'uncategorized'
 
-export function categoryOptions(categories: readonly CategoryDto[], { leavesOnly = false } = {}): ComboOption[] {
+export function categoryOptions(
+  categories: readonly CategoryDto[],
+  { leavesOnly = false } = {},
+): ComboOption[] {
   const parents = new Map(categories.filter((c) => !c.parentId).map((c) => [c.id, c]))
   const hasChildren = new Set(categories.filter((c) => c.parentId).map((c) => c.parentId!))
   return categories
@@ -30,11 +41,20 @@ type CategoryPickerProps = {
   className?: string
 }
 
-export function CategoryPicker({ value, onChange, mode = 'assign', id, invalid, className }: CategoryPickerProps) {
+export function CategoryPicker({
+  value,
+  onChange,
+  mode = 'assign',
+  id,
+  invalid,
+  className,
+}: CategoryPickerProps) {
   const { data = [] } = useCategories()
   const options = useMemo(() => {
     const opts = categoryOptions(data, { leavesOnly: mode === 'assign' })
-    return mode === 'filter' ? [{ value: UNCATEGORIZED, label: 'Uncategorized', group: 'Other' }, ...opts] : opts
+    return mode === 'filter'
+      ? [{ value: UNCATEGORIZED, label: 'Uncategorized', group: 'Other' }, ...opts]
+      : opts
   }, [data, mode])
   return (
     <Combobox
@@ -77,12 +97,27 @@ type AccountSelectProps = {
 
 export const ALL_ACCOUNTS = 'all'
 
-export function AccountSelect({ value, onChange, allowAll, exclude, id, invalid, className, placeholder = 'Choose account', label }: AccountSelectProps) {
+export function AccountSelect({
+  value,
+  onChange,
+  allowAll,
+  exclude,
+  id,
+  invalid,
+  className,
+  placeholder = 'Choose account',
+  label,
+}: AccountSelectProps) {
   const { data = [] } = useAccounts()
   const accounts = data.filter((a) => a.id !== exclude)
   return (
     <Select value={value ?? undefined} onValueChange={onChange}>
-      <SelectTrigger id={id} aria-label={label} aria-invalid={invalid || undefined} className={className ?? 'w-full'}>
+      <SelectTrigger
+        id={id}
+        aria-label={label}
+        aria-invalid={invalid || undefined}
+        className={className ?? 'w-full'}
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

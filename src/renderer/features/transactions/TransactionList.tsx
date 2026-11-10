@@ -74,7 +74,9 @@ export function TransactionList({
     const i = Math.max(0, Math.min(rows.length - 1, index))
     setFocus(i)
     virtualizer.scrollToIndex(i)
-    requestAnimationFrame(() => parentRef.current?.querySelector<HTMLElement>(`[data-row-index="${i}"]`)?.focus())
+    requestAnimationFrame(() =>
+      parentRef.current?.querySelector<HTMLElement>(`[data-row-index="${i}"]`)?.focus(),
+    )
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -87,8 +89,10 @@ export function TransactionList({
     else if (e.key === 'PageUp') moveFocus(focus - 10)
     else if (e.key === 'Enter' && row) onOpen(row)
     else if (e.key === ' ' && row) toggle(row.id)
-    else if (e.key === 'Delete' && (selected.size > 0 || row)) onDelete(selected.size > 0 ? [...selected] : [row!.id])
-    else if (e.key.toLowerCase() === 'a' && (e.ctrlKey || e.metaKey)) onSelectedChange(new Set(rows.map((r) => r.id)))
+    else if (e.key === 'Delete' && (selected.size > 0 || row))
+      onDelete(selected.size > 0 ? [...selected] : [row!.id])
+    else if (e.key.toLowerCase() === 'a' && (e.ctrlKey || e.metaKey))
+      onSelectedChange(new Set(rows.map((r) => r.id)))
     else if (e.key === 'Escape' && selected.size > 0) onSelectedChange(new Set())
     else return
     e.preventDefault()
@@ -97,8 +101,17 @@ export function TransactionList({
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id))
 
   return (
-    <div role="grid" aria-rowcount={total + 1} aria-label="Transactions" className="flex min-h-0 flex-1 flex-col rounded-xl border bg-card">
-      <div role="row" aria-rowindex={1} className={cn(COLS, 'h-10 border-b text-xs font-medium text-muted-foreground')}>
+    <div
+      role="grid"
+      aria-rowcount={total + 1}
+      aria-label="Transactions"
+      className="flex min-h-0 flex-1 flex-col rounded-xl border bg-card"
+    >
+      <div
+        role="row"
+        aria-rowindex={1}
+        className={cn(COLS, 'h-10 border-b text-xs font-medium text-muted-foreground')}
+      >
         <div role="columnheader">
           <Checkbox
             aria-label="Select all loaded transactions"
@@ -151,7 +164,12 @@ export function TransactionList({
                 style={{ top: item.start, height: item.size }}
               >
                 <div role="gridcell" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox aria-label={`Select ${row.payee || 'transaction'}`} checked={isSelected} onCheckedChange={() => toggle(row.id)} tabIndex={-1} />
+                  <Checkbox
+                    aria-label={`Select ${row.payee || 'transaction'}`}
+                    checked={isSelected}
+                    onCheckedChange={() => toggle(row.id)}
+                    tabIndex={-1}
+                  />
                 </div>
                 <div role="gridcell" className="text-muted-foreground tabular-nums">
                   {formatDate(row.postedDate)}
@@ -162,7 +180,11 @@ export function TransactionList({
                     suggest={(() => {
                       const sg = suggestions?.get(row.id)
                       return sg && onAcceptSuggestion && onDismissSuggestion
-                        ? { suggestion: sg, onAccept: () => onAcceptSuggestion(sg), onDismiss: () => onDismissSuggestion(row.id) }
+                        ? {
+                            suggestion: sg,
+                            onAccept: () => onAcceptSuggestion(sg),
+                            onDismiss: () => onDismissSuggestion(row.id),
+                          }
                         : undefined
                     })()}
                   />

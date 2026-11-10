@@ -28,7 +28,11 @@ export function PreferenceFields({ value, onChange }: Props) {
   return (
     <FieldGroup className="gap-4">
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Currency" htmlFor={`${id}-currency`} description="Indian Rupee (₹), with lakh and crore grouping">
+        <FormField
+          label="Currency"
+          htmlFor={`${id}-currency`}
+          description="Indian Rupee (₹), with lakh and crore grouping"
+        >
           <Select value={value.currency} disabled>
             <SelectTrigger id={`${id}-currency`} className="w-full">
               <SelectValue />
@@ -51,7 +55,10 @@ export function PreferenceFields({ value, onChange }: Props) {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Financial year starts in" htmlFor={`${id}-fy`} description={`Current: ${fy.label}`}>
-          <Select value={String(value.fyStartMonth)} onValueChange={(v) => onChange({ fyStartMonth: Number(v) })}>
+          <Select
+            value={String(value.fyStartMonth)}
+            onValueChange={(v) => onChange({ fyStartMonth: Number(v) })}
+          >
             <SelectTrigger id={`${id}-fy`} className="w-full">
               <SelectValue />
             </SelectTrigger>

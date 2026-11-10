@@ -4,10 +4,23 @@ import { SuggestionChip } from '@renderer/components/SuggestionChip'
 import { Badge } from '@renderer/components/ui/badge'
 import type { Suggestion, TxnRow } from '@shared/types'
 
-export type SuggestionProps = { suggestion: Suggestion; onAccept: () => void; onDismiss: () => void; busy?: boolean }
+export type SuggestionProps = {
+  suggestion: Suggestion
+  onAccept: () => void
+  onDismiss: () => void
+  busy?: boolean
+}
 
 /** Payee line plus a secondary line (category, split or transfer), reused in every transaction list. */
-export function TxnDescription({ txn, showAccount = false, suggest }: { txn: TxnRow; showAccount?: boolean; suggest?: SuggestionProps | undefined }) {
+export function TxnDescription({
+  txn,
+  showAccount = false,
+  suggest,
+}: {
+  txn: TxnRow
+  showAccount?: boolean
+  suggest?: SuggestionProps | undefined
+}) {
   // Bank narrations are long codes; show the merchant read from them (the full text stays available).
   const title = txn.merchantName && parseNarration(txn.payee).counterparty ? txn.merchantName : txn.payee
   const secondary =
@@ -42,7 +55,13 @@ export function TxnDescription({ txn, showAccount = false, suggest }: { txn: Txn
           </Badge>
         ))}
       </div>
-      <div className={suggest ? 'flex items-center gap-1 truncate text-xs text-muted-foreground' : 'truncate text-xs text-muted-foreground'}>
+      <div
+        className={
+          suggest
+            ? 'flex items-center gap-1 truncate text-xs text-muted-foreground'
+            : 'truncate text-xs text-muted-foreground'
+        }
+      >
         {secondary}
         {showAccount && <> · {txn.accountName}</>}
         {txn.notes && <> · {txn.notes}</>}

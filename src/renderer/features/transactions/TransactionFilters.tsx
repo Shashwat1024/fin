@@ -30,7 +30,13 @@ export function rangeFromParams(params: URLSearchParams): FilterState['customRan
   return from && to && isCalendarDate(from) && isCalendarDate(to) && from <= to ? { from, to } : null
 }
 
-export const DEFAULT_FILTERS: FilterState = { text: '', range: 'all', accountId: ALL_ACCOUNTS, categoryId: null, direction: 'all' }
+export const DEFAULT_FILTERS: FilterState = {
+  text: '',
+  range: 'all',
+  accountId: ALL_ACCOUNTS,
+  categoryId: null,
+  direction: 'all',
+}
 
 export function toTxnFilter(f: FilterState, today: string, fyStartMonth: number): TxnFilter {
   const range = f.customRange ?? (f.range === 'all' ? null : presetRange(f.range, today, fyStartMonth))
@@ -47,7 +53,14 @@ export function toTxnFilter(f: FilterState, today: string, fyStartMonth: number)
 }
 
 export const isFiltered = (f: FilterState) =>
-  f.text.trim() !== '' || f.range !== 'all' || f.accountId !== ALL_ACCOUNTS || f.categoryId !== null || f.direction !== 'all' || Boolean(f.importBatchId) || Boolean(f.customRange) || Boolean(f.kind)
+  f.text.trim() !== '' ||
+  f.range !== 'all' ||
+  f.accountId !== ALL_ACCOUNTS ||
+  f.categoryId !== null ||
+  f.direction !== 'all' ||
+  Boolean(f.importBatchId) ||
+  Boolean(f.customRange) ||
+  Boolean(f.kind)
 
 type Props = { value: FilterState; onChange: (f: FilterState) => void; today: string; fyStartMonth: number }
 
@@ -83,7 +96,9 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
       </InputGroup>
       <Select
         value={value.customRange ? CUSTOM : value.range}
-        onValueChange={(v) => v !== CUSTOM && onChange({ ...value, range: v as FilterState['range'], customRange: null })}
+        onValueChange={(v) =>
+          v !== CUSTOM && onChange({ ...value, range: v as FilterState['range'], customRange: null })
+        }
       >
         <SelectTrigger className="min-w-40" aria-label="Date range">
           <SelectValue />
@@ -102,9 +117,23 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
           <SelectItem value="this-fy">{fyLabel}</SelectItem>
         </SelectContent>
       </Select>
-      <AccountSelect allowAll label="Account" className="w-48" value={value.accountId} onChange={(accountId) => onChange({ ...value, accountId })} />
-      <CategoryPicker mode="filter" className="w-52" value={value.categoryId} onChange={(categoryId) => onChange({ ...value, categoryId })} />
-      <Select value={value.direction} onValueChange={(v) => onChange({ ...value, direction: v as FilterState['direction'] })}>
+      <AccountSelect
+        allowAll
+        label="Account"
+        className="w-48"
+        value={value.accountId}
+        onChange={(accountId) => onChange({ ...value, accountId })}
+      />
+      <CategoryPicker
+        mode="filter"
+        className="w-52"
+        value={value.categoryId}
+        onChange={(categoryId) => onChange({ ...value, categoryId })}
+      />
+      <Select
+        value={value.direction}
+        onValueChange={(v) => onChange({ ...value, direction: v as FilterState['direction'] })}
+      >
         <SelectTrigger className="w-32" aria-label="Direction">
           <SelectValue />
         </SelectTrigger>
@@ -115,12 +144,22 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
         </SelectContent>
       </Select>
       {value.importBatchId && (
-        <Button variant="secondary" size="sm" onClick={() => onChange({ ...value, importBatchId: null })} aria-label="Remove import filter">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onChange({ ...value, importBatchId: null })}
+          aria-label="Remove import filter"
+        >
           From one import <XIcon />
         </Button>
       )}
       {value.kind === 'standard' && (
-        <Button variant="secondary" size="sm" onClick={() => onChange({ ...value, kind: null })} aria-label="Include transfers">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onChange({ ...value, kind: null })}
+          aria-label="Include transfers"
+        >
           Excluding transfers <XIcon />
         </Button>
       )}

@@ -19,9 +19,25 @@ import {
 } from '@db/repos/categorization'
 import { dashboardSummary } from '@db/repos/dashboard'
 import { listCategories, listTags } from '@db/repos/categories'
-import { deleteValuation, forecast, listValuations, netWorthHistoryFor, upsertValuation, whatIf } from '@db/repos/insights'
+import {
+  deleteValuation,
+  forecast,
+  listValuations,
+  netWorthHistoryFor,
+  upsertValuation,
+  whatIf,
+} from '@db/repos/insights'
 import { dismissInsight, listInsights, recurringSuggestions, restoreInsight } from '@db/repos/patterns'
-import { batchRows, commitImport, listBatches, listPresets, previewImport, reconcile, savePreset, undoImport } from '@db/repos/imports'
+import {
+  batchRows,
+  commitImport,
+  listBatches,
+  listPresets,
+  previewImport,
+  reconcile,
+  savePreset,
+  undoImport,
+} from '@db/repos/imports'
 import {
   assignBudget,
   budgetMonth,
@@ -57,7 +73,10 @@ import type { ActivityEntry } from '@shared/types'
 import { backupHandlers } from './backupHandlers'
 import type { HandlerContext } from './env'
 
-export type Handler<C extends Channel> = (ctx: HandlerContext, input: ParsedInput<C>) => Output<C> | Promise<Output<C>>
+export type Handler<C extends Channel> = (
+  ctx: HandlerContext,
+  input: ParsedInput<C>,
+) => Output<C> | Promise<Output<C>>
 export type Handlers = { [C in Channel]: Handler<C> }
 
 function activity(db: Db, limit: number): ActivityEntry[] {
@@ -99,7 +118,8 @@ export const handlers: Handlers = {
   'transfers.update': ({ db }, input) => updateTransfer(db, input.transferId, input.patch),
   'payees.suggest': ({ db }, input) => suggestPayees(db, input.prefix, input.limit),
   'activity.list': ({ db }, input) => activity(db, input?.limit ?? 50),
-  'accounts.reconcile': ({ db }, input) => reconcile(db, input.id, input.statementDate, input.statementBalanceMinor),
+  'accounts.reconcile': ({ db }, input) =>
+    reconcile(db, input.id, input.statementDate, input.statementBalanceMinor),
   'import.presets': ({ db }) => listPresets(db),
   'import.savePreset': ({ db }, input) => savePreset(db, input.name, input.mapping),
   'import.preview': ({ db }, input) => previewImport(db, input),

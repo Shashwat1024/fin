@@ -8,7 +8,11 @@ export function StepIndicator({ steps, current }: { steps: readonly string[]; cu
       {steps.map((label, i) => {
         const state = i < current ? 'done' : i === current ? 'current' : 'todo'
         return (
-          <li key={label} className="flex items-center gap-2" aria-current={state === 'current' ? 'step' : undefined}>
+          <li
+            key={label}
+            className="flex items-center gap-2"
+            aria-current={state === 'current' ? 'step' : undefined}
+          >
             <span
               className={cn(
                 'grid size-6 place-items-center rounded-full border text-xs font-medium',

@@ -6,9 +6,11 @@ import { drillHref } from '@renderer/lib/drill'
 import type { MonthFlow } from '@shared/types'
 
 const monthLabel = (month: string, style: 'short' | 'long' = 'short') =>
-  new Intl.DateTimeFormat('en-IN', { month: style, year: style === 'long' ? 'numeric' : undefined, timeZone: 'UTC' }).format(
-    new Date(`${month}-01T00:00:00Z`),
-  )
+  new Intl.DateTimeFormat('en-IN', {
+    month: style,
+    year: style === 'long' ? 'numeric' : undefined,
+    timeZone: 'UTC',
+  }).format(new Date(`${month}-01T00:00:00Z`))
 
 /** A round axis maximum (1, 2 or 5 × 10ⁿ steps) with four gridlines. */
 function niceScale(max: number): number[] {
@@ -47,16 +49,28 @@ function Bars({ months }: { months: MonthFlow[] }) {
         {/* y-axis labels */}
         <div className="relative w-14 shrink-0 text-right text-[11px] text-muted-foreground">
           {ticks.map((t) => (
-            <span key={t} className="absolute right-0 -translate-y-1/2 tabular-nums" style={{ bottom: `calc(${(t / top) * 100}% - 0px)` }}>
+            <span
+              key={t}
+              className="absolute right-0 -translate-y-1/2 tabular-nums"
+              style={{ bottom: `calc(${(t / top) * 100}% - 0px)` }}
+            >
               <MoneyText minor={t} compact />
             </span>
           ))}
         </div>
         <div className="relative flex-1">
           {ticks.map((t) => (
-            <div key={t} className="absolute inset-x-0 border-t border-border/60" style={{ bottom: `${(t / top) * 100}%` }} aria-hidden />
+            <div
+              key={t}
+              className="absolute inset-x-0 border-t border-border/60"
+              style={{ bottom: `${(t / top) * 100}%` }}
+              aria-hidden
+            />
           ))}
-          <ul className="relative flex h-full items-end justify-around" aria-label="Money in and out by month">
+          <ul
+            className="relative flex h-full items-end justify-around"
+            aria-label="Money in and out by month"
+          >
             {months.map((m) => (
               <li key={m.month} className="flex h-full flex-1 justify-center">
                 <Tooltip>
@@ -102,10 +116,26 @@ function Bars({ months }: { months: MonthFlow[] }) {
 }
 
 const COLUMNS: ChartColumn<MonthFlow>[] = [
-  { key: 'month', header: 'Month', cell: (m) => <Link to={drillHref({ page: 'transactions', from: m.from, to: m.to, kind: 'standard' })} className="underline-offset-4 hover:underline">{monthLabel(m.month, 'long')}</Link> },
+  {
+    key: 'month',
+    header: 'Month',
+    cell: (m) => (
+      <Link
+        to={drillHref({ page: 'transactions', from: m.from, to: m.to, kind: 'standard' })}
+        className="underline-offset-4 hover:underline"
+      >
+        {monthLabel(m.month, 'long')}
+      </Link>
+    ),
+  },
   { key: 'in', header: 'Money in', numeric: true, cell: (m) => <MoneyText minor={m.inMinor} /> },
   { key: 'out', header: 'Money out', numeric: true, cell: (m) => <MoneyText minor={m.outMinor} /> },
-  { key: 'net', header: 'Difference', numeric: true, cell: (m) => <MoneyText minor={m.inMinor - m.outMinor} showPlus /> },
+  {
+    key: 'net',
+    header: 'Difference',
+    numeric: true,
+    cell: (m) => <MoneyText minor={m.inMinor - m.outMinor} showPlus />,
+  },
 ]
 
 /** Money in vs out for the last six months; transfers between your accounts are left out. */
@@ -115,7 +145,14 @@ export function MonthlyFlowChart({ months }: { months: MonthFlow[] }) {
       title="Money in and out"
       description="Last six months, excluding transfers between your accounts. This month is up to today."
       chart={<Bars months={months} />}
-      table={<ChartTable caption="Money in and out by month" columns={COLUMNS} rows={months} rowKey={(m) => m.month} />}
+      table={
+        <ChartTable
+          caption="Money in and out by month"
+          columns={COLUMNS}
+          rows={months}
+          rowKey={(m) => m.month}
+        />
+      }
     />
   )
 }

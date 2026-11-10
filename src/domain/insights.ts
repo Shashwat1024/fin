@@ -7,7 +7,17 @@
  * cannot be detected honestly and are not attempted.
  */
 import { median } from './forecast'
-import { addDays, addMonths, compareDates, diffDays, endOfMonth, monthKey, startOfMonth, weekday, type CalendarDate } from './dates'
+import {
+  addDays,
+  addMonths,
+  compareDates,
+  diffDays,
+  endOfMonth,
+  monthKey,
+  startOfMonth,
+  weekday,
+  type CalendarDate,
+} from './dates'
 import type { Frequency } from './recurrence'
 
 /** One piece of spending: a transaction, or one split of it. */
@@ -41,7 +51,13 @@ export type SubscriptionItem = {
 /** A real payment matched to a subscription item. */
 export type SubscriptionPayment = { itemId: string; txnId: string; date: CalendarDate; amountMinor: number }
 
-export type InsightKind = 'category_change' | 'merchant_change' | 'subscription_price' | 'subscription_creep' | 'weekend_spending' | 'unusual_purchase'
+export type InsightKind =
+  | 'category_change'
+  | 'merchant_change'
+  | 'subscription_price'
+  | 'subscription_creep'
+  | 'weekend_spending'
+  | 'unusual_purchase'
 
 export type InsightSource = { txnId: string; date: CalendarDate; label: string; amountMinor: number }
 export type InsightPeriod = { label: string; from: CalendarDate; to: CalendarDate }
@@ -96,9 +112,13 @@ const dayMonth = (d: CalendarDate) => DAY_MONTH.format(asDate(d))
 const rupees = (minor: number) => `₹${Math.round(Math.abs(minor) / 100).toLocaleString('en-IN')}`
 const pct = (share: number) => `${Math.round(Math.abs(share) * 100)}%`
 
-const inRange = (d: CalendarDate, from: CalendarDate, to: CalendarDate) => compareDates(d, from) >= 0 && compareDates(d, to) <= 0
+const inRange = (d: CalendarDate, from: CalendarDate, to: CalendarDate) =>
+  compareDates(d, from) >= 0 && compareDates(d, to) <= 0
 
-function topSources(lines: readonly SpendLine[], label: (l: SpendLine) => string = (l) => l.merchantName || 'Unnamed'): InsightSource[] {
+function topSources(
+  lines: readonly SpendLine[],
+  label: (l: SpendLine) => string = (l) => l.merchantName || 'Unnamed',
+): InsightSource[] {
   return [...lines]
     .sort((a, b) => b.amountMinor - a.amountMinor || compareDates(b.date, a.date))
     .slice(0, MAX_SOURCES)
@@ -116,7 +136,8 @@ export function comparisonMonths(
   if (!historyStart) return null
   const recentFrom = addMonths(startOfMonth(today), -1)
   let months = COMPARE_MONTHS
-  while (months >= MIN_COMPARE_MONTHS && compareDates(historyStart, addMonths(recentFrom, -months)) > 0) months--
+  while (months >= MIN_COMPARE_MONTHS && compareDates(historyStart, addMonths(recentFrom, -months)) > 0)
+    months--
   if (months < MIN_COMPARE_MONTHS) return null
   const usualFrom = addMonths(recentFrom, -months)
   const usualTo = addDays(recentFrom, -1)
@@ -149,7 +170,17 @@ function periodChanges(
     const isRecent = inRange(l.date, recent.from, recent.to)
     if (!isRecent && !inRange(l.date, usual.from, usual.to)) continue
     let g = groups.get(id)
-    if (!g) groups.set(id, (g = { id, name: (by === 'category' ? l.categoryName : l.merchantName) ?? 'Unnamed', recent: [], usualTotal: 0, recentTotal: 0 }))
+    if (!g)
+      groups.set(
+        id,
+        (g = {
+          id,
+          name: (by === 'category' ? l.categoryName : l.merchantName) ?? 'Unnamed',
+          recent: [],
+          usualTotal: 0,
+          recentTotal: 0,
+        }),
+      )
     if (isRecent) {
       g.recentTotal += l.amountMinor
       if (l.amountMinor > 0) g.recent.push(l)
@@ -171,7 +202,9 @@ function periodChanges(
       kind: by === 'category' ? 'category_change' : 'merchant_change',
       title: `${by === 'category' ? g.name : `Spending at ${g.name}`} ${up ? 'up' : 'down'} ${pct(diff / avg)} in ${recent.label}`,
       detail: `${rupees(now)} in ${recent.label}, ${up ? 'compared with' : 'down from'} your usual ${rupees(avg)} a month (${usual.label}). ${
-        g.recent.length ? `${g.recent.length} payment${g.recent.length === 1 ? '' : 's'} ${where} last month.` : `No spending ${where} last month.`
+        g.recent.length
+          ? `${g.recent.length} payment${g.recent.length === 1 ? '' : 's'} ${where} last month.`
+          : `No spending ${where} last month.`
       }`,
       direction: up ? 'up' : 'down',
       period: recent,
@@ -180,20 +213,33 @@ function periodChanges(
       comparisonMinor: avg,
       sources: topSources(g.recent, by === 'category' ? undefined : (l) => l.categoryName ?? l.merchantName),
       sourceCount: g.recent.length,
-      filter: by === 'category' ? { from: recent.from, to: recent.to, categoryId: g.id } : { from: recent.from, to: recent.to, text: g.name },
+      filter:
+        by === 'category'
+          ? { from: recent.from, to: recent.to, categoryId: g.id }
+          : { from: recent.from, to: recent.to, text: g.name },
       weightMinor: Math.abs(diff),
     })
   }
   return out.sort((a, b) => b.weightMinor - a.weightMinor).slice(0, by === 'category' ? 4 : 3)
 }
 
-export const categoryChanges = (lines: readonly SpendLine[], today: CalendarDate, historyStart: CalendarDate | null) =>
-  periodChanges(lines, today, historyStart, 'category')
-export const merchantChanges = (lines: readonly SpendLine[], today: CalendarDate, historyStart: CalendarDate | null) =>
-  periodChanges(lines, today, historyStart, 'merchant')
+export const categoryChanges = (
+  lines: readonly SpendLine[],
+  today: CalendarDate,
+  historyStart: CalendarDate | null,
+) => periodChanges(lines, today, historyStart, 'category')
+export const merchantChanges = (
+  lines: readonly SpendLine[],
+  today: CalendarDate,
+  historyStart: CalendarDate | null,
+) => periodChanges(lines, today, historyStart, 'merchant')
 
 /** Everyday spending per weekend day against per weekday, over the last 90 days. */
-export function weekendSpending(lines: readonly SpendLine[], today: CalendarDate, historyStart: CalendarDate | null): Insight[] {
+export function weekendSpending(
+  lines: readonly SpendLine[],
+  today: CalendarDate,
+  historyStart: CalendarDate | null,
+): Insight[] {
   if (!historyStart) return []
   const to = addDays(today, -1)
   const windowFrom = addDays(today, -WEEKEND_DAYS)
@@ -223,7 +269,11 @@ export function weekendSpending(lines: readonly SpendLine[], today: CalendarDate
   if (perWeekday <= 0 || new Set(weekendLines.map((l) => l.date)).size < 4) return []
   if (perWeekend - perWeekday < WEEKEND_MIN_MINOR || perWeekend < perWeekday * WEEKEND_RATIO) return []
   const byCategory = new Map<string, number>()
-  for (const l of weekendLines) byCategory.set(l.categoryName ?? 'Uncategorised', (byCategory.get(l.categoryName ?? 'Uncategorised') ?? 0) + l.amountMinor)
+  for (const l of weekendLines)
+    byCategory.set(
+      l.categoryName ?? 'Uncategorised',
+      (byCategory.get(l.categoryName ?? 'Uncategorised') ?? 0) + l.amountMinor,
+    )
   const top = [...byCategory].sort((a, b) => b[1] - a[1]).slice(0, 2)
   const days = diffDays(addDays(to, 1), from)
   const period = { label: `A weekend day, last ${days} days`, from, to }
@@ -263,7 +313,9 @@ export function unusualPurchases(lines: readonly SpendLine[], today: CalendarDat
     for (const l of list) {
       if (!inRange(l.date, recentFrom, today) || l.amountMinor < UNUSUAL_MIN_MINOR) continue
       const yearFrom = addDays(l.date, -365)
-      const before = list.filter((p) => p !== l && compareDates(p.date, l.date) < 0 && compareDates(p.date, yearFrom) >= 0).map((p) => p.amountMinor)
+      const before = list
+        .filter((p) => p !== l && compareDates(p.date, l.date) < 0 && compareDates(p.date, yearFrom) >= 0)
+        .map((p) => p.amountMinor)
       if (before.length < UNUSUAL_MIN_HISTORY) continue
       const usual = median(before)
       if (l.amountMinor < usual * UNUSUAL_RATIO) continue
@@ -274,7 +326,11 @@ export function unusualPurchases(lines: readonly SpendLine[], today: CalendarDat
         detail: `About ${Math.round(l.amountMinor / Math.max(usual, 1))}× your typical ${l.categoryName} payment of ${rupees(usual)} (the middle of ${before.length} payments in the year before).`,
         direction: 'up',
         period: { label: dayMonth(l.date), from: l.date, to: l.date },
-        comparison: { label: `${l.categoryName}, previous 12 months`, from: yearFrom, to: addDays(l.date, -1) },
+        comparison: {
+          label: `${l.categoryName}, previous 12 months`,
+          from: yearFrom,
+          to: addDays(l.date, -1),
+        },
         currentMinor: l.amountMinor,
         comparisonMinor: usual,
         sources: topSources([l]),
@@ -289,7 +345,8 @@ export function unusualPurchases(lines: readonly SpendLine[], today: CalendarDat
 
 /** What one payment of a schedule costs per month on average. */
 export function monthlyEquivalent(amountMinor: number, frequency: Frequency, interval: number): number {
-  const perYear = frequency === 'weekly' ? 52 / interval : frequency === 'monthly' ? 12 / interval : 1 / interval
+  const perYear =
+    frequency === 'weekly' ? 52 / interval : frequency === 'monthly' ? 12 / interval : 1 / interval
   return Math.round((amountMinor * perYear) / 12)
 }
 
@@ -330,7 +387,10 @@ export function subscriptionChanges(
       comparison: { label: dayMonth(first.date), from: first.date, to: first.date },
       currentMinor: last.amountMinor,
       comparisonMinor: first.amountMinor,
-      sources: [...paid].reverse().slice(0, MAX_SOURCES).map((p) => ({ txnId: p.txnId, date: p.date, label: s.name, amountMinor: p.amountMinor })),
+      sources: [...paid]
+        .reverse()
+        .slice(0, MAX_SOURCES)
+        .map((p) => ({ txnId: p.txnId, date: p.date, label: s.name, amountMinor: p.amountMinor })),
       sourceCount: paid.length,
       filter: { from: first.date, to: last.date, text: s.name },
       weightMinor: monthlyEquivalent(rise, s.frequency, s.interval) * 12,
@@ -340,7 +400,8 @@ export function subscriptionChanges(
   const then = addMonths(today, -CREEP_MONTHS)
   const nowItems = items.filter((s) => s.active && activeOn(s, today))
   const thenItems = items.filter((s) => activeOn(s, then))
-  const total = (list: readonly SubscriptionItem[]) => list.reduce((t, s) => t + monthlyEquivalent(s.amountMinor, s.frequency, s.interval), 0)
+  const total = (list: readonly SubscriptionItem[]) =>
+    list.reduce((t, s) => t + monthlyEquivalent(s.amountMinor, s.frequency, s.interval), 0)
   const nowTotal = total(nowItems)
   const thenTotal = total(thenItems)
   const added = nowItems.filter((s) => !thenItems.includes(s))
@@ -348,7 +409,9 @@ export function subscriptionChanges(
   if (enoughHistory && added.length > 0 && nowTotal - thenTotal >= Math.max(10_000, thenTotal * 0.1)) {
     const addedIds = new Set(added.map((s) => s.itemId))
     const names = new Map(items.map((s) => [s.itemId, s.name]))
-    const recentPaid = payments.filter((p) => addedIds.has(p.itemId)).sort((a, b) => compareDates(b.date, a.date))
+    const recentPaid = payments
+      .filter((p) => addedIds.has(p.itemId))
+      .sort((a, b) => compareDates(b.date, a.date))
     out.push({
       key: `subs:${monthKey(today)}`,
       kind: 'subscription_creep',
@@ -361,7 +424,12 @@ export function subscriptionChanges(
       comparison: { label: monthName(then), from: then, to: then },
       currentMinor: nowTotal,
       comparisonMinor: thenTotal,
-      sources: recentPaid.slice(0, MAX_SOURCES).map((p) => ({ txnId: p.txnId, date: p.date, label: names.get(p.itemId) ?? '', amountMinor: p.amountMinor })),
+      sources: recentPaid.slice(0, MAX_SOURCES).map((p) => ({
+        txnId: p.txnId,
+        date: p.date,
+        label: names.get(p.itemId) ?? '',
+        amountMinor: p.amountMinor,
+      })),
       sourceCount: recentPaid.length,
       filter: { from: then, to: today },
       weightMinor: (nowTotal - thenTotal) * 12,
@@ -389,9 +457,14 @@ export function detectInsights(input: InsightInput): Insight[] {
   const categories = categoryChanges(lines, today, historyStart)
   const reported = new Set(categories.map((c) => c.filter.categoryId))
   const merchants = merchantChanges(lines, today, historyStart).filter((m) => {
-    const recent = lines.filter((l) => l.merchantName === m.filter.text && inRange(l.date, m.period.from, m.period.to) && l.amountMinor > 0)
+    const recent = lines.filter(
+      (l) =>
+        l.merchantName === m.filter.text && inRange(l.date, m.period.from, m.period.to) && l.amountMinor > 0,
+    )
     const total = recent.reduce((t, l) => t + l.amountMinor, 0)
-    const covered = recent.filter((l) => l.categoryId && reported.has(l.categoryId)).reduce((t, l) => t + l.amountMinor, 0)
+    const covered = recent
+      .filter((l) => l.categoryId && reported.has(l.categoryId))
+      .reduce((t, l) => t + l.amountMinor, 0)
     return total === 0 || covered * 2 < total
   })
   return [

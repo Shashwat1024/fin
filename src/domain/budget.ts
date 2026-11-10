@@ -60,7 +60,10 @@ export function nextMonth(month: MonthKey): MonthKey {
  * Run the budget forward over consecutive months (oldest first) and return every month's result.
  * `categoryIds` lists categories to report even with no activity.
  */
-export function runBudget(months: readonly BudgetMonthInput[], categoryIds: readonly string[] = []): BudgetMonthResult[] {
+export function runBudget(
+  months: readonly BudgetMonthInput[],
+  categoryIds: readonly string[] = [],
+): BudgetMonthResult[] {
   const all = new Set(categoryIds)
   for (const m of months) {
     for (const id of m.assigned.keys()) all.add(id)
@@ -75,13 +78,27 @@ export function runBudget(months: readonly BudgetMonthInput[], categoryIds: read
       const carryMinor = Math.max(prevAvailable.get(categoryId) ?? 0, 0)
       const assignedMinor = m.assigned.get(categoryId) ?? 0
       const spentMinor = m.spent.get(categoryId) ?? 0
-      return { categoryId, carryMinor, assignedMinor, spentMinor, availableMinor: sumMinor([carryMinor, assignedMinor, -spentMinor]) }
+      return {
+        categoryId,
+        carryMinor,
+        assignedMinor,
+        spentMinor,
+        availableMinor: sumMinor([carryMinor, assignedMinor, -spentMinor]),
+      }
     })
     const overspentMinor = sumMinor([...prevAvailable.values()].map((v) => (v < 0 ? -v : 0)))
     const assignedMinor = sumMinor(lines.map((l) => l.assignedMinor))
     const leftoverMinor = toAssign
     toAssign = sumMinor([m.incomeMinor, leftoverMinor, -assignedMinor, -overspentMinor])
-    results.push({ month: m.month, incomeMinor: m.incomeMinor, leftoverMinor, overspentMinor, assignedMinor, toAssignMinor: toAssign, lines })
+    results.push({
+      month: m.month,
+      incomeMinor: m.incomeMinor,
+      leftoverMinor,
+      overspentMinor,
+      assignedMinor,
+      toAssignMinor: toAssign,
+      lines,
+    })
     prevAvailable = new Map(lines.map((l) => [l.categoryId, l.availableMinor]))
   }
   return results

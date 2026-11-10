@@ -58,8 +58,16 @@ describe('calendar dates', () => {
   })
 
   it('computes Indian financial years', () => {
-    expect(financialYear('2026-11-08', 4)).toEqual({ from: '2026-04-01', to: '2027-03-31', label: 'FY 2026-27' })
-    expect(financialYear('2026-03-31', 4)).toEqual({ from: '2025-04-01', to: '2026-03-31', label: 'FY 2025-26' })
+    expect(financialYear('2026-11-08', 4)).toEqual({
+      from: '2026-04-01',
+      to: '2027-03-31',
+      label: 'FY 2026-27',
+    })
+    expect(financialYear('2026-03-31', 4)).toEqual({
+      from: '2025-04-01',
+      to: '2026-03-31',
+      label: 'FY 2025-26',
+    })
     expect(financialYear('2026-06-01', 1)).toEqual({ from: '2026-01-01', to: '2026-12-31', label: '2026' })
   })
 

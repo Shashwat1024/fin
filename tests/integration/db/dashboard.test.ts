@@ -16,8 +16,12 @@ let card: string
 
 beforeEach(() => {
   db = testDb()
-  const acct = (name: string, type: Parameters<typeof createAccount>[1]['type'], minor: number, date = '2026-09-01') =>
-    createAccount(db, { name, type, openingBalanceMinor: minor, openingDate: date }).account.id
+  const acct = (
+    name: string,
+    type: Parameters<typeof createAccount>[1]['type'],
+    minor: number,
+    date = '2026-09-01',
+  ) => createAccount(db, { name, type, openingBalanceMinor: minor, openingDate: date }).account.id
   bank = acct('HDFC Savings', 'bank', 5_000_000)
   cash = acct('Wallet', 'cash', 200_000)
   card = acct('Amex', 'credit_card', 1_200_000) // ₹12,000 owed
@@ -38,7 +42,12 @@ beforeEach(() => {
   txn(cash, '2026-11-08', -200_000, 'Chai')
   txn(bank, '2026-11-20', -99_900, 'Netflix') // after today: not in month-to-date
   // Card bill paid from the bank: a transfer, never spending or income.
-  createTransfer(db, { fromAccountId: bank, toAccountId: card, postedDate: '2026-11-05', amountMinor: 1_000_000 })
+  createTransfer(db, {
+    fromAccountId: bank,
+    toAccountId: card,
+    postedDate: '2026-11-05',
+    amountMinor: 1_000_000,
+  })
 })
 
 /** The total the drill-down page shows for a metric. */
@@ -46,11 +55,19 @@ function drillTotal(drill: DrillTarget): number {
   if (drill.page === 'accounts') {
     return listAccounts(db)
       .filter(ACCOUNT_GROUPS[drill.group])
-      .reduce((t, a) => t + (drill.group === 'all' && a.nature === 'liability' ? -a.balanceMinor : a.balanceMinor), 0)
+      .reduce(
+        (t, a) => t + (drill.group === 'all' && a.nature === 'liability' ? -a.balanceMinor : a.balanceMinor),
+        0,
+      )
   }
   if (drill.page === 'networth') return netWorthHistoryFor(db, TODAY).current.netMinor
   if (drill.page === 'forecast') throw new Error('No total on the forecast page')
-  const { totals } = queryTransactions(db, { from: drill.from, to: drill.to, direction: drill.direction, kind: drill.kind })
+  const { totals } = queryTransactions(db, {
+    from: drill.from,
+    to: drill.to,
+    direction: drill.direction,
+    kind: drill.kind,
+  })
   return drill.direction === 'out' ? -totals.outMinor : totals.inMinor
 }
 
@@ -76,7 +93,12 @@ describe('dashboard summary', () => {
     // Drill-down: this month's transactions; (in + out) / in is the savings rate.
     const t = queryTransactions(db, { from: '2026-11-01', to: TODAY, kind: 'standard' }).totals
     expect(Math.round((t.netMinor / t.inMinor) * 100)).toBe(75)
-    expect(s.savingsRate.drill).toEqual({ page: 'transactions', from: '2026-11-01', to: TODAY, kind: 'standard' })
+    expect(s.savingsRate.drill).toEqual({
+      page: 'transactions',
+      from: '2026-11-01',
+      to: TODAY,
+      kind: 'standard',
+    })
     expectDrillMatches(s.spent)
     expectDrillMatches(s.income)
   })
@@ -105,9 +127,25 @@ describe('dashboard summary', () => {
 
   it('gives six months of money in and out, matching each month’s transactions', () => {
     const s = dashboardSummary(db, TODAY)
-    expect(s.months.map((m) => m.month)).toEqual(['2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11'])
-    expect(s.months.at(-2)).toMatchObject({ from: '2026-10-01', to: '2026-10-31', inMinor: 8_000_000, outMinor: 4_000_000 })
-    expect(s.months.at(-1)).toMatchObject({ to: TODAY, inMinor: s.income.valueMinor, outMinor: s.spent.valueMinor })
+    expect(s.months.map((m) => m.month)).toEqual([
+      '2026-06',
+      '2026-07',
+      '2026-08',
+      '2026-09',
+      '2026-10',
+      '2026-11',
+    ])
+    expect(s.months.at(-2)).toMatchObject({
+      from: '2026-10-01',
+      to: '2026-10-31',
+      inMinor: 8_000_000,
+      outMinor: 4_000_000,
+    })
+    expect(s.months.at(-1)).toMatchObject({
+      to: TODAY,
+      inMinor: s.income.valueMinor,
+      outMinor: s.spent.valueMinor,
+    })
   })
 
   it('labels freshness: oldest "data up to" date and the latest import per account', () => {
@@ -128,7 +166,12 @@ describe('dashboard summary', () => {
       amountMinor,
       description: `UPI-${rowNumber}`,
     })
-    const mapping = { headerRow: 0, dateOrder: 'dmy', amountMode: 'single', columns: { date: 'Date', description: 'Narration', amount: 'Amount' } } as const
+    const mapping = {
+      headerRow: 0,
+      dateOrder: 'dmy',
+      amountMode: 'single',
+      columns: { date: 'Date', description: 'Narration', amount: 'Amount' },
+    } as const
     const { batchId } = commitImport(db, {
       accountId: cash,
       fileName: 'wallet.csv',

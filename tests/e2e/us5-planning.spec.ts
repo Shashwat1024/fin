@@ -96,7 +96,9 @@ test('US5: recurring items match payments, the budget reaches ₹0, and goals pr
   // Spent drills to the same total on the ledger
   await page.keyboard.press('Alt+ArrowLeft')
   await page.getByRole('link', { name: 'Spent on Rent: view transactions' }).click()
-  await expect(page.getByRole('heading', { name: 'Transactions' }).locator('..')).toContainText('Out ₹18,000.00')
+  await expect(page.getByRole('heading', { name: 'Transactions' }).locator('..')).toContainText(
+    'Out ₹18,000.00',
+  )
 
   // Goals: progress, monthly amount needed and projection
   await page.keyboard.press('Control+7')

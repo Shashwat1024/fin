@@ -2,7 +2,8 @@
 export const LABEL_SEP = '\u0001'
 export const ID_SEP = '\u0000'
 
-export const optionValue = (label: string, group: string, id: string) => `${label}${LABEL_SEP}${group}${ID_SEP}${id}`
+export const optionValue = (label: string, group: string, id: string) =>
+  `${label}${LABEL_SEP}${group}${ID_SEP}${id}`
 
 /**
  * Rank matches on the visible label first, then the group name; never on the hidden id.

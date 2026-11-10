@@ -64,10 +64,24 @@ describe('performance with 50,000 transactions', () => {
   it('filters the transaction list in under 150 ms', () => {
     const food = listCategories(db).find((c) => c.path === 'Food')!.id
     expect(measure('txns: first page', () => queryTransactions(db, { limit: 100 }))).toBeLessThan(150)
-    expect(measure('txns: text search', () => queryTransactions(db, { text: 'swiggy', limit: 100 }))).toBeLessThan(150)
-    expect(measure('txns: category + year', () => queryTransactions(db, { categoryIds: [food], from: '2025-11-01', to: TODAY, limit: 100 }))).toBeLessThan(150)
-    expect(measure('txns: amount + account', () => queryTransactions(db, { accountIds: [bank], minAmountMinor: 100_000, direction: 'out', limit: 100 }))).toBeLessThan(150)
-    expect(measure('txns: uncategorised', () => queryTransactions(db, { categoryIds: ['uncategorized'], limit: 100 }))).toBeLessThan(150)
+    expect(
+      measure('txns: text search', () => queryTransactions(db, { text: 'swiggy', limit: 100 })),
+    ).toBeLessThan(150)
+    expect(
+      measure('txns: category + year', () =>
+        queryTransactions(db, { categoryIds: [food], from: '2025-11-01', to: TODAY, limit: 100 }),
+      ),
+    ).toBeLessThan(150)
+    expect(
+      measure('txns: amount + account', () =>
+        queryTransactions(db, { accountIds: [bank], minAmountMinor: 100_000, direction: 'out', limit: 100 }),
+      ),
+    ).toBeLessThan(150)
+    expect(
+      measure('txns: uncategorised', () =>
+        queryTransactions(db, { categoryIds: ['uncategorized'], limit: 100 }),
+      ),
+    ).toBeLessThan(150)
   })
 
   it('loads everything the Overview needs in under 300 ms', () => {
@@ -97,7 +111,9 @@ describe('performance with 50,000 transactions', () => {
   it('computes insights, recurring suggestions and a what-if quickly (US8)', () => {
     expect(measure('insights', () => listInsights(db, TODAY), 3)).toBeLessThan(500)
     expect(measure('looks recurring', () => recurringSuggestions(db, TODAY), 3)).toBeLessThan(500)
-    const changes = [{ kind: 'large_purchase' as const, name: 'Laptop', amountMinor: 15_000_000, date: TODAY }]
+    const changes = [
+      { kind: 'large_purchase' as const, name: 'Laptop', amountMinor: 15_000_000, date: TODAY },
+    ]
     expect(measure('what-if 90', () => whatIf(db, 90, changes, TODAY))).toBeLessThan(300)
   })
 
@@ -106,7 +122,9 @@ describe('performance with 50,000 transactions', () => {
     for (let i = 0; i < 1000; i++) {
       const d = addDays('2026-08-01', i % 90)
       const [y, m, day] = d.split('-')
-      lines.push(`${day}/${m}/${y!.slice(2)},UPI-SWIGGY-SWIGGY@ICICI-ICIC0DC0099-4288${100000 + i}-ORDER,4288${100000 + i},${day}/${m}/${y!.slice(2)},${(i % 900) + 10}.00,,1000.00`)
+      lines.push(
+        `${day}/${m}/${y!.slice(2)},UPI-SWIGGY-SWIGGY@ICICI-ICIC0DC0099-4288${100000 + i}-ORDER,4288${100000 + i},${day}/${m}/${y!.slice(2)},${(i % 900) + 10}.00,,1000.00`,
+      )
     }
     const text = lines.join('\n')
     const preset = BUILTIN_PRESETS.find((p) => p.id === 'builtin:hdfc')!
@@ -116,7 +134,16 @@ describe('performance with 50,000 transactions', () => {
         const table = parseTable(text)
         const parsed = applyMapping(table.rows, { ...preset.mapping, headerRow: 0 })
         const rows = parsed.rows.flatMap((r) =>
-          r.status === 'ok' ? [{ rowNumber: r.rowNumber, date: r.values.date, amountMinor: r.values.amountMinor, description: r.values.description }] : [],
+          r.status === 'ok'
+            ? [
+                {
+                  rowNumber: r.rowNumber,
+                  date: r.values.date,
+                  amountMinor: r.values.amountMinor,
+                  description: r.values.description,
+                },
+              ]
+            : [],
         )
         expect(rows).toHaveLength(1000)
         previewImport(db, { accountId: bank, rows })

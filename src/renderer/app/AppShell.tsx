@@ -88,7 +88,9 @@ function NavItem({ to, label, icon: Icon, combo }: (typeof NAV)[number]) {
     >
       <Icon className="size-4" aria-hidden />
       <span className="flex-1">{label}</span>
-      {combo && <ShortcutHint combo={combo} className="opacity-0 transition-opacity group-hover:opacity-60" />}
+      {combo && (
+        <ShortcutHint combo={combo} className="opacity-0 transition-opacity group-hover:opacity-60" />
+      )}
     </NavLink>
   )
 }
@@ -109,12 +111,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   useHotkey('mod+,', () => navigate('/settings'))
   return (
     <div className="flex h-full">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:px-3 focus:py-2">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-background focus:px-3 focus:py-2"
+      >
         Skip to content
       </a>
       <aside className="flex w-60 shrink-0 flex-col gap-6 overflow-y-auto border-r bg-sidebar px-3 py-5 text-sidebar-foreground">
         <div className="flex items-center gap-2 px-3">
-          <div className="grid size-7 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground" aria-hidden>
+          <div
+            className="grid size-7 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
+            aria-hidden
+          >
             ₹
           </div>
           <span className="text-lg font-semibold tracking-tight">Fin</span>

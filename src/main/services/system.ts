@@ -85,7 +85,10 @@ export function createSystem(paths: AppPaths, log: Logger, window: () => Browser
     async restore(live, path, passphrase) {
       const prepared = await prepareBackup(path, passphrase, workDir)
       if (!prepared.file || !prepared.inspection.valid) {
-        throw new AppError('VALIDATION', prepared.inspection.valid ? 'The backup could not be read' : prepared.inspection.message)
+        throw new AppError(
+          'VALIDATION',
+          prepared.inspection.valid ? 'The backup could not be read' : prepared.inspection.message,
+        )
       }
       const preRestoreBackup = await createBackup(live, backupDirFor(live, env), 'pre-restore')
       close()

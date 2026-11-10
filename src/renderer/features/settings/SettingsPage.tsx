@@ -52,7 +52,9 @@ export function SettingsPage() {
             <CardTitle className="flex items-center gap-2">
               <HistoryIcon className="size-4" /> Recent changes
             </CardTitle>
-            <CardDescription>Every change is recorded on this computer. The latest one can be undone here.</CardDescription>
+            <CardDescription>
+              Every change is recorded on this computer. The latest one can be undone here.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {activity.data?.length ? (
@@ -97,9 +99,9 @@ export function SettingsPage() {
               <LockIcon className="size-4" /> Privacy
             </CardTitle>
             <CardDescription>
-              Fin works fully offline. Your data is stored only on this computer and is never sent anywhere. For
-              protection if this computer is lost, turn on your operating system's disk encryption (BitLocker on
-              Windows) and keep passphrase-protected backups.
+              Fin works fully offline. Your data is stored only on this computer and is never sent anywhere.
+              For protection if this computer is lost, turn on your operating system's disk encryption
+              (BitLocker on Windows) and keep passphrase-protected backups.
             </CardDescription>
           </CardHeader>
         </Card>

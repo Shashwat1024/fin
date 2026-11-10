@@ -1,7 +1,22 @@
 import { useState, type ReactNode } from 'react'
 import { BarChart3Icon, TableIcon } from 'lucide-react'
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@renderer/components/ui/card'
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@renderer/components/ui/table'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@renderer/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@renderer/components/ui/table'
 import { ToggleGroup, ToggleGroupItem } from '@renderer/components/ui/toggle-group'
 import { cn } from '@renderer/lib/utils'
 

@@ -1,5 +1,11 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { AlertTriangleIcon, ArrowDownToLineIcon, CalendarRangeIcon, GaugeIcon, LineChartIcon } from 'lucide-react'
+import {
+  AlertTriangleIcon,
+  ArrowDownToLineIcon,
+  CalendarRangeIcon,
+  GaugeIcon,
+  LineChartIcon,
+} from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { formatMoney, money } from '@domain/money'
 import { ChartCard, ChartTable, type ChartColumn } from '@renderer/components/ChartTable'
@@ -19,11 +25,20 @@ import { BufferField } from './BufferField'
 export const FORECAST_OPTIONS = [30, 60, 90] as const
 type Days = (typeof FORECAST_OPTIONS)[number]
 
-const DAY = new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+const DAY = new Intl.DateTimeFormat('en-IN', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+})
 export const dayLabel = (d: string) => DAY.format(new Date(`${d}T00:00:00Z`))
 const rupees = (minor: number) => formatMoney(money(minor))
 
-export const CONFIDENCE_LABELS: Record<Confidence, string> = { high: 'High confidence', medium: 'Medium confidence', low: 'Low confidence' }
+export const CONFIDENCE_LABELS: Record<Confidence, string> = {
+  high: 'High confidence',
+  medium: 'Medium confidence',
+  low: 'Low confidence',
+}
 
 export function ConfidenceBadge({ confidence }: { confidence: Confidence }) {
   return (
@@ -35,9 +50,24 @@ export function ConfidenceBadge({ confidence }: { confidence: Confidence }) {
 
 const COLUMNS: ChartColumn<ForecastPoint>[] = [
   { key: 'date', header: 'Day', cell: (p) => dayLabel(p.date) },
-  { key: 'recurring', header: 'Recurring', numeric: true, cell: (p) => (p.recurringMinor ? <MoneyText minor={p.recurringMinor} showPlus /> : '—') },
-  { key: 'baseline', header: 'Everyday spending', numeric: true, cell: (p) => (p.baselineMinor ? <MoneyText minor={-p.baselineMinor} /> : '—') },
-  { key: 'balance', header: 'Projected balance', numeric: true, cell: (p) => <MoneyText minor={p.balanceMinor} /> },
+  {
+    key: 'recurring',
+    header: 'Recurring',
+    numeric: true,
+    cell: (p) => (p.recurringMinor ? <MoneyText minor={p.recurringMinor} showPlus /> : '—'),
+  },
+  {
+    key: 'baseline',
+    header: 'Everyday spending',
+    numeric: true,
+    cell: (p) => (p.baselineMinor ? <MoneyText minor={-p.baselineMinor} /> : '—'),
+  },
+  {
+    key: 'balance',
+    header: 'Projected balance',
+    numeric: true,
+    cell: (p) => <MoneyText minor={p.balanceMinor} />,
+  },
 ]
 
 function Tooltip({ f, i }: { f: ForecastDto; i: number }) {
@@ -74,7 +104,9 @@ function AssumptionRows({ rows }: { rows: ForecastAssumption[] }) {
             <p>{a.label}</p>
             {a.detail && <p className="text-xs text-muted-foreground">{a.detail}</p>}
           </div>
-          {a.amountMinor !== null && <MoneyText minor={a.amountMinor} showPlus={a.kind === 'recurring'} className="text-sm" />}
+          {a.amountMinor !== null && (
+            <MoneyText minor={a.amountMinor} showPlus={a.kind === 'recurring'} className="text-sm" />
+          )}
         </li>
       ))}
     </ul>
@@ -89,7 +121,9 @@ function Assumptions({ f }: { f: ForecastDto }) {
     <Card role="region" aria-label="Assumptions">
       <CardHeader>
         <CardTitle>Assumptions</CardTitle>
-        <CardDescription>Everything this estimate is built from. Change any of it and the forecast follows.</CardDescription>
+        <CardDescription>
+          Everything this estimate is built from. Change any of it and the forecast follows.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section aria-labelledby="fa-start">
@@ -97,14 +131,21 @@ function Assumptions({ f }: { f: ForecastDto }) {
             Starting balance
           </h3>
           <AssumptionRows rows={group('start')} />
-          <h3 id="fa-recurring" className="mt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <h3
+            id="fa-recurring"
+            className="mt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+          >
             Recurring items still expected
           </h3>
           {recurring.length ? (
             <AssumptionRows rows={recurring} />
           ) : (
             <p className="py-2 text-sm text-muted-foreground">
-              None in this period. <Link to="/recurring" className="underline underline-offset-4">Add bills, EMIs and income that repeat</Link>.
+              None in this period.{' '}
+              <Link to="/recurring" className="underline underline-offset-4">
+                Add bills, EMIs and income that repeat
+              </Link>
+              .
             </p>
           )}
         </section>
@@ -114,7 +155,10 @@ function Assumptions({ f }: { f: ForecastDto }) {
           </h3>
           <AssumptionRows rows={group('baseline')} />
           {f.baselineDays > 0 && (
-            <dl className="mt-1 grid grid-cols-7 gap-1 text-center text-xs" aria-label="Usual spending by day of the week">
+            <dl
+              className="mt-1 grid grid-cols-7 gap-1 text-center text-xs"
+              aria-label="Usual spending by day of the week"
+            >
               {WEEKDAYS.map((d, i) => (
                 <div key={d} className="rounded-md bg-muted/50 px-1 py-1.5">
                   <dt className="text-muted-foreground">{d}</dt>
@@ -125,7 +169,9 @@ function Assumptions({ f }: { f: ForecastDto }) {
               ))}
             </dl>
           )}
-          <h3 className="mt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase">Also worth knowing</h3>
+          <h3 className="mt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Also worth knowing
+          </h3>
           <AssumptionRows rows={group('note')} />
         </section>
       </CardContent>
@@ -148,11 +194,14 @@ function BufferWarnings({ f }: { f: ForecastDto }) {
         <Alert key={r.from} className="border-warning/50">
           <AlertTriangleIcon className="text-warning" />
           <AlertTitle>
-            {r.from === r.to ? `Below your buffer on ${dayLabel(r.from)}` : `Below your buffer from ${dayLabel(r.from)} to ${dayLabel(r.to)}`}
+            {r.from === r.to
+              ? `Below your buffer on ${dayLabel(r.from)}`
+              : `Below your buffer from ${dayLabel(r.from)} to ${dayLabel(r.to)}`}
           </AlertTitle>
           <AlertDescription>
             <p>
-              Lowest {rupees(r.lowestMinor)} on {dayLabel(r.lowestDate)}, {rupees(f.bufferMinor - r.lowestMinor)} under your {rupees(f.bufferMinor)} buffer.
+              Lowest {rupees(r.lowestMinor)} on {dayLabel(r.lowestDate)},{' '}
+              {rupees(f.bufferMinor - r.lowestMinor)} under your {rupees(f.bufferMinor)} buffer.
               {r.causes.length > 0 ? ' Largest payments before then:' : ' This comes from everyday spending.'}
             </p>
             {r.causes.length > 0 && (
@@ -218,7 +267,11 @@ export function ForecastPage() {
             icon={<ArrowDownToLineIcon className="size-4" />}
             label="Lowest point"
             value={<MoneyText minor={f.low.balanceMinor} />}
-            detail={f.low.date === f.today ? 'Today; it does not dip lower in this period' : `On ${formatDate(f.low.date)}`}
+            detail={
+              f.low.date === f.today
+                ? 'Today; it does not dip lower in this period'
+                : `On ${formatDate(f.low.date)}`
+            }
           />
           <StatCard
             icon={<CalendarRangeIcon className="size-4" />}
@@ -230,7 +283,12 @@ export function ForecastPage() {
               </>
             }
           />
-          <StatCard icon={<GaugeIcon className="size-4" />} label="Confidence" value={CONFIDENCE_LABELS[f.confidence]} detail={f.confidenceReason} />
+          <StatCard
+            icon={<GaugeIcon className="size-4" />}
+            label="Confidence"
+            value={CONFIDENCE_LABELS[f.confidence]}
+            detail={f.confidenceReason}
+          />
         </div>
         <BufferWarnings f={f} />
         <ChartCard
@@ -240,14 +298,28 @@ export function ForecastPage() {
             <LineChart
               points={f.points.map((p) => ({ date: p.date, valueMinor: p.balanceMinor }))}
               label={`Projected balance over ${f.days} days, lowest ${rupees(f.low.balanceMinor)} on ${formatDate(f.low.date)}`}
-              reference={f.bufferMinor > 0 ? { valueMinor: f.bufferMinor, label: `Buffer ${rupees(f.bufferMinor)}` } : null}
+              reference={
+                f.bufferMinor > 0
+                  ? { valueMinor: f.bufferMinor, label: `Buffer ${rupees(f.bufferMinor)}` }
+                  : null
+              }
               ranges={f.belowBuffer}
-              marker={{ date: f.low.date, label: `Lowest ${formatMoney(money(f.low.balanceMinor), { compact: true })}` }}
+              marker={{
+                date: f.low.date,
+                label: `Lowest ${formatMoney(money(f.low.balanceMinor), { compact: true })}`,
+              }}
               tooltip={(i) => <Tooltip f={f} i={i} />}
               height={280}
             />
           }
-          table={<ChartTable caption="Projected balance by day" columns={COLUMNS} rows={f.points} rowKey={(p) => p.date} />}
+          table={
+            <ChartTable
+              caption="Projected balance by day"
+              columns={COLUMNS}
+              rows={f.points}
+              rowKey={(p) => p.date}
+            />
+          }
         />
         <Card>
           <CardContent>
