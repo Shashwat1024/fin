@@ -68,6 +68,19 @@ Load demo data → every card shows a value, "as of" date, and drill-down whose 
 - **Recurring** → "Looks recurring" lists Domestic help; **Set up…** opens the dialog filled in.
 - Late-night spending is not detected: statements carry dates, not times of day.
 
+### 5c. Daily use (US9–US12, v2.1)
+Automated: `us9-views`, `us10-cards`, `us11-reminders`, `us12-calendar`. By hand, with demo data:
+- **Saved views**: the sidebar shows "Food delivery"; open it, change the search, then View options ›
+  Save current filters to this view. Rename, unpin and delete it, then Undo.
+- **Card cycles**: Accounts › Demo Credit Card shows the last statement, what is due and by when,
+  and the next statement; each amount opens its transactions. Edit the card to change the statement
+  day. The Forecast's assumptions say the bill is counted from the recurring card payment.
+- **Reminders**: Settings › Reminders › turn on, then **Show a test notification** (a Windows
+  notification appears). "Due now" lists what would be reminded. With **Keep Fin running in the
+  tray** on, closing the window leaves the tray icon; its menu reopens or quits Fin. **Start Fin when
+  I sign in** adds Fin to Windows' start-up apps (not with `FIN_DATA_DIR` set).
+- **Spending calendar**: Insights › Calendar; previous month; choose a day.
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
 request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check

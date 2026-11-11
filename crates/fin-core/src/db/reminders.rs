@@ -51,7 +51,7 @@ fn compute(db: &Db, today: &str, time: &str, settings: &ReminderSettings) -> DbR
         Vec::new()
     };
     let cards: Vec<CardBill> = if settings.card_due {
-        cards_with_cycles(db, today)?
+        cards_with_cycles(db, today, &super::accounts::list_accounts(db, false)?)?
             .into_iter()
             .filter_map(|c| {
                 Some(CardBill {

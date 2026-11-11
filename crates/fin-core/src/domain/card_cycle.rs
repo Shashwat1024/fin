@@ -99,21 +99,59 @@ impl CardCycle {
     }
 }
 
+/// The latest statement on or before today, unless it was before the card's start in Fin.
+pub fn latest_statement(statement_day: u32, opening_date: &str, today: &str) -> Option<String> {
+    let latest = statement_on_or_before(statement_day.clamp(1, 31), today);
+    (latest.as_str() >= opening_date).then_some(latest)
+}
+
+/// Sums of the card's stored amounts that a cycle needs; storage can compute them in one query.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct Totals {
+    /// Every transaction up to and including the statement day (0 without a statement).
+    pub through_statement: i64,
+    /// Every transaction.
+    pub all: i64,
+    /// Payments and refunds after the statement (or from the start without one).
+    pub credits_after: i64,
+    /// Spending after the statement (or from the start), as a positive amount.
+    pub spent_after: i64,
+}
+
+/// The totals from a list of transactions, with the same boundaries storage uses.
+pub fn totals(entries: &[(String, i64)], statement: Option<&str>, opening_date: &str) -> Totals {
+    let after = |date: &str| match statement {
+        Some(s) => date > s,
+        None => date >= opening_date,
+    };
+    let mut t = Totals::default();
+    for (d, a) in entries {
+        t.all += a;
+        if statement.is_some_and(|s| d.as_str() <= s) {
+            t.through_statement += a;
+        }
+        if after(d) {
+            if *a > 0 {
+                t.credits_after += a;
+            } else {
+                t.spent_after -= a;
+            }
+        }
+    }
+    t
+}
+
 pub fn card_cycle(input: &CycleInput) -> CardCycle {
+    let statement = latest_statement(input.statement_day, input.opening_date, input.today);
+    let t = totals(input.entries, statement.as_deref(), input.opening_date);
+    card_cycle_from_totals(input, statement, t)
+}
+
+/// The cycle from precomputed totals (`input.entries` is not read).
+pub fn card_cycle_from_totals(input: &CycleInput, statement: Option<String>, t: Totals) -> CardCycle {
     let day = input.statement_day.clamp(1, 31);
-    let owed_at = |date: &str| -> i64 {
-        input.opening_owed_minor - input.entries.iter().filter(|(d, _)| d.as_str() <= date).map(|(_, a)| a).sum::<i64>()
-    };
-    let owed_now = input.opening_owed_minor - input.entries.iter().map(|(_, a)| a).sum::<i64>();
-    let latest = statement_on_or_before(day, input.today);
-    let statement = (latest.as_str() >= input.opening_date).then_some(latest);
-    // Spending and credits are counted after the statement, or from the start without one.
-    let after = |date: &str| match &statement {
-        Some(s) => date > s.as_str(),
-        None => date >= input.opening_date,
-    };
-    let credits_since: i64 = input.entries.iter().filter(|(d, a)| *a > 0 && after(d)).map(|(_, a)| a).sum();
-    let spent_since: i64 = -input.entries.iter().filter(|(d, a)| *a < 0 && after(d)).map(|(_, a)| a).sum::<i64>();
+    let owed_now = input.opening_owed_minor - t.all;
+    let (credits_since, spent_since) = (t.credits_after, t.spent_after);
     let next_statement = statement_after(day, input.today);
     let due_after = |d: &str| add_days(d, input.due_days_after).unwrap_or_else(|_| d.to_owned());
     let next_due = due_after(&next_statement);
@@ -133,7 +171,7 @@ pub fn card_cycle(input: &CycleInput) -> CardCycle {
             days_until_due: None,
         };
     };
-    let statement_minor = owed_at(&statement_date).max(0);
+    let statement_minor = (input.opening_owed_minor - t.through_statement).max(0);
     let remaining = (statement_minor - credits_since).max(0);
     let due = due_after(&statement_date);
     let days_until_due = diff_days(&due, input.today).ok();

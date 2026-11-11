@@ -152,7 +152,7 @@ pub fn dashboard_summary(db: &Db, today: &str) -> DbResult<Value> {
     let mut card_dues =
         metric(sum_group("cards"), sources_for("cards"), json!({ "page": "accounts", "group": "cards" }));
     card_dues.insert("cardCount".into(), json!(accounts.iter().filter(|a| in_group("cards", a)).count()));
-    let (next_due, all_paid) = super::cards::next_due(db, today)?;
+    let (next_due, all_paid) = super::cards::next_due(db, today, &accounts)?;
     card_dues.insert("nextDue".into(), next_due);
     card_dues.insert("allPaid".into(), json!(all_paid));
     let mut net_worth = metric(worth.net_minor, all_sources.clone(), json!({ "page": "networth" }));

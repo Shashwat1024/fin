@@ -5,8 +5,9 @@
 use rusqlite::params;
 use serde_json::{Value, json};
 
+use super::accounts::list_accounts;
 use super::{Db, DbResult};
-use crate::domain::card_cycle::{CardCycle, CycleInput, card_cycle};
+use crate::domain::card_cycle::{CardCycle, CycleInput, Totals, card_cycle_from_totals, latest_statement};
 use crate::domain::ledger::display_balance;
 
 pub struct Card {
@@ -17,8 +18,10 @@ pub struct Card {
     pub cycle: CardCycle,
 }
 
-pub fn cards_with_cycles(db: &Db, today: &str) -> DbResult<Vec<Card>> {
-    let accounts = db.query_map(
+/// Cards with a cycle. `accounts` is `list_accounts` (active), whose balances already add up every
+/// transaction, so only the transactions after the statement (about a month) are read here.
+pub fn cards_with_cycles(db: &Db, today: &str, accounts: &[Value]) -> DbResult<Vec<Card>> {
+    let rows = db.query_map(
         "SELECT id, name, opening_date, opening_balance_minor, statement_day, due_days_after FROM accounts
      WHERE type = 'credit_card' AND archived_at IS NULL AND statement_day IS NOT NULL AND due_days_after IS NOT NULL
      ORDER BY sort_order, name COLLATE NOCASE",
@@ -35,20 +38,50 @@ pub fn cards_with_cycles(db: &Db, today: &str) -> DbResult<Vec<Card>> {
         },
     )?;
     let mut out = Vec::new();
-    for (id, name, opening_date, opening_stored, day, due_after) in accounts {
-        let entries = db.query_map(
-            "SELECT posted_date, amount_minor FROM transactions WHERE account_id = ? AND deleted_at IS NULL",
-            params![id],
-            |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)),
-        )?;
-        let cycle = card_cycle(&CycleInput {
-            statement_day: day as u32,
-            due_days_after: due_after,
-            opening_date: &opening_date,
-            opening_owed_minor: display_balance("credit_card", opening_stored),
-            entries: &entries,
-            today,
-        });
+    for (id, name, opening_date, opening_stored, day, due_after) in rows {
+        let Some(ledger) =
+            accounts.iter().find(|a| a["id"] == id.as_str()).and_then(|a| a["ledgerBalanceMinor"].as_i64())
+        else {
+            continue;
+        };
+        let opening_owed_minor = display_balance("credit_card", opening_stored);
+        let statement = latest_statement(day as u32, &opening_date, today);
+        // After the statement, or from the card's start in Fin without one.
+        let (op, from) = match &statement {
+            Some(s) => (">", s.clone()),
+            None => (">=", opening_date.clone()),
+        };
+        let (after_all, credits_after, spent_after) = db
+            .query_row(
+                &format!(
+                    "SELECT COALESCE(SUM(amount_minor), 0),
+              COALESCE(SUM(CASE WHEN amount_minor > 0 THEN amount_minor END), 0),
+              COALESCE(-SUM(CASE WHEN amount_minor < 0 THEN amount_minor END), 0)
+       FROM transactions WHERE account_id = ? AND deleted_at IS NULL AND posted_date {op} ?"
+                ),
+                params![id, from],
+                |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?, r.get::<_, i64>(2)?)),
+            )?
+            .unwrap_or_default();
+        let all = ledger - opening_stored;
+        let t = Totals {
+            through_statement: if statement.is_some() { all - after_all } else { 0 },
+            all,
+            credits_after,
+            spent_after,
+        };
+        let cycle = card_cycle_from_totals(
+            &CycleInput {
+                statement_day: day as u32,
+                due_days_after: due_after,
+                opening_date: &opening_date,
+                opening_owed_minor,
+                entries: &[],
+                today,
+            },
+            statement,
+            t,
+        );
         out.push(Card { account_id: id, account_name: name, statement_day: day, due_days_after: due_after, cycle });
     }
     Ok(out)
@@ -76,13 +109,13 @@ fn to_dto(c: &Card) -> Value {
 }
 
 pub fn card_cycles(db: &Db, today: &str) -> DbResult<Vec<Value>> {
-    Ok(cards_with_cycles(db, today)?.iter().map(to_dto).collect())
+    Ok(cards_with_cycles(db, today, &list_accounts(db, false)?)?.iter().map(to_dto).collect())
 }
 
 /// For the Overview's "Card dues": the earliest unpaid statement, and whether every card with a
 /// cycle has paid its latest one.
-pub fn next_due(db: &Db, today: &str) -> DbResult<(Value, bool)> {
-    let cards = cards_with_cycles(db, today)?;
+pub fn next_due(db: &Db, today: &str, accounts: &[Value]) -> DbResult<(Value, bool)> {
+    let cards = cards_with_cycles(db, today, accounts)?;
     let next = cards
         .iter()
         .filter(|c| c.cycle.remaining_minor > 0)

@@ -44,12 +44,13 @@ struct BaseParts {
 fn card_bill_events(
     db: &Db,
     today: &str,
+    accounts: &[Value],
     until: &str,
     items: &[Value],
     events: &mut Vec<Event>,
 ) -> DbResult<Vec<(String, String)>> {
     let mut from_recurring = Vec::new();
-    for card in cards_with_cycles(db, today)? {
+    for card in cards_with_cycles(db, today, accounts)? {
         if let Some(item) =
             items.iter().find(|i| i["active"] == true && i["toAccountId"].as_str() == Some(card.account_id.as_str()))
         {
@@ -160,7 +161,7 @@ fn forecast_base(db: &Db, days: i64, today: &str, accounts: &[Value]) -> DbResul
             .flatten();
     }
 
-    let card_bills_from_recurring = card_bill_events(db, today, &ad(today, days), &items, &mut events)?;
+    let card_bills_from_recurring = card_bill_events(db, today, accounts, &ad(today, days), &items, &mut events)?;
 
     let buffer_minor = get_settings(db)?["bufferMinor"].as_i64().unwrap_or(0);
     let input = ForecastInput {

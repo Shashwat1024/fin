@@ -34,5 +34,5 @@ unit tests, parity vectors, the phase's e2e spec).
 - [x] D405 `us11-reminders.spec.ts`; offline spec covers reminders
 
 ## D5: Release 2.1.0
-- [ ] D501 Perf budgets (SC-012); full e2e on the release build
+- [x] D501 Perf budgets (SC-012); full e2e on the release build
 - [ ] D502 README, quickstart sections, release checklist; version 2.1.0; installer; PR; tag

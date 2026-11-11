@@ -40,6 +40,7 @@ pub fn seed_perf_data(db: &Db, today: &str, count: usize) -> DbResult<i64> {
     let salary = acct("Perf Salary Account", "bank", 10_000_000)?;
     let wallet = acct("Perf Wallet", "cash", 500_000)?;
     let card = acct("Perf Card", "credit_card", 0)?;
+    super::accounts::update_account(db, &card, &json!({ "statementDay": 25, "dueDaysAfter": 20 }))?;
     let fund = acct("Perf Fund", "investment", 100_000_000)?;
 
     let categories = list_categories(db)?;
