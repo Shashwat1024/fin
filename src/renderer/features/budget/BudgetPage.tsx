@@ -77,11 +77,16 @@ export function BudgetPage() {
             >
               <ChevronRightIcon />
             </Button>
-            {month !== monthKey(today) && (
-              <Button variant="link" onClick={() => go(monthKey(today))}>
-                This month
-              </Button>
-            )}
+            {/* Always takes its space, so the month switcher never moves; shown only away from this month. */}
+            <Button
+              variant="link"
+              onClick={() => go(monthKey(today))}
+              className={month === monthKey(today) ? 'invisible' : undefined}
+              aria-hidden={month === monthKey(today) || undefined}
+              tabIndex={month === monthKey(today) ? -1 : undefined}
+            >
+              This month
+            </Button>
           </div>
         }
       />
