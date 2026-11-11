@@ -24,4 +24,4 @@ Each phase is committed and pushed when its checks pass.
 
 ## E4: Release 2.2.0
 - [x] E401 Perf budgets (SC-015); full e2e on the release build
-- [ ] E402 Docs, version 2.2.0, installer, PR, tag after merge
+- [x] E402 Docs, version 2.2.0, installer, PR, tag after merge
