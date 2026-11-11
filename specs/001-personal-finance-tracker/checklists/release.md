@@ -81,6 +81,25 @@ backend is Rust (`crates/fin-core`, all 76 requests), hosted by a Tauri shell wi
 interface is unchanged. Electron and the TypeScript backend are removed. Same data folder and file
 format: 1.x data opens as it is, and backups restore across versions.
 
+**Build**: `target\release\bundle\nsis\Fin_2.0.0_x64-setup.exe` (2.75 MB, was 108.6 MB; NSIS, x64,
+per-user, unsigned) · SHA-256 `117ed04deb01a3328ed6543f4fecb1f19f1ce91e163d50c2a7b0745b7e116603`.
+
+- **End to end**, against the release `fin.exe` the installer lays down (`FIN_TAURI_EXE`):
+  **27 passed, 1 skipped** (screenshots), including axe in both themes and the offline checks.
+  The debug build passes the same suite (cold start is measured on release only).
+- **Rust**: clippy clean, workspace tests and the frozen 1.x parity vectors (domain and request
+  validation) pass; unit tests for the interface and domain: 160 passed.
+- **Performance, 50,000 transactions** (release): cold start to a usable Overview, median of five,
+  **1.74 s** (1.67–2.03 s; Electron 1.1.1 on the same machine: 1.86 s); filtering the list 70–108 ms
+  (budget 150). Queries (`npm run test:perf`): transaction filters 8–21 ms, Overview 284 ms in all,
+  forecast 63–67 ms, budget 96 ms, insights 194 ms, looks-recurring 276 ms.
+
+## Release 2.1.0 (daily use)
+
+Saved views, credit-card cycles, reminders as Windows notifications (with optional tray and start at
+sign-in) and a spending calendar ([003-daily-use](../../003-daily-use/spec.md)). Schema v7 (adds card
+cycle fields, saved views and the reminder log); export stays format v1 with additive fields.
+
 **Build**: `target\release\bundle\nsis\Fin_2.1.0_x64-setup.exe` (2.83 MB, unsigned) · SHA-256
 `00b3fcdfe29bf6959fdd1a208c04e2aed66b27f0853cad481ec0e992996211e5`.
 
