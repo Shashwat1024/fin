@@ -6,7 +6,6 @@ use serde_json::{Value, json};
 
 use super::accounts::list_accounts;
 use super::audit::with_audit;
-use super::patterns::list_insights;
 use super::planning::budget_month;
 use super::transactions::query_transactions;
 use super::{Db, DbResult, new_id, now_iso};
@@ -31,7 +30,7 @@ fn state_of(db: &Db, month: &str) -> DbResult<Value> {
         .map_or(Value::Null, Value::Object))
 }
 
-pub fn review_month(db: &Db, month: &str, today: &str) -> DbResult<Value> {
+pub fn review_month(db: &Db, month: &str) -> DbResult<Value> {
     let (from, to) = month_range(month)?;
     let next = shift(month, 1)?;
     let count = |filter: Value| -> DbResult<i64> {
@@ -84,7 +83,11 @@ pub fn review_month(db: &Db, month: &str, today: &str) -> DbResult<Value> {
             }
         }
     }
-    let next_budget = budget_month(db, &next)?;
+    let next_assigned: i64 = db
+        .query_row("SELECT COALESCE(SUM(assigned_minor), 0) FROM monthly_budgets WHERE month = ?", [&next], |r| {
+            r.get(0)
+        })?
+        .unwrap_or(0);
     let copyable: i64 = db
         .query_row(
             "SELECT COUNT(*) FROM monthly_budgets b WHERE b.month = ? AND b.assigned_minor > 0
@@ -93,7 +96,6 @@ pub fn review_month(db: &Db, month: &str, today: &str) -> DbResult<Value> {
             |r| r.get(0),
         )?
         .unwrap_or(0);
-    let insights = list_insights(db, today, false)?;
 
     Ok(json!({
         "month": month,
@@ -109,8 +111,7 @@ pub fn review_month(db: &Db, month: &str, today: &str) -> DbResult<Value> {
             "spentMinor": budget["spentMinor"],
             "overspent": overspent,
         },
-        "insightCount": insights["insights"].as_array().map_or(0, Vec::len),
-        "next": { "assignedMinor": next_budget["assignedMinor"], "copyableCount": copyable },
+        "next": { "assignedMinor": next_assigned, "copyableCount": copyable },
     }))
 }
 
@@ -230,7 +231,7 @@ mod tests {
         assign_budget(&db, "2026-10", &groceries, 200_000).unwrap();
         assign_budget(&db, "2026-11", &groceries, 900_000).unwrap();
 
-        let r = review_month(&db, "2026-10", "2026-11-03").unwrap();
+        let r = review_month(&db, "2026-10").unwrap();
         assert_eq!((r["transactionCount"].clone(), r["uncategorizedCount"].clone()), (json!(2), json!(1)));
         assert_eq!(r["accounts"][0]["monthEndBalanceMinor"], 650_000);
         assert_eq!(r["budget"]["overspent"][0]["path"], "Food › Groceries");

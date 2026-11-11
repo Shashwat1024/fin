@@ -18,7 +18,7 @@ import {
 import { useReconcileDialog } from '@renderer/features/accounts/ReconcileDialog'
 import { monthLabel } from '@renderer/features/budget/BudgetPage'
 import { call } from '@renderer/lib/ipc'
-import { useAccounts, useFinMutation, useToday } from '@renderer/lib/queries'
+import { useAccounts, useFinMutation, useInsights, useToday } from '@renderer/lib/queries'
 import type { MonthReviewDto } from '@shared/types'
 
 const STEPS = ['Categorise', 'Check accounts', 'Budget', 'Insights', 'Next month'] as const
@@ -109,13 +109,16 @@ function BudgetStep({ r }: { r: MonthReviewDto }) {
   )
 }
 
-function InsightsStep({ r }: { r: MonthReviewDto }) {
+function InsightsStep() {
+  const insights = useInsights(false)
+  const count = insights.data?.insights.length
+  if (count === undefined) return <p className="text-muted-foreground">Looking at your recent spending…</p>
   return (
     <div className="flex flex-col items-start gap-3">
       <p>
-        {r.insightCount === 0
+        {count === 0
           ? 'Nothing stands out in your recent spending.'
-          : `${plural(r.insightCount, 'thing')} stand${r.insightCount === 1 ? 's' : ''} out in your recent spending.`}
+          : `${plural(count, 'thing')} stand${count === 1 ? 's' : ''} out in your recent spending.`}
       </p>
       <Button asChild variant="outline">
         <Link to="/insights">Open Insights</Link>

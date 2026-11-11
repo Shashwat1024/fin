@@ -645,7 +645,6 @@ export type MonthReviewDto = {
     spentMinor: number
     overspent: { categoryId: string; path: string; overMinor: number }[]
   }
-  insightCount: number
   next: {
     assignedMinor: number
     /** Categories with an amount this month and none yet next month. */

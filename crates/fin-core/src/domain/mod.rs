@@ -15,3 +15,4 @@ pub mod recurrence;
 pub mod reminders;
 pub mod rules;
 pub mod scenarios;
+pub mod year_review;

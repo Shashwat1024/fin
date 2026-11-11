@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { LightbulbIcon } from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { EmptyState, ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
+import { Button } from '@renderer/components/ui/button'
 import { Label } from '@renderer/components/ui/label'
 import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
@@ -65,6 +66,11 @@ export function InsightsPage() {
       <PageHeader
         title="Insights"
         description="Patterns in your spending, a month at a glance, and what would happen if something changed."
+        actions={
+          <Button variant="outline" asChild>
+            <Link to="/year">Year in review</Link>
+          </Button>
+        }
       />
       <Tabs
         value={tab}

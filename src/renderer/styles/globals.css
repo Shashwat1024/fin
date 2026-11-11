@@ -183,3 +183,21 @@
     @apply bg-primary/20;
   }
 }
+
+/* Printing (the year in review's "Print or save as PDF"): the page only, without the app's frame. */
+@media print {
+  aside,
+  [data-print-hide],
+  [data-sonner-toaster],
+  a[href='#main'] {
+    display: none !important;
+  }
+  html,
+  body,
+  #root,
+  main {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+}

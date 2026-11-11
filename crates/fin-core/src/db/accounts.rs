@@ -54,12 +54,21 @@ fn cycle_field(account_type: &str, input: &Value, key: &str, current: Option<&Va
 }
 
 pub fn list_accounts(db: &Db, include_archived: bool) -> DbResult<Vec<Value>> {
+    let version = db.total_changes()?;
+    if let Some((v, archived, list)) = &*db.accounts_cache.borrow()
+        && *v == version
+        && *archived == include_archived
+    {
+        return Ok(list.clone());
+    }
     let filter = if include_archived { "" } else { "WHERE a.archived_at IS NULL" };
     let rows = db.all_json(
         &format!("{SELECT} {filter} ORDER BY a.archived_at IS NOT NULL, a.sort_order, a.name COLLATE NOCASE"),
         [],
     )?;
-    Ok(rows.iter().map(to_dto).collect())
+    let list: Vec<Value> = rows.iter().map(to_dto).collect();
+    *db.accounts_cache.borrow_mut() = Some((version, include_archived, list.clone()));
+    Ok(list)
 }
 
 pub fn get_account(db: &Db, id: &str) -> DbResult<Value> {

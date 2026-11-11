@@ -1,11 +1,14 @@
 //! The health summary over the ledger (US13). Monthly figures come from the same transaction query
 //! as the Overview and the Transactions page, so each measure matches the records it links to.
 
+use std::collections::HashMap;
+
+use rusqlite::params;
 use serde_json::{Value, json};
 
 use super::accounts::list_accounts;
 use super::planning::list_recurring;
-use super::transactions::query_transactions;
+
 use super::{Db, DbResult};
 use crate::domain::dates::{add_months, end_of_month, start_of_month};
 use crate::domain::health::{HealthInput, Month, health};
@@ -14,12 +17,56 @@ use crate::error::AppError;
 
 const MONTHS: i32 = 6;
 
+/// The transaction query's totals, which the grouped figures must equal (tests).
+#[cfg(test)]
 fn totals(db: &Db, filter: Value) -> DbResult<(i64, i64)> {
     let mut f = filter;
     f["kind"] = json!("standard");
     f["limit"] = json!(1);
-    let page = query_transactions(db, &f)?;
+    let page = super::transactions::query_transactions(db, &f)?;
     Ok((page["totals"]["inMinor"].as_i64().unwrap_or(0), -page["totals"]["outMinor"].as_i64().unwrap_or(0)))
+}
+
+/// Money in, money out and essential spending per month, in two grouped queries. Same rules as
+/// the transaction query the links open (`kind = 'standard'`, split parts by category, exactly the
+/// "needs" categories); a test checks they agree.
+fn monthly(db: &Db, months: &[(String, String)]) -> DbResult<Vec<Month>> {
+    let (Some(first), Some(last)) = (months.first(), months.last()) else { return Ok(Vec::new()) };
+    let flows: HashMap<String, (i64, i64)> = db
+        .query_map(
+            "SELECT substr(posted_date, 1, 7),
+              COALESCE(SUM(CASE WHEN amount_minor > 0 THEN amount_minor END), 0),
+              COALESCE(-SUM(CASE WHEN amount_minor < 0 THEN amount_minor END), 0)
+       FROM transactions WHERE deleted_at IS NULL AND kind = 'standard' AND posted_date BETWEEN ? AND ?
+       GROUP BY 1",
+            params![first.0, last.1],
+            |r| Ok((r.get::<_, String>(0)?, (r.get::<_, i64>(1)?, r.get::<_, i64>(2)?))),
+        )?
+        .into_iter()
+        .collect();
+    let needs: HashMap<String, i64> = db
+        .query_map(
+            "SELECT substr(t.posted_date, 1, 7), COALESCE(-SUM(
+           CASE WHEN EXISTS (SELECT 1 FROM splits s WHERE s.transaction_id = t.id)
+             THEN (SELECT COALESCE(SUM(s.amount_minor), 0) FROM splits s JOIN categories c ON c.id = s.category_id
+                   WHERE s.transaction_id = t.id AND c.grp = 'needs')
+             ELSE CASE WHEN c.grp = 'needs' THEN t.amount_minor ELSE 0 END END), 0)
+       FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
+       WHERE t.deleted_at IS NULL AND t.kind = 'standard' AND t.amount_minor < 0 AND t.posted_date BETWEEN ? AND ?
+       GROUP BY 1",
+            params![first.0, last.1],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)),
+        )?
+        .into_iter()
+        .collect();
+    Ok(months
+        .iter()
+        .map(|(from, _)| {
+            let key = from[..7].to_owned();
+            let (in_minor, out_minor) = flows.get(&key).copied().unwrap_or((0, 0));
+            Month { needs_minor: needs.get(&key).copied().unwrap_or(0), month: key, in_minor, out_minor }
+        })
+        .collect())
 }
 
 /// Complete months before this one, oldest first, from the month of the first transaction.
@@ -47,14 +94,7 @@ pub fn health_summary(db: &Db, today: &str) -> DbResult<Value> {
     let cards: Vec<&Value> = accounts.iter().filter(|a| a["type"] == "credit_card").collect();
     let balance = |list: &[&Value]| list.iter().map(|a| a["balanceMinor"].as_i64().unwrap_or(0)).sum::<i64>();
 
-    let mut months = Vec::new();
-    for (from, to) in complete_months(db, today)? {
-        let (in_minor, out_minor) = totals(db, json!({ "from": from, "to": to }))?;
-        // Essential spending: the same query the drill-down uses.
-        let needs_minor =
-            totals(db, json!({ "from": from, "to": to, "direction": "out", "categoryGroup": "needs" }))?.1;
-        months.push(Month { month: from[..7].to_owned(), in_minor, out_minor, needs_minor });
-    }
+    let months = monthly(db, &complete_months(db, today)?)?;
 
     let emis: Vec<Value> =
         list_recurring(db, today)?.into_iter().filter(|i| i["kind"] == "emi" && i["active"] == true).collect();
@@ -145,5 +185,13 @@ mod tests {
         assert_eq!(m("emi_share")["available"], false);
         assert_eq!(m("card_share")["text"], "No credit cards added.");
         assert_eq!(h["recent"], json!({ "from": "2026-08-01", "to": "2026-10-31" }));
+
+        // The grouped figures equal what the linked transaction lists add up to.
+        for m in monthly(&db, &complete_months(&db, "2026-11-10").unwrap()).unwrap() {
+            let (from, to) = (format!("{}-01", m.month), end_of_month(&format!("{}-01", m.month)).unwrap());
+            assert_eq!((m.in_minor, m.out_minor), totals(&db, json!({ "from": from, "to": to })).unwrap());
+            let needs = totals(&db, json!({ "from": from, "to": to, "direction": "out", "categoryGroup": "needs" }));
+            assert_eq!(m.needs_minor, needs.unwrap().1);
+        }
     }
 }

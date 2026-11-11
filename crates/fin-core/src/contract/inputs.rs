@@ -586,7 +586,10 @@ fn build() -> HashMap<&'static str, Schema> {
         ),
         ("review.prompt", empty()),
         ("budget.copyMonth", object(vec![("from", month_key()), ("to", month_key())])),
-        ("review.year", object(vec![("basis", enumeration(&["fy", "calendar"])), ("year", int().min(1900).max(9999))])),
+        (
+            "review.year",
+            object(vec![("basis", enumeration(&["fy", "calendar"])), ("year", int().min(1900).max(9999).optional())]),
+        ),
     ];
     entries.into_iter().collect()
 }

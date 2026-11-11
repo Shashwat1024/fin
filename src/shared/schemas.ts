@@ -420,5 +420,6 @@ export const reviewStateInput = z.object({
 export const budgetCopyInput = z.object({ from: monthKey, to: monthKey })
 export const yearReviewInput = z.object({
   basis: z.enum(['fy', 'calendar']),
-  year: z.number().int().min(1900).max(9999),
+  /** Omitted: the last complete year with data, or the current one. */
+  year: z.number().int().min(1900).max(9999).optional(),
 })

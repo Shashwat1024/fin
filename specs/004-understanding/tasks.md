@@ -18,10 +18,10 @@ Each phase is committed and pushed when its checks pass.
 - [x] E203 `us14-month-review.spec.ts`; a11y
 
 ## E3: Year in review (US15)
-- [ ] E301 `domain/year_review.rs` with tests; `review.year`; year = sum of months test
-- [ ] E302 `YearReviewPage`, chart and table, print layout
-- [ ] E303 `us15-year.spec.ts`; a11y
+- [x] E301 `domain/year_review.rs` with tests; `review.year`; year = sum of months test
+- [x] E302 `YearReviewPage`, chart and table, print layout
+- [x] E303 `us15-year.spec.ts`; a11y
 
 ## E4: Release 2.2.0
-- [ ] E401 Perf budgets (SC-015); full e2e on the release build
+- [x] E401 Perf budgets (SC-015); full e2e on the release build
 - [ ] E402 Docs, version 2.2.0, installer, PR, tag after merge
