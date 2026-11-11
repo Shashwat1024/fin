@@ -5,7 +5,9 @@ import { AccountSelect, ALL_ACCOUNTS, CategoryPicker } from '@renderer/component
 import { Button } from '@renderer/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@renderer/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@renderer/components/ui/select'
+import { GROUP_LABELS } from '@renderer/features/categories/CategoryDialogs'
 import type { TxnFilter } from '@shared/schemas'
+import type { CategoryGroup } from '@shared/types'
 
 export type FilterState = {
   text: string
@@ -19,7 +21,14 @@ export type FilterState = {
   customRange?: { from: string; to: string } | null
   /** 'standard' hides transfers between your own accounts (dashboard income and spending). */
   kind?: 'standard' | null
+  /** Every category in a group, e.g. essential spending from the health summary. */
+  group?: CategoryGroup | null
 }
+
+const GROUPS = Object.keys(GROUP_LABELS) as CategoryGroup[]
+/** A category group from a URL parameter, when valid. */
+export const groupFromParam = (v: string | null): CategoryGroup | null =>
+  (GROUPS as string[]).includes(v ?? '') ? (v as CategoryGroup) : null
 
 const CUSTOM = 'custom'
 
@@ -46,6 +55,7 @@ export function toTxnFilter(f: FilterState, today: string, fyStartMonth: number)
     to: range?.to,
     accountIds: f.accountId === ALL_ACCOUNTS ? undefined : [f.accountId],
     categoryIds: f.categoryId ? [f.categoryId] : undefined,
+    categoryGroup: !f.categoryId && f.group ? f.group : undefined,
     direction: f.direction === 'all' ? undefined : f.direction,
     importBatchId: f.importBatchId ?? undefined,
     kind: f.kind ?? undefined,
@@ -67,6 +77,7 @@ export function filtersToQuery(f: FilterState): string {
   if (f.categoryId) p.set('category', f.categoryId)
   if (f.direction !== 'all') p.set('direction', f.direction)
   if (f.kind) p.set('kind', f.kind)
+  if (f.group && !f.categoryId) p.set('group', f.group)
   return p.toString()
 }
 
@@ -78,7 +89,8 @@ export const isFiltered = (f: FilterState) =>
   f.direction !== 'all' ||
   Boolean(f.importBatchId) ||
   Boolean(f.customRange) ||
-  Boolean(f.kind)
+  Boolean(f.kind) ||
+  Boolean(f.group)
 
 type Props = {
   value: FilterState
@@ -176,6 +188,16 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth, extra
           aria-label="Remove import filter"
         >
           From one import <XIcon />
+        </Button>
+      )}
+      {value.group && !value.categoryId && (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onChange({ ...value, group: null })}
+          aria-label={`Remove the ${GROUP_LABELS[value.group]} categories filter`}
+        >
+          {GROUP_LABELS[value.group]} categories <XIcon />
         </Button>
       )}
       {value.kind === 'standard' && (

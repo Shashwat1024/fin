@@ -6,6 +6,8 @@ import {
   ArrowUpRightIcon,
   BookmarkIcon,
   CalendarDaysIcon,
+  CalendarRangeIcon,
+  ClipboardCheckIcon,
   FileUpIcon,
   FlaskConicalIcon,
   LandmarkIcon,
@@ -130,6 +132,15 @@ export function CommandPalette() {
             </CommandItem>
             <CommandItem onSelect={run(() => navigate('/insights'))}>
               <LightbulbIcon /> Insights
+            </CommandItem>
+            <CommandItem
+              value="review last month monthly review"
+              onSelect={run(() => navigate('/review/last'))}
+            >
+              <ClipboardCheckIcon /> Review last month
+            </CommandItem>
+            <CommandItem value="year in review annual summary" onSelect={run(() => navigate('/year'))}>
+              <CalendarRangeIcon /> Year in review
             </CommandItem>
             <CommandItem
               value="spending calendar heatmap"

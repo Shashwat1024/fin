@@ -47,6 +47,12 @@ const SCREENS: {
   { name: 'Settings', key: 'Control+,', ready: (p) => p.getByRole('heading', { name: 'Settings' }) },
   { name: 'Insights', hash: '/insights', ready: (p) => p.getByRole('article').first() },
   { name: 'Calendar', hash: '/insights?tab=calendar', ready: (p) => p.getByTestId('calendar-summary') },
+  { name: 'Year in review', hash: '/year?basis=calendar', ready: (p) => p.getByTestId('year-totals') },
+  {
+    name: 'Monthly review',
+    hash: '/review/last?step=1',
+    ready: (p) => p.getByRole('region', { name: 'Check accounts' }),
+  },
   {
     name: 'Saved view',
     open: (p) =>

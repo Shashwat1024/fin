@@ -81,6 +81,16 @@ Automated: `us9-views`, `us10-cards`, `us11-reminders`, `us12-calendar`. By hand
   I sign in** adds Fin to Windows' start-up apps (not with `FIN_DATA_DIR` set).
 - **Spending calendar**: Insights › Calendar; previous month; choose a day.
 
+### 5d. Making sense of it (US13–US15, v2.2)
+Automated: `us13-health`, `us14-month-review`, `us15-year`. By hand, with demo data:
+- **Health summary**: the Overview and Insights show "Where you stand"; each sentence links to its
+  records ("Essential spending" opens Transactions filtered to the needs categories).
+- **Monthly review**: Ctrl+K › Review last month; step through the five steps; Copy this month’s
+  amounts on the last step, then Undo; Mark as reviewed. (The Overview offers it from the 1st to the
+  7th.)
+- **Year in review**: Insights › Year in review; switch financial/calendar year; open a top category;
+  Print or save as PDF (choose Microsoft Print to PDF).
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
 request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check

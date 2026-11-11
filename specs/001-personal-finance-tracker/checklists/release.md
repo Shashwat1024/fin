@@ -113,6 +113,25 @@ cycle fields, saved views and the reminder log); export stays format v1 with add
   Queries: card cycles 35–42 ms (budget 100), spending calendar under 1 ms (100), reminder check
   about 95 ms (300), Overview in all 247–263 ms (300).
 
+## Release 2.2.0 (making sense of it)
+
+A health summary, a monthly review and a year in review
+([004-understanding](../../004-understanding/spec.md)). Schema v8 (adds `month_reviews`); export
+stays format v1 with the additive `monthReviews`.
+
+**Build**: `target\release\bundle\nsis\Fin_2.2.0_x64-setup.exe` (2.86 MB, unsigned) · SHA-256
+`11da9440ed4c2e2fe193bf3450ba2cc51af5701067ff4ee566f56e2e3b40db5c`.
+
+- **End to end** on the release `fin.exe`: **34 passed, 1 skipped** (screenshots), including the new
+  `us13-health`, `us14-month-review` and `us15-year`, and axe on the review and year pages and the
+  Overview's new card in both themes. The print layout was checked with print media emulation.
+- **Rust**: clippy clean; 57 unit and database tests (health, reviews, budget copy, year totals equal
+  the sum of months, grouped health figures equal the transaction query) and the parity vectors
+  pass; interface and domain unit tests: 160 passed.
+- **Performance, 50,000 transactions** (release): cold start median **1.38 s**; filtering 41–56 ms.
+  The account list is now kept until data changes, so the Overview's requests take 170–210 ms in
+  all (was about 280 ms). Health summary 20–31 ms, month review 147 ms, year in review 158 ms.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start

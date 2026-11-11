@@ -44,6 +44,7 @@ fn fifty_thousand_transactions_stay_fast() {
     let mut check = |app: &mut App, name: &str, channel: &str, input: Value, budget: u128| {
         let ms = median_ms(app, channel, input, 5);
         report.push(format!("{name}: {ms} ms (budget {budget})"));
+        println!("{}", report.last().unwrap());
         assert!(ms < budget, "{name} took {ms} ms (budget {budget} ms)");
     };
     check(&mut app, "txns: first page", "txns.query", json!({ "limit": 100 }), 150);
@@ -79,6 +80,10 @@ fn fifty_thousand_transactions_stay_fast() {
     check(&mut app, "card cycles", "cards.cycles", json!({}), 100);
     check(&mut app, "spending calendar", "insights.calendar", json!({ "month": &TODAY[..7] }), 100);
     check(&mut app, "reminder check", "reminders.preview", json!({}), 300);
+    // Making sense of it (specs/004-understanding SC-015).
+    check(&mut app, "health summary", "health.summary", json!({}), 300);
+    check(&mut app, "month review", "review.month", json!({ "month": "2026-10" }), 300);
+    check(&mut app, "year in review", "review.year", json!({ "basis": "fy" }), 500);
     check(&mut app, "looks recurring", "recurring.detectCandidates", json!({}), 500);
     check(
         &mut app,
@@ -99,6 +104,8 @@ fn fifty_thousand_transactions_stay_fast() {
             ("goals.list", json!({})),
             ("accounts.list", json!({})),
             ("txns.query", json!({ "limit": 10 })),
+            ("health.summary", json!({})),
+            ("review.prompt", json!({})),
         ] {
             dispatch(app, channel, Some(input));
         }
@@ -113,6 +120,6 @@ fn fifty_thousand_transactions_stay_fast() {
         .collect();
     t.sort();
     report.push(format!("overview (all queries): {} ms (budget 300)", t[2]));
-    println!("{}", report.join("\n"));
+    println!("{}", report.last().unwrap());
     assert!(t[2] < 300, "the Overview took {} ms", t[2]);
 }

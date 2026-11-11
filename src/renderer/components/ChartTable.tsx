@@ -83,6 +83,7 @@ export function ChartCard({
         {description && <CardDescription>{description}</CardDescription>}
         <CardAction>
           <ToggleGroup
+            data-print-hide
             type="single"
             variant="outline"
             size="sm"

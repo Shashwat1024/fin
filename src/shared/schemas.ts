@@ -116,6 +116,8 @@ export const txnFilter = z.object({
   accountIds: z.array(id).max(200).optional(),
   /** May include the pseudo-id "uncategorized". Parent ids include their children. */
   categoryIds: z.array(id).max(500).optional(),
+  /** Exactly the categories in a group (used when categoryIds is not given). */
+  categoryGroup: z.enum(['needs', 'wants', 'goals', 'buffer', 'income', 'transfer']).optional(),
   tagIds: z.array(id).max(200).optional(),
   minAmountMinor: minor.min(0).optional(),
   maxAmountMinor: minor.min(0).optional(),
@@ -407,3 +409,17 @@ export const viewUpdate = z.object({
   patch: z.object({ name: name.optional(), query: viewQuery.optional(), pinned: z.boolean().optional() }),
 })
 export const calendarInput = z.object({ month: monthKey })
+
+// ---- Making sense of it (US13-US15) --------------------------------------------------------------
+
+export const monthInput = z.object({ month: monthKey })
+export const reviewStateInput = z.object({
+  month: monthKey,
+  state: z.enum(['reviewed', 'dismissed']).nullable(),
+})
+export const budgetCopyInput = z.object({ from: monthKey, to: monthKey })
+export const yearReviewInput = z.object({
+  basis: z.enum(['fy', 'calendar']),
+  /** Omitted: the last complete year with data, or the current one. */
+  year: z.number().int().min(1900).max(9999).optional(),
+})

@@ -23,15 +23,15 @@ use crate::row;
 /// A year of history is enough for every detector.
 const LOOKBACK_DAYS: i64 = 400;
 
-struct LineRow {
-    id: String,
-    account_id: String,
-    posted_date: String,
-    payee: String,
-    mkey: Option<String>,
-    mname: Option<String>,
-    category_id: Option<String>,
-    amount_minor: i64,
+pub(crate) struct LineRow {
+    pub id: String,
+    pub account_id: String,
+    pub posted_date: String,
+    pub payee: String,
+    pub mkey: Option<String>,
+    pub mname: Option<String>,
+    pub category_id: Option<String>,
+    pub amount_minor: i64,
 }
 
 fn line_row(r: &rusqlite::Row) -> rusqlite::Result<LineRow> {
@@ -48,7 +48,7 @@ fn line_row(r: &rusqlite::Row) -> rusqlite::Result<LineRow> {
 }
 
 /// Standard (non-transfer) transactions with splits expanded: one row per category.
-fn ledger_lines(db: &Db, from: &str, to: &str) -> DbResult<Vec<LineRow>> {
+pub(crate) fn ledger_lines(db: &Db, from: &str, to: &str) -> DbResult<Vec<LineRow>> {
     db.query_map(
         "SELECT t.id, t.account_id, t.posted_date, t.payee, m.normalized_key AS mkey, m.display_name AS mname,
             COALESCE(s.category_id, t.category_id) AS category_id, COALESCE(s.amount_minor, t.amount_minor) AS amount_minor

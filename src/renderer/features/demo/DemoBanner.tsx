@@ -8,6 +8,7 @@ export function DemoBanner() {
   if (!demo.active) return null
   return (
     <div
+      data-print-hide
       role="status"
       className="flex items-center gap-3 border-b border-warning/40 bg-warning/15 px-8 py-2 text-sm"
     >

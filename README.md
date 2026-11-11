@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `Fin_2.1.0_x64-setup.exe` (about 3 MB).
+   `Fin_2.2.0_x64-setup.exe` (about 3 MB).
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. Fin uses Microsoft Edge WebView2, which is part of Windows 10 and 11. On the rare machine
@@ -136,3 +136,8 @@ How to validate each feature by hand is in
   counted in the forecast); **reminders** as Windows notifications for payments due tomorrow or
   overdue, card bills and cash about to fall below your buffer (off until you turn them on, with
   quiet hours), with optional tray and start at sign-in; and a **spending calendar** under Insights.
+- ✅ Fin 2.2 (making sense of it): a plain-language **health summary** (how long your cash would
+  cover essential spending, EMIs against income, your savings rate against the months before, card
+  dues against cash; facts with links to the records, no scores); a **monthly review** in five
+  skippable steps, offered on the Overview in the first week of each month; and a **year in review**
+  for a financial or calendar year, printable to PDF.

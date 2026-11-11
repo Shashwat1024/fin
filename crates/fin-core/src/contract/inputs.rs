@@ -133,6 +133,7 @@ fn txn_filter() -> Schema {
         ("to", calendar_date().optional()),
         ("accountIds", array(id()).max_len(200).optional()),
         ("categoryIds", array(id()).max_len(500).optional()),
+        ("categoryGroup", category_group().optional()),
         ("tagIds", array(id()).max_len(200).optional()),
         ("minAmountMinor", minor().min(0).optional()),
         ("maxAmountMinor", minor().min(0).optional()),
@@ -577,6 +578,18 @@ fn build() -> HashMap<&'static str, Schema> {
         ("insights.calendar", object(vec![("month", month_key())])),
         ("reminders.preview", empty()),
         ("reminders.test", empty()),
+        ("health.summary", empty()),
+        ("review.month", object(vec![("month", month_key())])),
+        (
+            "review.setState",
+            object(vec![("month", month_key()), ("state", enumeration(&["reviewed", "dismissed"]).nullable())]),
+        ),
+        ("review.prompt", empty()),
+        ("budget.copyMonth", object(vec![("from", month_key()), ("to", month_key())])),
+        (
+            "review.year",
+            object(vec![("basis", enumeration(&["fy", "calendar"])), ("year", int().min(1900).max(9999).optional())]),
+        ),
     ];
     entries.into_iter().collect()
 }

@@ -12,18 +12,21 @@ pub mod dashboard;
 pub mod demo;
 pub mod export;
 pub mod forecast;
+pub mod health;
 pub mod imports;
 pub mod migrate;
 pub mod networth;
 pub mod patterns;
 pub mod planning;
 pub mod reminders;
+pub mod review;
 pub mod seed_perf;
 pub mod settings;
 pub mod transactions;
 pub mod views;
+pub mod year;
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -51,6 +54,9 @@ impl From<rusqlite::Error> for AppError {
 pub struct Db {
     pub conn: Connection,
     depth: Cell<u32>,
+    /// The account list (`list_accounts`), kept until anything is written on this connection.
+    /// Several requests behind one screen need it, and its balances add up every transaction.
+    pub(crate) accounts_cache: RefCell<Option<(i64, bool, Vec<Value>)>>,
 }
 
 impl Db {
@@ -68,12 +74,12 @@ impl Db {
         let conn =
             Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX)?;
         conn.execute_batch("PRAGMA busy_timeout = 5000;")?;
-        Ok(Db { conn, depth: Cell::new(0) })
+        Ok(Db { conn, depth: Cell::new(0), accounts_cache: RefCell::new(None) })
     }
 
     /// Wrap an already-open connection (used to inspect backups).
     pub fn from_connection(conn: Connection) -> Db {
-        Db { conn, depth: Cell::new(0) }
+        Db { conn, depth: Cell::new(0), accounts_cache: RefCell::new(None) }
     }
 
     pub fn open_in_memory() -> DbResult<Db> {
@@ -86,7 +92,14 @@ impl Db {
             "PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000; PRAGMA foreign_keys = ON; \
              PRAGMA cache_size = -65536; PRAGMA temp_store = MEMORY;",
         )?;
-        Ok(Db { conn, depth: Cell::new(0) })
+        Ok(Db { conn, depth: Cell::new(0), accounts_cache: RefCell::new(None) })
+    }
+
+    /// Rows inserted, changed or deleted on this connection since it opened (including by
+    /// triggers and in transactions later rolled back). It only grows, so an unchanged value means
+    /// nothing was written.
+    pub fn total_changes(&self) -> DbResult<i64> {
+        Ok(self.conn.query_row("SELECT total_changes()", [], |r| r.get(0))?)
     }
 
     /// Run `f` atomically. Nested calls use savepoints, so an inner failure rolls back only its

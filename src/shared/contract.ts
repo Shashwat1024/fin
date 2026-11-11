@@ -90,6 +90,12 @@ export const inputSchemas = {
   'insights.calendar': s.calendarInput,
   'reminders.preview': s.empty,
   'reminders.test': s.empty,
+  'health.summary': s.empty,
+  'review.month': s.monthInput,
+  'review.setState': s.reviewStateInput,
+  'review.prompt': s.empty,
+  'budget.copyMonth': s.budgetCopyInput,
+  'review.year': s.yearReviewInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -185,6 +191,12 @@ export interface Outputs {
   'reminders.preview': t.ReminderDto[]
   /** A sample reminder; the app shows it as a notification. */
   'reminders.test': t.ReminderDto
+  'health.summary': t.HealthDto
+  'review.month': t.MonthReviewDto
+  'review.setState': t.Mutation<{ review: t.MonthReviewState }>
+  'review.prompt': { month: string } | null
+  'budget.copyMonth': t.Mutation<{ copied: number }>
+  'review.year': t.YearReviewDto
 }
 
 export type Output<C extends Channel> = Outputs[C]

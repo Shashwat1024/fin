@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { LightbulbIcon } from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { EmptyState, ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
+import { Button } from '@renderer/components/ui/button'
 import { Label } from '@renderer/components/ui/label'
 import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useInsights } from '@renderer/lib/queries'
+import { HealthSummary } from './HealthSummary'
 import { InsightCard } from './InsightCard'
 import { SpendingCalendar } from './SpendingCalendar'
 import { WhatIf } from './WhatIf'
@@ -64,6 +66,11 @@ export function InsightsPage() {
       <PageHeader
         title="Insights"
         description="Patterns in your spending, a month at a glance, and what would happen if something changed."
+        actions={
+          <Button variant="outline" asChild>
+            <Link to="/year">Year in review</Link>
+          </Button>
+        }
       />
       <Tabs
         value={tab}
@@ -74,7 +81,8 @@ export function InsightsPage() {
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="what-if">What if</TabsTrigger>
         </TabsList>
-        <TabsContent value="insights">
+        <TabsContent value="insights" className="flex flex-col gap-6">
+          <HealthSummary />
           <Feed />
         </TabsContent>
         <TabsContent value="calendar">

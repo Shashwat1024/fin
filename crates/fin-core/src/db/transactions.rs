@@ -622,6 +622,20 @@ pub fn query_transactions(db: &Db, f: &Value) -> DbResult<Value> {
             );
         }
         wh.push(format!("({})", parts.join(" OR ")));
+    } else if let Some(group) = str_or(f, "categoryGroup") {
+        // A category group: exactly the categories in it (a child that sets another group, such as
+        // Food › Dining out under "needs", is not included through its parent).
+        category_ids = db.query_map("SELECT id FROM categories WHERE grp = ?", [group], |r| r.get::<_, String>(0))?;
+        if category_ids.is_empty() {
+            wh.push("0".into());
+        } else {
+            let ph = placeholders(category_ids.len());
+            wh.push(format!(
+                "(t.category_id IN ({ph}) OR EXISTS (SELECT 1 FROM splits s WHERE s.transaction_id = t.id AND s.category_id IN ({ph})))"
+            ));
+            params.extend(category_ids.iter().cloned().map(Sql::Text));
+            params.extend(category_ids.iter().cloned().map(Sql::Text));
+        }
     }
     let tag_ids = strings(f.get("tagIds"));
     if !tag_ids.is_empty() {

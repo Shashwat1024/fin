@@ -20,6 +20,7 @@ import { useTransactionDialog } from './TransactionDialog'
 import {
   DEFAULT_FILTERS,
   filtersToQuery,
+  groupFromParam,
   isFiltered,
   rangeFromParams,
   toTxnFilter,
@@ -48,6 +49,7 @@ export function TransactionsPage() {
     importBatchId: params.get('batch'),
     customRange: rangeFromParams(params),
     kind: params.get('kind') === 'standard' ? 'standard' : null,
+    group: groupFromParam(params.get('group')),
     range: (RANGES as readonly string[]).includes(params.get('range') ?? '')
       ? (params.get('range') as FilterState['range'])
       : 'all',

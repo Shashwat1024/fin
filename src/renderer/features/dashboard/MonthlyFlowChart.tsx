@@ -139,11 +139,17 @@ const COLUMNS: ChartColumn<MonthFlow>[] = [
 ]
 
 /** Money in vs out for the last six months; transfers between your accounts are left out. */
-export function MonthlyFlowChart({ months }: { months: MonthFlow[] }) {
+export function MonthlyFlowChart({
+  months,
+  description = 'Last six months, excluding transfers between your accounts. This month is up to today.',
+}: {
+  months: MonthFlow[]
+  description?: string
+}) {
   return (
     <ChartCard
       title="Money in and out"
-      description="Last six months, excluding transfers between your accounts. This month is up to today."
+      description={description}
       chart={<Bars months={months} />}
       table={
         <ChartTable

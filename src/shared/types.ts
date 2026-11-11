@@ -598,3 +598,84 @@ export type ReminderDto = {
   /** Already shown as a notification (previews only). */
   sent: boolean
 }
+
+// ---- Making sense of it (US13-US15) --------------------------------------------------------------
+
+export type HealthMeasureKey = 'emergency_cover' | 'emi_share' | 'savings_rate' | 'card_share'
+
+export type HealthMeasure = {
+  key: HealthMeasureKey
+  label: string
+  /** Months (emergency cover) or percent; null when it cannot be worked out. */
+  value: number | null
+  /** The sentence shown, or why there is no value. */
+  text: string
+  available: boolean
+}
+
+export type HealthDto = {
+  today: string
+  /** The complete months the "recent" figures cover (up to three), for links to their records. */
+  recent: { from: string; to: string } | null
+  measures: HealthMeasure[]
+}
+
+export type MonthReviewState = { month: string; state: 'reviewed' | 'dismissed'; at: string }
+
+export type MonthReviewAccount = {
+  accountId: string
+  name: string
+  type: AccountType
+  /** As displayed (owed for cards), at the end of the month. */
+  monthEndBalanceMinor: number
+  txnCount: number
+}
+
+export type MonthReviewDto = {
+  month: string
+  from: string
+  to: string
+  nextMonth: string
+  state: MonthReviewState | null
+  transactionCount: number
+  uncategorizedCount: number
+  accounts: MonthReviewAccount[]
+  budget: {
+    assignedMinor: number
+    spentMinor: number
+    overspent: { categoryId: string; path: string; overMinor: number }[]
+  }
+  next: {
+    assignedMinor: number
+    /** Categories with an amount this month and none yet next month. */
+    copyableCount: number
+  }
+}
+
+export type YearMonth = { month: string; from: string; to: string; inMinor: number; outMinor: number }
+
+export type YearReviewDto = {
+  basis: 'fy' | 'calendar'
+  year: number
+  label: string
+  from: string
+  /** The last day counted: the year's end, or today for the current year. */
+  to: string
+  /** The year is still going. */
+  partial: boolean
+  /** First transaction date, when the year starts before any data. */
+  dataFrom: string | null
+  inMinor: number
+  outMinor: number
+  savedMinor: number
+  savingsRate: number | null
+  months: YearMonth[]
+  topCategories: { categoryId: string | null; name: string; amountMinor: number }[]
+  topMerchants: { name: string; amountMinor: number }[]
+  /** Biggest changes against the year before; null without data for that year. */
+  changes: { categoryId: string; name: string; thisMinor: number; lastMinor: number }[] | null
+  goalsReached: { id: string; name: string; targetMinor: number; reachedOn: string }[]
+  netWorth: { startMinor: number; endMinor: number }
+  /** Years with data, newest first, for the picker. */
+  years: number[]
+}
