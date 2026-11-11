@@ -83,7 +83,8 @@
   --heat-2-fg: oklch(0.145 0 0);
   --heat-3-fg: oklch(0.985 0 0);
   --heat-4-fg: oklch(0.985 0 0);
-  --warning: oklch(0.62 0.14 70);
+  /* Dark enough for text on the light surface (axe colour contrast); also icons and tints. */
+  --warning: oklch(0.52 0.13 65);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);

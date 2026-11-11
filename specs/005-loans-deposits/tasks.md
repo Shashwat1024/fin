@@ -22,5 +22,5 @@
 - [x] F303 `us18-set-aside.spec.ts`
 
 ## F4: Release 2.3.0
-- [ ] F401 Demo data; perf; full e2e on the release build
-- [ ] F402 Docs, version 2.3.0, installer, PR
+- [x] F401 Demo data; perf; full e2e on the release build
+- [x] F402 Docs, version 2.3.0, installer, PR
