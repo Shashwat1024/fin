@@ -48,6 +48,7 @@ const SCREENS: {
   { name: 'Insights', hash: '/insights', ready: (p) => p.getByRole('article').first() },
   { name: 'Calendar', hash: '/insights?tab=calendar', ready: (p) => p.getByTestId('calendar-summary') },
   { name: 'Tax', hash: '/tax', ready: (p) => p.getByRole('region', { name: 'Section 80C', exact: true }) },
+  { name: 'Mutual fund import', hash: '/import?tab=cas', ready: (p) => p.getByLabel('Statement (PDF)') },
   { name: 'Year in review', hash: '/year?basis=calendar', ready: (p) => p.getByTestId('year-totals') },
   {
     name: 'Monthly review',

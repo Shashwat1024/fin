@@ -1,6 +1,8 @@
+import { useSearchParams } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { CircleCheckIcon, FileUpIcon } from 'lucide-react'
 import { Page, PageHeader } from '@renderer/components/layout'
+import { CasImport } from './CasImport'
 import { StepIndicator } from '@renderer/components/StepIndicator'
 import { Button } from '@renderer/components/ui/button'
 import {
@@ -54,6 +56,7 @@ function DoneStep({ wizard }: { wizard: ImportWizard }) {
 
 export function ImportPage() {
   const wizard = useImportWizard()
+  const [params] = useSearchParams()
   const stepIndex =
     wizard.step === 'done'
       ? STEPS.length
@@ -64,11 +67,12 @@ export function ImportPage() {
         title="Import"
         description="Bring in bank and card statements. Duplicates are caught before anything is saved."
       />
-      <Tabs defaultValue="new">
+      <Tabs defaultValue={params.get('tab') === 'cas' ? 'cas' : 'new'}>
         <TabsList>
           <TabsTrigger value="new">
             <FileUpIcon /> New import
           </TabsTrigger>
+          <TabsTrigger value="cas">Mutual funds (CAS)</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="new" className="flex flex-col gap-6 pt-4">
@@ -77,6 +81,9 @@ export function ImportPage() {
           {wizard.step === 'map' && <MappingStep wizard={wizard} />}
           {wizard.step === 'review' && <ReviewStep wizard={wizard} />}
           {wizard.step === 'done' && <DoneStep wizard={wizard} />}
+        </TabsContent>
+        <TabsContent value="cas" className="pt-4">
+          <CasImport />
         </TabsContent>
         <TabsContent value="history" className="pt-4">
           <ImportHistory />

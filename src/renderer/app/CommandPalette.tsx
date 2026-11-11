@@ -99,6 +99,12 @@ export function CommandPalette() {
             <CommandItem onSelect={run(() => navigate('/import'))}>
               <FileUpIcon /> Import a bank statement
             </CommandItem>
+            <CommandItem
+              value="import mutual fund statement cas"
+              onSelect={run(() => navigate('/import?tab=cas'))}
+            >
+              <FileUpIcon /> Import a mutual fund statement (CAS)
+            </CommandItem>
           </CommandGroup>
           <CommandGroup heading="Go to">
             <CommandItem onSelect={run(() => navigate('/'))}>

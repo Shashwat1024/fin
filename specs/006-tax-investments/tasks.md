@@ -13,9 +13,9 @@
 ## G2: CAS import (US20)
 - [x] G201 `domain/cas.rs` parser with synthetic-text tests first
 - [x] G202 `cas.preview`, `cas.commit`; tests
-- [ ] G203 pdf.js text extraction with password; `CasImport` mapping UI
-- [ ] G204 `us20-cas.spec.ts` (PDF generated at test time); a11y
+- [x] G203 pdf.js text extraction with password; `CasImport` mapping UI
+- [x] G204 `us20-cas.spec.ts` (PDF generated at test time); a11y
 
 ## G3: Release 2.4.0
-- [ ] G301 Demo data (tax mappings); perf; full e2e on the release build
+- [x] G301 Demo data (tax mappings); perf; full e2e on the release build
 - [ ] G302 Docs, version 2.4.0, installer, PR
