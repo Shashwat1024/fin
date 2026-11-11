@@ -48,6 +48,11 @@ const SCREENS: {
   { name: 'Insights', hash: '/insights', ready: (p) => p.getByRole('article').first() },
   { name: 'Calendar', hash: '/insights?tab=calendar', ready: (p) => p.getByTestId('calendar-summary') },
   {
+    name: 'Monthly review',
+    hash: '/review/last?step=1',
+    ready: (p) => p.getByRole('region', { name: 'Check accounts' }),
+  },
+  {
     name: 'Saved view',
     open: (p) =>
       p.getByRole('navigation', { name: 'Saved views' }).getByRole('link', { name: 'Food delivery' }).click(),

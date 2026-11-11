@@ -52,7 +52,7 @@ test.afterEach(async ({}, info) => {
  */
 export async function launchFin(
   prepared?: string,
-  opts: { realNotifications?: boolean } = {},
+  opts: { realNotifications?: boolean; env?: Record<string, string> } = {},
 ): Promise<FinApp> {
   const dataDir = prepared ?? mkdtempSync(join(tmpdir(), 'fin-e2e-'))
   const exe = process.env.FIN_TAURI_EXE ?? resolve('target', 'debug', 'fin.exe')
@@ -75,6 +75,7 @@ export async function launchFin(
       FIN_E2E_DIALOG_ANSWERS: answersFile,
       // Test-only: notifications are written here instead of shown.
       ...(opts.realNotifications ? {} : { FIN_E2E_NOTIFICATIONS: notificationsFile }),
+      ...opts.env,
     },
     stdio: 'ignore',
   })

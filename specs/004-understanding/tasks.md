@@ -13,9 +13,9 @@ Each phase is committed and pushed when its checks pass.
 - [x] E104 `us13-health.spec.ts`; a11y
 
 ## E2: Monthly review (US14)
-- [ ] E201 `review.month`, `review.setState`, `review.prompt`, `budget.copyMonth`; tests
-- [ ] E202 `MonthReviewPage` with five steps; Overview prompt; palette
-- [ ] E203 `us14-month-review.spec.ts`; a11y
+- [x] E201 `review.month`, `review.setState`, `review.prompt`, `budget.copyMonth`; tests
+- [x] E202 `MonthReviewPage` with five steps; Overview prompt; palette
+- [x] E203 `us14-month-review.spec.ts`; a11y
 
 ## E3: Year in review (US15)
 - [ ] E301 `domain/year_review.rs` with tests; `review.year`; year = sum of months test
