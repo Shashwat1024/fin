@@ -60,6 +60,7 @@ type Values = {
   count: string
   toleranceBp: number
   active: boolean
+  setAside: boolean
 }
 
 /** Starting values for a new item, e.g. from a "looks recurring" suggestion. */
@@ -87,6 +88,7 @@ function initial(item: RecurringItemDto | undefined, today: string, draft: Recur
     count: item?.count ? String(item.count) : '',
     toleranceBp: from.toleranceBp ?? 1000,
     active: item?.active ?? true,
+    setAside: item?.setAside ?? false,
   }
 }
 
@@ -139,6 +141,13 @@ function RecurringForm({
   const canMoveToAccount = v.kind === 'transfer' || v.kind === 'savings'
   const amount = parseAmountText(v.amount)
   const interval = Number(v.interval)
+  // Bills that come round every three months or more, with a budget category (US18).
+  const canSetAside =
+    (v.frequency === 'yearly' || (v.frequency === 'monthly' && interval >= 3)) &&
+    v.kind !== 'income' &&
+    v.kind !== 'transfer' &&
+    !(v.kind === 'savings' && v.toAccountId) &&
+    Boolean(v.categoryId)
   const count = Number(v.count)
   const errors = {
     name: v.name.trim() ? server['name'] : 'Give it a name, like Rent or Netflix',
@@ -187,6 +196,7 @@ function RecurringForm({
       endDate: v.ends === 'date' ? v.endDate : null,
       count: v.ends === 'count' ? count : null,
       active: v.active,
+      setAside: canSetAside && v.setAside,
     }
     try {
       if (item) await update.mutateAsync({ id: item.id, input })
@@ -381,6 +391,18 @@ function RecurringForm({
               </FormField>
             )}
           </div>
+          {canSetAside && (
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor={`${id}-set-aside`} className="font-normal">
+                Set aside monthly (the Budget suggests an amount each month)
+              </Label>
+              <Switch
+                id={`${id}-set-aside`}
+                checked={v.setAside}
+                onCheckedChange={(a) => set('setAside', a)}
+              />
+            </div>
+          )}
           {item && (
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor={`${id}-active`} className="font-normal">

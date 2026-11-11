@@ -168,6 +168,26 @@ pub fn seed_demo_data(db: &Db, today: &str) -> DbResult<()> {
             today,
         )?;
     }
+    // A home loan with its terms (US16), a fixed deposit paid out to the bank (US17) and car
+    // insurance set aside monthly (US18).
+    let first_emi = d(add_months(&start, -24, None))?;
+    create_account(
+        db,
+        &json!({ "name": "Home loan", "type": "loan", "openingBalanceMinor": 371_000_000, "openingDate": start,
+                 "loanPrincipalMinor": 400_000_000, "rateBp": 850, "tenureMonths": 240, "firstEmiDate": first_emi }),
+    )?;
+    let fd_start = d(add_months(&start, -6, None))?;
+    create_account(
+        db,
+        &json!({ "name": "SBI fixed deposit", "type": "investment", "openingBalanceMinor": 20_000_000, "openingDate": fd_start,
+                 "depositKind": "fd", "rateBp": 710, "maturityDate": d(add_months(&fd_start, 12, None))?, "payoutAccountId": bank }),
+    )?;
+    create_recurring(
+        db,
+        &json!({ "name": "Car insurance", "kind": "bill", "accountId": bank, "categoryId": c("Bills › Insurance")?,
+                 "amountMinor": 2_100_000, "frequency": "yearly", "anchorDate": d(add_months(&start, 7, None))?, "setAside": true }),
+        today,
+    )?;
     // A saved view (US9) on the sidebar.
     super::views::create_view(db, &json!({ "name": "Food delivery", "query": "q=swiggy&range=last-90-days" }))?;
     let mut patch = serde_json::Map::new();

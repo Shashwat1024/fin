@@ -379,6 +379,8 @@ export type BudgetRowDto = {
   assignedMinor: number
   spentMinor: number
   availableMinor: number
+  /** A yearly or quarterly bill set aside monthly (US18): this month's suggested amount. */
+  suggestion: { itemName: string; dueDate: string; amountMinor: number } | null
 }
 
 export type BudgetGroupDto = {

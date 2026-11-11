@@ -17,4 +17,5 @@ pub mod recurrence;
 pub mod reminders;
 pub mod rules;
 pub mod scenarios;
+pub mod set_aside;
 pub mod year_review;

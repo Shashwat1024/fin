@@ -503,6 +503,23 @@ pub fn budget_month(db: &Db, month: &str) -> DbResult<Value> {
         result.lines.iter().map(|l| (l.category_id.as_str(), l)).collect();
 
     let has_children: HashSet<&str> = categories.iter().filter_map(|c| c["parentId"].as_str()).collect();
+    // Yearly and quarterly bills set aside monthly (US18), by category: the next one due from this
+    // month on.
+    let month_start = format!("{month}-01");
+    let mut set_aside: HashMap<String, (String, String, i64)> = HashMap::new();
+    for r in item_rows(db)?.iter().filter(|r| ri(r, "set_aside") == 1 && ri(r, "active") == 1) {
+        let (Some(category), Some(due)) = (r["category_id"].as_str(), next_occurrence(&schedule_of(r), &month_start))
+        else {
+            continue;
+        };
+        let item = (r["name"].as_str().unwrap_or_default().to_owned(), due, ri(r, "amount_minor").abs());
+        match set_aside.get(category) {
+            Some(existing) if existing.1 <= item.1 => {}
+            _ => {
+                set_aside.insert(category.to_owned(), item);
+            }
+        }
+    }
     let mut groups = Vec::new();
     for parent in categories.iter().filter(|c| c["parentId"].is_null()) {
         let pid = parent["id"].as_str().unwrap_or_default();
@@ -530,6 +547,18 @@ pub fn budget_month(db: &Db, month: &str) -> DbResult<Value> {
                 "assignedMinor": l.map_or(0, |l| l.assigned_minor),
                 "spentMinor": l.map_or(0, |l| l.spent_minor),
                 "availableMinor": l.map_or(0, |l| l.available_minor),
+                "suggestion": set_aside.get(cid).map_or(Value::Null, |(item, due, amount)| {
+                    let carry = l.map_or(0, |l| l.carry_minor);
+                    json!({
+                        "itemName": item,
+                        "dueDate": due,
+                        "amountMinor": crate::domain::set_aside::monthly_set_aside(
+                            *amount,
+                            carry,
+                            crate::domain::set_aside::months_left(month, due),
+                        ),
+                    })
+                }),
             }));
         }
         if rows.is_empty() {
@@ -792,4 +821,57 @@ pub fn delete_contribution(db: &Db, id: &str) -> DbResult<Value> {
         a.remove("goal_contributions", id)
     })?;
     Ok(json!({ "auditGroupId": audited.audit_group_id }))
+}
+
+#[cfg(test)]
+mod set_aside_tests {
+    use super::*;
+    use crate::db::accounts::create_account;
+    use crate::db::test_db;
+
+    #[test]
+    fn a_yearly_bill_set_aside_is_suggested_in_its_budget_category() {
+        let db = test_db();
+        let bank =
+            create_account(&db, &json!({ "name": "Bank", "type": "bank", "openingDate": "2026-01-01" })).unwrap();
+        let bank = bank["account"]["id"].as_str().unwrap().to_owned();
+        let cats = list_categories(&db).unwrap();
+        let insurance =
+            cats.iter().find(|c| c["path"] == "Bills › Insurance").unwrap()["id"].as_str().unwrap().to_owned();
+        let item = create_recurring(
+            &db,
+            &json!({ "name": "Car insurance", "kind": "bill", "accountId": bank, "categoryId": insurance,
+                     "amountMinor": 2_100_000, "frequency": "yearly", "anchorDate": "2027-03-15", "setAside": true }),
+            "2026-11-10",
+        )
+        .unwrap();
+        assert_eq!(item["item"]["setAside"], true);
+        let row = |month: &str| -> Value {
+            let b = budget_month(&db, month).unwrap();
+            b["groups"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .flat_map(|g| g["rows"].as_array().unwrap().clone())
+                .find(|r| r["categoryId"] == insurance.as_str())
+                .unwrap()
+        };
+        assert_eq!(
+            row("2026-11")["suggestion"],
+            json!({ "itemName": "Car insurance", "dueDate": "2027-03-15", "amountMinor": 420_000 })
+        );
+        // With ₹4,200 assigned in November, December's suggestion is the rest over four months.
+        assign_budget(&db, "2026-11", &insurance, 420_000).unwrap();
+        assert_eq!(row("2026-12")["suggestion"]["amountMinor"], 420_000);
+
+        // Monthly bills are not set aside.
+        let monthly = create_recurring(
+            &db,
+            &json!({ "name": "Phone", "kind": "bill", "accountId": bank, "categoryId": insurance,
+                     "amountMinor": 50_000, "frequency": "monthly", "anchorDate": "2026-11-20", "setAside": true }),
+            "2026-11-10",
+        )
+        .unwrap();
+        assert_eq!(monthly["item"]["setAside"], false);
+    }
 }

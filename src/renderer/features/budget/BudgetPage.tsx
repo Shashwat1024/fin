@@ -8,7 +8,7 @@ import {
   InfoIcon,
 } from 'lucide-react'
 import { nextMonth, previousMonth } from '@domain/budget'
-import { monthKey } from '@domain/dates'
+import { formatDate, monthKey } from '@domain/dates'
 import { formatMoney, money, parseAmount } from '@domain/money'
 import { ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
 import { MoneyText } from '@renderer/components/MoneyText'
@@ -256,13 +256,39 @@ function BudgetLine({
   last: number
   focusRow: (i: number) => void
 }) {
+  const assign = useFinMutation('budget.assign', {
+    success: (r) => `Assigned to ${row.name} for ${monthLabel(r.month.month)}`,
+  })
+  const s = row.suggestion
   return (
     <TableRow>
-      <TableCell className="pl-8">
+      <TableCell className="pl-8 whitespace-normal">
         {row.name}
         {row.carryMinor > 0 && (
           <span className="block text-xs text-muted-foreground">
             incl. <MoneyText minor={row.carryMinor} /> from last month
+          </span>
+        )}
+        {s && s.amountMinor > 0 && (
+          <span
+            className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+            data-testid="set-aside"
+          >
+            <span>
+              Suggested <MoneyText minor={s.amountMinor} /> for {s.itemName}, due {formatDate(s.dueDate)}
+            </span>
+            {row.assignedMinor !== s.amountMinor && (
+              <Button
+                variant="outline"
+                size="xs"
+                disabled={assign.isPending}
+                onClick={() =>
+                  assign.mutate({ month: b.month, categoryId: row.categoryId, assignedMinor: s.amountMinor })
+                }
+              >
+                Assign
+              </Button>
+            )}
           </span>
         )}
       </TableCell>
