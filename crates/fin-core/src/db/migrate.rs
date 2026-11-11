@@ -22,9 +22,10 @@ pub const MIGRATIONS: &[Migration] = &[
         sql: include_str!("../../migrations/0006_dismissed_insights.sql"),
     },
     Migration { version: 7, name: "daily_use", sql: include_str!("../../migrations/0007_daily_use.sql") },
+    Migration { version: 8, name: "reviews", sql: include_str!("../../migrations/0008_reviews.sql") },
 ];
 
-pub const LATEST_SCHEMA_VERSION: i64 = 7;
+pub const LATEST_SCHEMA_VERSION: i64 = 8;
 
 fn migration_error(message: String) -> AppError {
     AppError::new(ErrorCode::Internal, message)

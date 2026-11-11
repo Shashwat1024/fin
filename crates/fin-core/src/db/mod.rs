@@ -12,6 +12,7 @@ pub mod dashboard;
 pub mod demo;
 pub mod export;
 pub mod forecast;
+pub mod health;
 pub mod imports;
 pub mod migrate;
 pub mod networth;

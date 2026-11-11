@@ -5,6 +5,7 @@ pub mod card_cycle;
 pub mod dates;
 pub mod forecast;
 pub mod goals;
+pub mod health;
 pub mod import;
 pub mod insights;
 pub mod ledger;

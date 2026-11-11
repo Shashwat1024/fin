@@ -16,6 +16,7 @@ import { MoneyText } from '@renderer/components/MoneyText'
 import { StatCard } from '@renderer/components/StatCard'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import { HealthSummary } from '@renderer/features/insights/HealthSummary'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { TxnDescription } from '@renderer/features/transactions/TxnDescription'
 import { drillHref } from '@renderer/lib/drill'
@@ -153,6 +154,9 @@ export function DashboardPage() {
       </div>
 
       <PlanningCards />
+      <div className="mt-6">
+        <HealthSummary />
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
         <MonthlyFlowChart months={d.months} />

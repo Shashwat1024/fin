@@ -7,6 +7,7 @@ import { Label } from '@renderer/components/ui/label'
 import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useInsights } from '@renderer/lib/queries'
+import { HealthSummary } from './HealthSummary'
 import { InsightCard } from './InsightCard'
 import { SpendingCalendar } from './SpendingCalendar'
 import { WhatIf } from './WhatIf'
@@ -74,7 +75,8 @@ export function InsightsPage() {
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="what-if">What if</TabsTrigger>
         </TabsList>
-        <TabsContent value="insights">
+        <TabsContent value="insights" className="flex flex-col gap-6">
+          <HealthSummary />
           <Feed />
         </TabsContent>
         <TabsContent value="calendar">

@@ -113,6 +113,7 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
         "valuations": all("SELECT id, account_id AS accountId, date, value_minor AS valueMinor, note FROM valuations ORDER BY account_id, date")?,
         "dismissedInsights": all("SELECT key, dismissed_at AS dismissedAt FROM dismissed_insights ORDER BY dismissed_at, key")?,
         "savedViews": saved_views,
+        "monthReviews": all("SELECT month, state, at FROM month_reviews ORDER BY month")?,
         "importBatches": all("SELECT id, account_id AS accountId, file_name AS fileName, imported_at AS importedAt, rows_total AS rowsTotal,
               rows_imported AS rowsImported, rows_duplicate AS rowsDuplicate, rows_failed AS rowsFailed
        FROM import_batches WHERE undone_at IS NULL ORDER BY imported_at")?,
