@@ -265,7 +265,9 @@ fn run_checks(checks: &[Check], value: &mut Value, ctx: &mut Ctx, fatal_before: 
             Check::SafeInt => {
                 let f = value.as_f64().unwrap_or(f64::NAN);
                 if f.fract() != 0.0 {
+                    // Zod stops at a failed integer check: no "too small" for 1.5 against min 2000.
                     ctx.push(&[], "Invalid input: expected int, received number");
+                    return;
                 } else if f > crate::domain::money::MAX_SAFE as f64 {
                     ctx.push(&[], format!("Too big: expected int to be <={}", crate::domain::money::MAX_SAFE));
                 } else if f < -(crate::domain::money::MAX_SAFE as f64) {

@@ -3,6 +3,7 @@
 pub mod amortization;
 pub mod budget;
 pub mod card_cycle;
+pub mod cas;
 pub mod dates;
 pub mod deposits;
 pub mod forecast;
@@ -18,4 +19,5 @@ pub mod reminders;
 pub mod rules;
 pub mod scenarios;
 pub mod set_aside;
+pub mod tax;
 pub mod year_review;

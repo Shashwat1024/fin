@@ -437,3 +437,37 @@ export const yearReviewInput = z.object({
   /** Omitted: the last complete year with data, or the current one. */
   year: z.number().int().min(1900).max(9999).optional(),
 })
+
+// ---- Tax and investments (US19, US20) ------------------------------------------------------------
+
+const taxYear = z.number().int().min(2000).max(2100)
+export const taxYearInput = z.object({ year: taxYear.optional() }).optional()
+export const taxSectionUpdate = z.object({
+  id,
+  label: name.optional(),
+  /** null: no limit. */
+  limitMinor: minor.min(0).nullable().optional(),
+})
+export const taxMapInput = z.object({
+  sectionId: id,
+  categoryId: id.optional(),
+  loanAccountId: id.optional(),
+  loanPart: z.enum(['interest', 'principal']).optional(),
+})
+export const taxExportInput = z.object({ year: taxYear })
+/** The text of a statement, extracted in the window (the PDF and its password never leave it). */
+export const casPreviewInput = z.object({ text: z.string().min(1).max(2_000_000) })
+export const casCommitInput = z.object({
+  statementDate: calendarDate,
+  folios: z
+    .array(
+      z.object({
+        key: z.string().max(300),
+        accountId: id.optional(),
+        newName: name.optional(),
+        valueMinor: minor.min(0),
+      }),
+    )
+    .min(1)
+    .max(200),
+})

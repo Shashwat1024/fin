@@ -22,6 +22,7 @@ import { TransactionDialogProvider } from '@renderer/features/transactions/Trans
 import { TransactionsPage } from '@renderer/features/transactions/TransactionsPage'
 import { MonthReviewPage } from '@renderer/features/review/MonthReviewPage'
 import { YearReviewPage } from '@renderer/features/review/YearReviewPage'
+import { TaxPage } from '@renderer/features/tax/TaxPage'
 import { useSettings } from '@renderer/lib/queries'
 
 /** Route content is isolated so a crash in one page can be retried, and clears on navigation. */
@@ -43,6 +44,7 @@ function Routed() {
         <Route path="/insights" element={<InsightsPage />} />
         <Route path="/review/:month" element={<MonthReviewPage />} />
         <Route path="/year" element={<YearReviewPage />} />
+        <Route path="/tax" element={<TaxPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<DashboardPage />} />
       </Routes>

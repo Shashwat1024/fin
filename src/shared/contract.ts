@@ -99,6 +99,13 @@ export const inputSchemas = {
   'loans.summary': s.empty,
   'loans.schedule': s.idInput,
   'deposits.summary': s.empty,
+  'tax.year': s.taxYearInput,
+  'tax.updateSection': s.taxSectionUpdate,
+  'tax.map': s.taxMapInput,
+  'tax.unmap': s.idInput,
+  'tax.exportCsv': s.taxExportInput,
+  'cas.preview': s.casPreviewInput,
+  'cas.commit': s.casCommitInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -203,6 +210,13 @@ export interface Outputs {
   'loans.summary': t.LoanDto[]
   'loans.schedule': t.LoanDto & { rows: t.LoanRow[] }
   'deposits.summary': t.DepositDto[]
+  'tax.year': t.TaxYearDto
+  'tax.updateSection': t.Mutation<object>
+  'tax.map': t.Mutation<object>
+  'tax.unmap': t.Mutation<object>
+  'tax.exportCsv': { path: string } | null
+  'cas.preview': t.CasPreviewDto
+  'cas.commit': t.Mutation<{ created: number; valued: number }>
 }
 
 export type Output<C extends Channel> = Outputs[C]

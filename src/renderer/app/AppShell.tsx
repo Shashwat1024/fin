@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   BookmarkIcon,
+  FileTextIcon,
   FileUpIcon,
   KeyboardIcon,
   LandmarkIcon,
@@ -47,6 +48,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo?: string }[] = [
   { to: '/forecast', label: 'Forecast', icon: LineChartIcon, combo: 'mod+9' },
   { to: '/net-worth', label: 'Net worth', icon: ScaleIcon, combo: 'mod+0' },
   { to: '/insights', label: 'Insights', icon: LightbulbIcon },
+  { to: '/tax', label: 'Tax', icon: FileTextIcon },
 ]
 const SETTINGS = { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' }
 
