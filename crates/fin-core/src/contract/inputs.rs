@@ -597,6 +597,44 @@ fn build() -> HashMap<&'static str, Schema> {
         ("loans.summary", empty()),
         ("loans.schedule", id_input()),
         ("deposits.summary", empty()),
+        ("tax.year", object(vec![("year", int().min(2000).max(2100).optional())]).optional()),
+        (
+            "tax.updateSection",
+            object(vec![
+                ("id", id()),
+                ("label", name().optional()),
+                ("limitMinor", minor().min(0).nullable().optional()),
+            ]),
+        ),
+        (
+            "tax.map",
+            object(vec![
+                ("sectionId", id()),
+                ("categoryId", id().optional()),
+                ("loanAccountId", id().optional()),
+                ("loanPart", enumeration(&["interest", "principal"]).optional()),
+            ]),
+        ),
+        ("tax.unmap", id_input()),
+        ("tax.exportCsv", object(vec![("year", int().min(2000).max(2100))])),
+        ("cas.preview", object(vec![("text", string().min_len(1).max_len(2_000_000))])),
+        (
+            "cas.commit",
+            object(vec![
+                ("statementDate", calendar_date()),
+                (
+                    "folios",
+                    array(object(vec![
+                        ("key", string().max_len(300)),
+                        ("accountId", id().optional()),
+                        ("newName", name().optional()),
+                        ("valueMinor", minor().min(0)),
+                    ]))
+                    .min_len(1)
+                    .max_len(200),
+                ),
+            ]),
+        ),
         ("budget.copyMonth", object(vec![("from", month_key()), ("to", month_key())])),
         (
             "review.year",

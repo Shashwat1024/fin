@@ -152,6 +152,27 @@ terms on accounts, set-aside on recurring items); export stays format v1 with ad
 - **Performance, 50,000 transactions** (release): cold start median **1.21 s**; filtering 27–59 ms;
   the Overview's requests 140 ms in all.
 
+## Release 2.4.0 (tax and investments)
+
+A tax-year view of the old regime's deductions and mutual fund statement (CAS) import
+([006-tax-investments](../../006-tax-investments/spec.md)). Schema v10 (tax sections and what counts
+under them); export stays format v1 with additive fields.
+
+**Build**: `target\release\bundle\nsis\Fin_2.4.0_x64-setup.exe` (3.33 MB, unsigned; pdf.js adds about
+0.5 MB) · SHA-256 `196040345d39d5f0dfd6841ecd668012c2dc66071a8ddd6240772c2f3bd8b318`.
+
+- **End to end** on the release `fin.exe`: **39 passed, 1 skipped** (screenshots), including
+  `us19-tax` (sections, limits, the CA export through the save-dialog seam) and `us20-cas`, which
+  imports a password-protected statement generated at test time from synthetic text (wrong password
+  asked again; a PDF that is not a statement imports nothing). axe passes on the Tax page and the
+  CAS import in both themes.
+- **Rust**: clippy clean; 73 unit and database tests (tax years, limits, loan interest and principal
+  in a year, section totals equal to the transaction query, the CA CSV, the CAS parser on CAMS and
+  KFintech-style text, CAS commit and undo). The wider contract-vector pool found and fixed one
+  difference from Zod (a non-integer below a minimum).
+- **Performance, 50,000 transactions** (release): cold start median **1.28 s**; filtering 66–115 ms;
+  Tax page 10 ms with a busy category counted.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
@@ -161,6 +182,8 @@ terms on accounts, set-aside on recurring items); export stays format v1 with ad
 - [ ] **2.1 shell features** on an installed copy: a reminder notification appears under Fin's name
   and clicking it opens the right screen; the tray icon reopens and quits Fin; start at sign-in
   starts Fin in the tray (and turning it off removes it from Windows' start-up apps).
+- [ ] **A real CAS** (2.4): import your own CAMS or KFintech statement and compare the values with
+  it. The parser is tested on synthetic text in their wording, not on real statements.
 - [ ] **SmartScreen.** The installer is not code-signed, so Windows shows "unknown publisher".
   Signing needs a certificate.
 - [x] **App icon.** Added in 1.1.1 (`build/icon.ico`).

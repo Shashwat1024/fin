@@ -8,6 +8,7 @@ import {
   CalendarDaysIcon,
   CalendarRangeIcon,
   ClipboardCheckIcon,
+  FileTextIcon,
   FileUpIcon,
   FlaskConicalIcon,
   LandmarkIcon,
@@ -98,6 +99,12 @@ export function CommandPalette() {
             <CommandItem onSelect={run(() => navigate('/import'))}>
               <FileUpIcon /> Import a bank statement
             </CommandItem>
+            <CommandItem
+              value="import mutual fund statement cas"
+              onSelect={run(() => navigate('/import?tab=cas'))}
+            >
+              <FileUpIcon /> Import a mutual fund statement (CAS)
+            </CommandItem>
           </CommandGroup>
           <CommandGroup heading="Go to">
             <CommandItem onSelect={run(() => navigate('/'))}>
@@ -141,6 +148,9 @@ export function CommandPalette() {
             </CommandItem>
             <CommandItem value="year in review annual summary" onSelect={run(() => navigate('/year'))}>
               <CalendarRangeIcon /> Year in review
+            </CommandItem>
+            <CommandItem value="tax deductions 80c" onSelect={run(() => navigate('/tax'))}>
+              <FileTextIcon /> Tax deductions
             </CommandItem>
             <CommandItem
               value="spending calendar heatmap"

@@ -1,7 +1,7 @@
 {
   "name": "fin",
   "productName": "Fin",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Private, local-first personal finance tracker",
   "private": true,
   "type": "module",
@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.4",
+    "pdfjs-dist": "4.10.38",
     "zod": "^4.6.7"
   },
   "devDependencies": {

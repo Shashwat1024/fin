@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `Fin_2.3.0_x64-setup.exe` (about 3 MB).
+   `Fin_2.4.0_x64-setup.exe` (about 3 MB).
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. Fin uses Microsoft Edge WebView2, which is part of Windows 10 and 11. On the rare machine
@@ -146,3 +146,8 @@ How to validate each feature by hand is in
   smaller EMI); **fixed and recurring deposits** are valued from their rate (compounded quarterly)
   in net worth and mature into the forecast; **annual bills** can be set aside monthly, with the
   amount suggested in the Budget.
+- ✅ Fin 2.4 (tax and investments): a **Tax** page for each financial year with the old regime's
+  deduction sections (80C, 80CCD(1B), 80D, 24(b), 80E, 80G, 80TTA), the categories and loans you
+  count under each and how much counts within its limit, an export for your CA and a printable page
+  (no tax is worked out); and **mutual fund statement (CAS) import**, which reads a CAMS or KFintech
+  PDF on this computer (its password is never kept) and records each folio's value.

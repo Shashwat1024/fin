@@ -101,6 +101,14 @@ Automated: `us16-loans`, `us17-deposits`, `us18-set-aside`. By hand, with demo d
   it falls in the period.
 - **Set aside**: Budget › Bills › Insurance suggests a monthly amount for Car insurance; Assign.
 
+### 5f. Tax and investments (US19–US20, v2.4)
+Automated: `us19-tax`, `us20-cas` (with a password-protected statement made from synthetic text).
+By hand, with demo data:
+- **Tax**: Ctrl+K › Tax deductions. Count a category under 80C with Add; change a limit; Count it on
+  the home loan's suggestions; Export for my CA (a CSV) and Print or save as PDF.
+- **CAS**: Import › Mutual funds (CAS) with your own statement PDF: enter its password, choose the
+  accounts, Record values; Net worth shows them. Undo from the toast.
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
 request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check

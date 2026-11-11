@@ -753,3 +753,70 @@ export type LoanPrepaymentDto = {
   newEmiMinor: number
   emiInterestSavedMinor: number
 }
+
+// ---- Tax and investments (US19, US20) ------------------------------------------------------------
+
+export type TaxLineDto = {
+  mappingId: string
+  kind: 'category' | 'loan'
+  name: string
+  categoryId: string | null
+  loanAccountId: string | null
+  loanPart: 'interest' | 'principal' | null
+  amountMinor: number
+}
+
+export type TaxSectionDto = {
+  id: string
+  code: string
+  label: string
+  /** null: no limit. */
+  limitMinor: number | null
+  /** 'in' for income sections (savings interest). */
+  direction: 'out' | 'in'
+  note: string | null
+  totalMinor: number
+  /** Within the limit. */
+  countedMinor: number
+  lines: TaxLineDto[]
+}
+
+export type TaxSuggestionDto = {
+  loanAccountId: string
+  name: string
+  part: 'interest' | 'principal'
+  sectionId: string
+  amountMinor: number
+}
+
+export type TaxYearDto = {
+  /** The year the financial year starts in (2026 for FY 2026-27). */
+  year: number
+  label: string
+  from: string
+  to: string
+  sections: TaxSectionDto[]
+  suggestions: TaxSuggestionDto[]
+  years: number[]
+}
+
+export type CasSchemeDto = {
+  name: string
+  units: string
+  nav: string
+  navDate: string
+  costMinor: number | null
+  valueMinor: number
+}
+
+export type CasFolioDto = {
+  key: string
+  amc: string
+  folio: string
+  valueMinor: number
+  schemes: CasSchemeDto[]
+  suggestedAccountId: string | null
+  suggestedName: string
+}
+
+export type CasPreviewDto = { statementDate: string; totalMinor: number; folios: CasFolioDto[] }

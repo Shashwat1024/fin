@@ -87,6 +87,10 @@ fn fifty_thousand_transactions_stay_fast() {
     // Loans and deposits (specs/005-loans-deposits SC-019).
     check(&mut app, "loans", "loans.summary", json!({}), 100);
     check(&mut app, "deposits", "deposits.summary", json!({}), 100);
+    // Tax and investments (specs/006-tax-investments SC-021).
+    // A busy category (Food and everything under it) counted under a section, so the totals do work.
+    dispatch(&mut app, "tax.map", Some(json!({ "sectionId": "tax_80c", "categoryId": food })));
+    check(&mut app, "tax year", "tax.year", json!({ "year": 2026 }), 300);
     check(&mut app, "looks recurring", "recurring.detectCandidates", json!({}), 500);
     check(
         &mut app,

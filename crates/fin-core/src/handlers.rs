@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 
 use crate::db::backup::{self as backups, DEFAULT_KDF};
 use crate::db::{
-    DbResult, accounts, audit, calendar, cards, categories, categorization, dashboard, deposits, export, forecast,
-    health, imports, loans, networth, patterns, planning, reminders, review, settings, transactions, views, year,
+    DbResult, accounts, audit, calendar, cards, cas, categories, categorization, dashboard, deposits, export, forecast,
+    health, imports, loans, networth, patterns, planning, reminders, review, settings, tax, transactions, views, year,
 };
 use crate::error::{AppError, ErrorCode};
 
@@ -159,6 +159,17 @@ fn handle_files(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<
                 export::to_js_pretty(&export::export_json(app.db())?)
             );
             std::fs::write(&path, text).map_err(|_| io("Fin could not write the export file."))?;
+            Ok(json!({ "path": path_str(&path) }))
+        })(),
+        "tax.exportCsv" => (|| {
+            let year = input["year"].as_i64().unwrap_or(0);
+            let name = format!("fin-tax-FY{}-{:02}.csv", year, (year + 1) % 100);
+            let Some(path) = app.dialogs.choose_save_path("Export for your CA", &name, "csv") else {
+                return Ok(Value::Null);
+            };
+            let today = settings::today(app.db())?;
+            std::fs::write(&path, crate::db::tax::tax_csv(app.db(), year, &today)?)
+                .map_err(|_| io("Fin could not write the export file."))?;
             Ok(json!({ "path": path_str(&path) }))
         })(),
         "export.csv" => (|| {
@@ -333,6 +344,12 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         "review.year" => {
             (|| year::year_review(db, s(input, "basis"), input.get("year").and_then(Value::as_i64), &today()?))()
         }
+        "cas.preview" => cas::preview(db, s(input, "text")),
+        "cas.commit" => (|| cas::commit(db, input, &today()?))(),
+        "tax.year" => (|| tax::tax_year(db, input.get("year").and_then(Value::as_i64), &today()?))(),
+        "tax.updateSection" => tax::update_section(db, input),
+        "tax.map" => tax::map(db, input),
+        "tax.unmap" => tax::unmap(db, s(input, "id")),
         "deposits.summary" => (|| deposits::deposits_summary(db, &today()?).map(Value::Array))(),
         "loans.summary" => (|| loans::loans_summary(db, &today()?).map(Value::Array))(),
         "loans.schedule" => (|| loans::loan_schedule(db, s(input, "id"), &today()?))(),
