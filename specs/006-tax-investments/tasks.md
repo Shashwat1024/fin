@@ -18,4 +18,4 @@
 
 ## G3: Release 2.4.0
 - [x] G301 Demo data (tax mappings); perf; full e2e on the release build
-- [ ] G302 Docs, version 2.4.0, installer, PR
+- [x] G302 Docs, version 2.4.0, installer, PR
