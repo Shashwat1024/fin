@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `Fin_2.0.0_x64-setup.exe` (about 3 MB).
+   `Fin_2.1.0_x64-setup.exe` (about 3 MB).
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. Fin uses Microsoft Edge WebView2, which is part of Windows 10 and 11. On the rare machine
@@ -30,7 +30,9 @@ Press `?` at any time to see every keyboard shortcut, or `Ctrl+K` for the comman
 | Logs | `%APPDATA%\Fin\logs\fin.log`. These record what happened, never amounts, payees or account names. |
 
 **Privacy.** Fin makes no network requests at all and blocks any attempt to make one. The test
-suite checks this across every flow, and checks the log file for financial details. Uninstalling
+suite checks this across every flow, and checks the log file for financial details. Reminders
+(off unless you turn them on) are shown by Windows on this computer, and their text is never
+logged; they can leave out amounts and names. Uninstalling
 Fin leaves your data folder in place, so delete `%APPDATA%\Fin` yourself if you want it gone.
 
 **Upgrading from 1.x.** Fin 2.0 uses the same data folder and file format, so it opens your 1.x
@@ -129,3 +131,8 @@ How to validate each feature by hand is in
   (Late-night spending is not detected: statements give dates, not times.)
 - ✅ Fin 2.0: the same app rebuilt in Rust. Every screen, file and shortcut works as in 1.1; the
   installer is about 3 MB instead of 108 MB, and the app starts and responds at least as fast.
+- ✅ Fin 2.1 (daily use): **saved views** of the Transactions filters in the sidebar and command
+  palette; **credit-card cycles** (statement day and due date, what was billed, what is still due,
+  counted in the forecast); **reminders** as Windows notifications for payments due tomorrow or
+  overdue, card bills and cash about to fall below your buffer (off until you turn them on, with
+  quiet hours), with optional tray and start at sign-in; and a **spending calendar** under Insights.

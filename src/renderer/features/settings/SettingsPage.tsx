@@ -8,6 +8,7 @@ import { ShortcutGroups } from '@renderer/components/ShortcutsSheet'
 import { undoChange, useActivity, useFinMutation, useSettings } from '@renderer/lib/queries'
 import { DataSettings } from './DataSettings'
 import { BufferField } from '@renderer/features/forecast/BufferField'
+import { BackgroundSettings, NotificationSettings } from './NotificationSettings'
 import { PreferenceFields } from './PreferenceFields'
 
 function relativeTime(iso: string): string {
@@ -44,6 +45,9 @@ export function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <NotificationSettings value={settings.data} onChange={(patch) => update.mutate(patch)} />
+        <BackgroundSettings value={settings.data} onChange={(patch) => update.mutate(patch)} />
 
         <DataSettings />
 

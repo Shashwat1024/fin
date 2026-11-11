@@ -19,6 +19,7 @@ const CATEGORY_GROUPS: &[&str] = &["needs", "wants", "goals", "buffer", "income"
 
 static CURRENCY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Z]{3}$").unwrap());
 static MONTH_KEY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{4}-(0[1-9]|1[0-2])$").unwrap());
+static TIME_OF_DAY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^([01]\d|2[0-3]):[0-5]\d$").unwrap());
 
 fn str_of(v: &Value) -> &str {
     v.as_str().unwrap_or_default()
@@ -49,6 +50,10 @@ fn non_zero(v: &Value) -> bool {
 fn currency() -> Schema {
     string().pattern(&CURRENCY, "/^[A-Z]{3}$/")
 }
+/// 24-hour local time, HH:MM.
+fn time_of_day() -> Schema {
+    string().pattern(&TIME_OF_DAY, r"/^([01]\d|2[0-3]):[0-5]\d$/")
+}
 fn days() -> Schema {
     union(vec![literal(json!(30)), literal(json!(60)), literal(json!(90))])
 }
@@ -64,6 +69,16 @@ fn settings_patch() -> Schema {
         ("bufferMinor", minor().min(0).optional()),
         ("onboarded", boolean().optional()),
         ("backupDir", string().max_len(1000).nullable().optional()),
+        ("notifyEnabled", boolean().optional()),
+        ("notifyRecurring", boolean().optional()),
+        ("notifyCardDue", boolean().optional()),
+        ("notifyLowCash", boolean().optional()),
+        ("cardDueNoticeDays", int().min(1).max(10).optional()),
+        ("quietHoursStart", time_of_day().optional()),
+        ("quietHoursEnd", time_of_day().optional()),
+        ("notifyShowAmounts", boolean().optional()),
+        ("keepInTray", boolean().optional()),
+        ("startAtLogin", boolean().optional()),
     ])
 }
 
@@ -75,6 +90,8 @@ fn account_input() -> Schema {
         ("openingDate", calendar_date()),
         ("notes", notes().optional()),
         ("currency", currency().optional()),
+        ("statementDay", int().min(1).max(31).nullable().optional()),
+        ("dueDaysAfter", int().min(1).max(60).nullable().optional()),
     ])
 }
 
@@ -536,6 +553,30 @@ fn build() -> HashMap<&'static str, Schema> {
         ("insights.restore", object(vec![("key", string().min_len(1).max_len(300))])),
         ("recurring.detectCandidates", empty()),
         ("scenarios.run", object(vec![("days", days()), ("changes", array(scenario_change()).max_len(20))])),
+        ("views.list", empty()),
+        (
+            "views.create",
+            object(vec![("name", name()), ("query", string().max_len(2000)), ("pinned", boolean().optional())]),
+        ),
+        (
+            "views.update",
+            object(vec![
+                ("id", id()),
+                (
+                    "patch",
+                    object(vec![
+                        ("name", name().optional()),
+                        ("query", string().max_len(2000).optional()),
+                        ("pinned", boolean().optional()),
+                    ]),
+                ),
+            ]),
+        ),
+        ("views.delete", id_input()),
+        ("cards.cycles", empty()),
+        ("insights.calendar", object(vec![("month", month_key())])),
+        ("reminders.preview", empty()),
+        ("reminders.test", empty()),
     ];
     entries.into_iter().collect()
 }

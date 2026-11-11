@@ -121,9 +121,19 @@ export function DashboardPage() {
           label="Card dues"
           value={<MoneyText minor={cardDues.valueMinor} />}
           detail={
-            cardDues.cardCount === 0
-              ? 'No credit cards added'
-              : `Owed across ${plural(cardDues.cardCount, 'card')}`
+            cardDues.nextDue ? (
+              <>
+                <MoneyText minor={cardDues.nextDue.amountMinor} /> due on{' '}
+                {formatDate(cardDues.nextDue.dueDate)}
+                {cardDues.cardCount > 1 && ` (${cardDues.nextDue.accountName})`}
+              </>
+            ) : cardDues.allPaid ? (
+              `Latest bills paid · owed across ${plural(cardDues.cardCount, 'card')}`
+            ) : cardDues.cardCount === 0 ? (
+              'No credit cards added'
+            ) : (
+              `Owed across ${plural(cardDues.cardCount, 'card')}`
+            )
           }
           to={drillHref(cardDues.drill)}
           footer={fresh(cardDues, 'Card dues')}

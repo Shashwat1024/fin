@@ -6,11 +6,20 @@ import { EmptyState, ErrorState, LoadingState, PageHeader, ShortcutHint } from '
 import { MoneyText } from '@renderer/components/MoneyText'
 import { ALL_ACCOUNTS } from '@renderer/components/pickers'
 import { Button } from '@renderer/components/ui/button'
-import { useFinMutation, useSettings, useSuggestions, useTxnPages } from '@renderer/lib/queries'
+import {
+  useCategories,
+  useFinMutation,
+  useSettings,
+  useSuggestions,
+  useTxnPages,
+  useViews,
+} from '@renderer/lib/queries'
 import { BulkActionBar } from './BulkActionBar'
+import { SaveViewButton, ViewMenu } from './SavedViews'
 import { useTransactionDialog } from './TransactionDialog'
 import {
   DEFAULT_FILTERS,
+  filtersToQuery,
   isFiltered,
   rangeFromParams,
   toTxnFilter,
@@ -25,11 +34,17 @@ export function TransactionsPage() {
   const [params] = useSearchParams()
   const { data: settings } = useSettings()
   const dialog = useTransactionDialog()
+  const { data: categories } = useCategories()
+  const { data: views } = useViews()
+  const view = views?.find((v) => v.id === params.get('view'))
   const [filters, setFilters] = useState<FilterState>(() => ({
     ...DEFAULT_FILTERS,
     text: params.get('q') ?? '',
     accountId: params.get('account') ?? ALL_ACCOUNTS,
-    categoryId: params.get('category'),
+    // A deleted category's transactions moved to its replacement, so a saved filter on it is dropped.
+    categoryId: categories?.find((c) => c.id === params.get('category'))?.archived
+      ? null
+      : params.get('category'),
     importBatchId: params.get('batch'),
     customRange: rangeFromParams(params),
     kind: params.get('kind') === 'standard' ? 'standard' : null,
@@ -75,11 +90,12 @@ export function TransactionsPage() {
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query
   const loadMore = useCallback(() => void fetchNextPage(), [fetchNextPage])
   const accountId = filters.accountId === ALL_ACCOUNTS ? undefined : filters.accountId
+  const filterQuery = filtersToQuery(filters)
 
   return (
     <div className="flex h-full flex-col px-8 pt-8 pb-6">
       <PageHeader
-        title="Transactions"
+        title={view?.name ?? 'Transactions'}
         description={
           totals ? (
             <span className="tabular-nums">
@@ -91,17 +107,30 @@ export function TransactionsPage() {
           )
         }
         actions={
-          <Button onClick={() => dialog.open({ mode: 'expense', accountId })}>
-            <PlusIcon /> Add transaction{' '}
-            <ShortcutHint
-              combo="mod+n"
-              className="ml-1 *:bg-transparent *:text-primary-foreground *:ring-1 *:ring-primary-foreground/50"
-            />
-          </Button>
+          <>
+            {view && <ViewMenu view={view} query={filterQuery} />}
+            <Button onClick={() => dialog.open({ mode: 'expense', accountId })}>
+              <PlusIcon /> Add transaction{' '}
+              <ShortcutHint
+                combo="mod+n"
+                className="ml-1 *:bg-transparent *:text-primary-foreground *:ring-1 *:ring-primary-foreground/50"
+              />
+            </Button>
+          </>
         }
       />
       <div className="flex flex-col gap-3 pb-3">
-        <TransactionFilters value={filters} onChange={changeFilters} today={today} fyStartMonth={fy} />
+        <TransactionFilters
+          value={filters}
+          onChange={changeFilters}
+          today={today}
+          fyStartMonth={fy}
+          extra={
+            isFiltered(filters) &&
+            filterQuery !== view?.query &&
+            !filters.importBatchId && <SaveViewButton query={filterQuery} />
+          }
+        />
         {selected.size > 0 && <BulkActionBar ids={[...selected]} onClear={() => setSelected(new Set())} />}
       </div>
       {query.isPending ? (

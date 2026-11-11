@@ -36,7 +36,21 @@ fn to_dto(r: &Map<String, Value>) -> Value {
         "txnCount": int("txn_count"),
         "lastTxnDate": r["last_date"],
         "sortOrder": int("sort_order"),
+        "statementDay": r["statement_day"],
+        "dueDaysAfter": r["due_days_after"],
     })
+}
+
+/// A billing-cycle field (US10): kept only on credit cards. In a patch, a missing field keeps the
+/// current value and `null` clears it.
+fn cycle_field(account_type: &str, input: &Value, key: &str, current: Option<&Value>) -> Value {
+    if account_type != "credit_card" {
+        return Value::Null;
+    }
+    match input.get(key) {
+        Some(v) => v.clone(),
+        None => current.and_then(|c| c.get(key)).cloned().unwrap_or(Value::Null),
+    }
 }
 
 pub fn list_accounts(db: &Db, include_archived: bool) -> DbResult<Vec<Value>> {
@@ -97,6 +111,8 @@ pub fn create_account(db: &Db, input: &Value) -> DbResult<Value> {
                 "opening_balance_minor" => stored_opening_balance(t, opening),
                 "opening_date" => s(input, "openingDate"),
                 "notes" => input.get("notes").cloned().unwrap_or(Value::Null),
+                "statement_day" => cycle_field(t, input, "statementDay", None),
+                "due_days_after" => cycle_field(t, input, "dueDaysAfter", None),
                 "sort_order" => order + 1,
                 "created_at" => now,
                 "updated_at" => now,
@@ -124,6 +140,8 @@ pub fn update_account(db: &Db, id: &str, patch: &Value) -> DbResult<Value> {
         "opening_balance_minor" => stored_opening_balance(&t, entered),
         "opening_date" => s(patch, "openingDate").or(s(&current, "openingDate")),
         "notes" => patch.get("notes").cloned().unwrap_or_else(|| current["notes"].clone()),
+        "statement_day" => cycle_field(&t, patch, "statementDay", Some(&current)),
+        "due_days_after" => cycle_field(&t, patch, "dueDaysAfter", Some(&current)),
     };
     let audited = unique_name(with_audit(db, &format!("Edit account {name}"), None, |a| {
         let mut f = fields.clone();

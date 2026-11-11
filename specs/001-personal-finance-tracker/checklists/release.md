@@ -94,12 +94,34 @@ per-user, unsigned) · SHA-256 `117ed04deb01a3328ed6543f4fecb1f19f1ce91e163d50c2
   (budget 150). Queries (`npm run test:perf`): transaction filters 8–21 ms, Overview 284 ms in all,
   forecast 63–67 ms, budget 96 ms, insights 194 ms, looks-recurring 276 ms.
 
+## Release 2.1.0 (daily use)
+
+Saved views, credit-card cycles, reminders as Windows notifications (with optional tray and start at
+sign-in) and a spending calendar ([003-daily-use](../../003-daily-use/spec.md)). Schema v7 (adds card
+cycle fields, saved views and the reminder log); export stays format v1 with additive fields.
+
+**Build**: `target\release\bundle\nsis\Fin_2.1.0_x64-setup.exe` (2.83 MB, unsigned) · SHA-256
+`00b3fcdfe29bf6959fdd1a208c04e2aed66b27f0853cad481ec0e992996211e5`.
+
+- **End to end** on the release `fin.exe`: **31 passed, 1 skipped** (screenshots), including the new
+  `us9-views`, `us10-cards`, `us11-reminders` (through the notification-file seam) and
+  `us12-calendar`, and axe on the calendar, an open saved view and the new Settings cards in both
+  themes. A real Windows notification was shown from a development build without error.
+- **Rust**: clippy clean; 48 unit and database tests (card cycles, reminders, views, calendar,
+  forecast card bills) and the parity vectors pass; interface and domain unit tests: 160 passed.
+- **Performance, 50,000 transactions** (release): cold start median **1.50 s**; filtering 53–67 ms.
+  Queries: card cycles 35–42 ms (budget 100), spending calendar under 1 ms (100), reminder check
+  about 95 ms (300), Overview in all 247–263 ms (300).
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
   menu entry, the uninstaller, and that uninstalling leaves `%APPDATA%\Fin` in place. The automated
   run used the built `fin.exe` so it would not register an app on the development machine. For 2.0,
   also install over an existing 1.x install and check the old data opens.
+- [ ] **2.1 shell features** on an installed copy: a reminder notification appears under Fin's name
+  and clicking it opens the right screen; the tray icon reopens and quits Fin; start at sign-in
+  starts Fin in the tray (and turning it off removes it from Windows' start-up apps).
 - [ ] **SmartScreen.** The installer is not code-signed, so Windows shows "unknown publisher".
   Signing needs a certificate.
 - [x] **App icon.** Added in 1.1.1 (`build/icon.ico`).

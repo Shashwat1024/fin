@@ -75,6 +75,10 @@ fn fifty_thousand_transactions_stay_fast() {
     check(&mut app, "budget month", "budget.month", json!({ "month": "2026-11" }), 300);
     check(&mut app, "net worth (all)", "networth.history", json!({ "from": "1900-01-01" }), 300);
     check(&mut app, "insights", "insights.list", json!({}), 500);
+    // Daily use (specs/003-daily-use SC-012).
+    check(&mut app, "card cycles", "cards.cycles", json!({}), 100);
+    check(&mut app, "spending calendar", "insights.calendar", json!({ "month": &TODAY[..7] }), 100);
+    check(&mut app, "reminder check", "reminders.preview", json!({}), 300);
     check(&mut app, "looks recurring", "recurring.detectCandidates", json!({}), 500);
     check(
         &mut app,

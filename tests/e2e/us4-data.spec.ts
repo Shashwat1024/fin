@@ -22,7 +22,7 @@ const answerDialogs = (file: string) => fin.answerDialogs(file)
 
 async function addExpense(amount: string, payee: string) {
   await page.keyboard.press('Control+n')
-  await page.getByLabel('Amount').fill(amount)
+  await page.getByLabel('Amount', { exact: true }).fill(amount)
   await page.getByLabel('Payee').fill(payee)
   await page.getByLabel('Payee').press('Control+Enter')
   await expect(toast(page, 'Transaction added')).toBeVisible()

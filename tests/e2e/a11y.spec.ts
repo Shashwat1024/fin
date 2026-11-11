@@ -27,6 +27,7 @@ const SCREENS: {
   name: string
   key?: string
   hash?: string
+  open?: (p: Page) => Promise<void>
   ready: (p: Page) => ReturnType<Page['getByRole']>
 }[] = [
   { name: 'Overview', key: 'Control+1', ready: (p) => p.getByRole('heading', { name: 'Overview' }) },
@@ -45,6 +46,13 @@ const SCREENS: {
   { name: 'Net worth', key: 'Control+0', ready: (p) => p.getByRole('region', { name: 'Assets' }) },
   { name: 'Settings', key: 'Control+,', ready: (p) => p.getByRole('heading', { name: 'Settings' }) },
   { name: 'Insights', hash: '/insights', ready: (p) => p.getByRole('article').first() },
+  { name: 'Calendar', hash: '/insights?tab=calendar', ready: (p) => p.getByTestId('calendar-summary') },
+  {
+    name: 'Saved view',
+    open: (p) =>
+      p.getByRole('navigation', { name: 'Saved views' }).getByRole('link', { name: 'Food delivery' }).click(),
+    ready: (p) => p.getByRole('button', { name: 'View options' }),
+  },
   {
     name: 'What if',
     hash: '/insights?tab=what-if',
@@ -75,6 +83,7 @@ for (const theme of ['light', 'dark'] as const) {
     await page.evaluate(`document.documentElement.classList.toggle('dark', ${theme === 'dark'})`)
     for (const s of SCREENS) {
       if (s.key) await page.keyboard.press(s.key)
+      else if (s.open) await s.open(page)
       else await page.evaluate(`location.hash = ${JSON.stringify(s.hash)}`)
       await expect(s.ready(page)).toBeVisible()
       await audit(`${s.name} (${theme})`)

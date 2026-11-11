@@ -9,6 +9,7 @@ use rusqlite::types::Value as Sql;
 use serde_json::{Value, json};
 
 use super::accounts::list_accounts;
+use super::cards::cards_with_cycles;
 use super::networth::net_worth_now;
 use super::planning::{goal_amounts, goal_rows, list_occurrences, list_recurring};
 use super::settings::get_settings;
@@ -33,6 +34,55 @@ struct BaseParts {
     liquid: Vec<Value>,
     not_counted: HashSet<String>,
     items: Vec<Value>,
+    /// Cards whose bill comes from a recurring payment instead of their statement: (card, item).
+    card_bills_from_recurring: Vec<(String, String)>,
+}
+
+/// Card bills from statements (US10): the unpaid statement on its due date, and spending since the
+/// statement on the next due date, as money out of cash and bank. A card with a recurring payment
+/// into it is left to that payment, so the bill is never counted twice.
+fn card_bill_events(
+    db: &Db,
+    today: &str,
+    accounts: &[Value],
+    until: &str,
+    items: &[Value],
+    events: &mut Vec<Event>,
+) -> DbResult<Vec<(String, String)>> {
+    let mut from_recurring = Vec::new();
+    for card in cards_with_cycles(db, today, accounts)? {
+        if let Some(item) =
+            items.iter().find(|i| i["active"] == true && i["toAccountId"].as_str() == Some(card.account_id.as_str()))
+        {
+            from_recurring.push((card.account_name.clone(), st(item, "name").to_owned()));
+            continue;
+        }
+        let c = &card.cycle;
+        let mut push = |key: &str, name: String, due: &str, amount: i64| {
+            if amount <= 0 || due > until {
+                return;
+            }
+            let overdue = due < today;
+            events.push(Event {
+                item_id: format!("card:{}:{key}", card.account_id),
+                name,
+                due_date: due.to_owned(),
+                date: if overdue { today.to_owned() } else { due.to_owned() },
+                amount_minor: -amount,
+                overdue,
+            });
+        };
+        if let Some(due) = &c.due_date {
+            push("statement", format!("{} bill (estimated from statement)", card.account_name), due, c.remaining_minor);
+        }
+        push(
+            "next",
+            format!("{} next bill (spending so far, estimated)", card.account_name),
+            &c.next_due_date,
+            c.next_bill_so_far_minor(),
+        );
+    }
+    Ok(from_recurring)
 }
 
 /// Everything the projection is computed from, shared by the forecast and what-if scenarios.
@@ -111,6 +161,8 @@ fn forecast_base(db: &Db, days: i64, today: &str, accounts: &[Value]) -> DbResul
             .flatten();
     }
 
+    let card_bills_from_recurring = card_bill_events(db, today, accounts, &ad(today, days), &items, &mut events)?;
+
     let buffer_minor = get_settings(db)?["bufferMinor"].as_i64().unwrap_or(0);
     let input = ForecastInput {
         today: today.to_owned(),
@@ -121,12 +173,12 @@ fn forecast_base(db: &Db, days: i64, today: &str, accounts: &[Value]) -> DbResul
         daily_spending,
         history_start,
     };
-    drop(by_id);
-    Ok(BaseParts { input, liquid, not_counted, items })
+    Ok(BaseParts { input, liquid, not_counted, items, card_bills_from_recurring })
 }
 
 /// Every input the forecast used, so each number on the line can be explained (FR-027).
-fn assumptions(f: &Forecast, liquid: &[Value], not_counted: &HashSet<String>) -> Vec<Value> {
+fn assumptions(f: &Forecast, base: &BaseParts) -> Vec<Value> {
+    let (liquid, not_counted) = (&base.liquid, &base.not_counted);
     let mut out: Vec<Value> = liquid
         .iter()
         .map(|a| {
@@ -154,7 +206,12 @@ fn assumptions(f: &Forecast, liquid: &[Value], not_counted: &HashSet<String>) ->
             short_date(&e.date)
         });
     }
-    for (_, name, amount, dates) in by_item {
+    for (id, name, amount, dates) in by_item {
+        if id.starts_with("card:") {
+            let detail = format!("Due {}", dates.join(", "));
+            out.push(json!({ "kind": "card", "label": name, "detail": detail, "amountMinor": amount }));
+            continue;
+        }
         let times = if dates.len() == 1 { "Once".to_owned() } else { format!("{} times", dates.len()) };
         out.push(json!({ "kind": "recurring", "label": name, "detail": format!("{times}: {}", dates.join(", ")), "amountMinor": amount }));
     }
@@ -172,9 +229,15 @@ fn assumptions(f: &Forecast, liquid: &[Value], not_counted: &HashSet<String>) ->
     };
     note(
         "Only cash and bank accounts are projected".to_owned(),
-        "Credit-card spending counts on the day the card bill is paid, when that bill is set up as a recurring transfer."
+        "Credit-card spending counts when its bill is due: from the card’s statement when its billing cycle is set on the Accounts page, or from a recurring payment to the card."
             .to_owned(),
     );
+    for (card, item) in &base.card_bills_from_recurring {
+        note(
+            format!("{card} bill: counted from your recurring payment"),
+            format!("“{item}”, not from the card’s statement, so it is not counted twice."),
+        );
+    }
     if !not_counted.is_empty() {
         let mut names: Vec<&String> = not_counted.iter().collect();
         // Array.prototype.sort(): by UTF-16 code units.
@@ -197,7 +260,7 @@ pub fn forecast(db: &Db, days: i64, today: &str) -> DbResult<Value> {
     let base = forecast_base(db, days, today, &accounts)?;
     let f = run_forecast(&base.input);
     let mut out = serde_json::to_value(&f).map_err(|_| AppError::internal())?;
-    out["assumptions"] = Value::Array(assumptions(&f, &base.liquid, &base.not_counted));
+    out["assumptions"] = Value::Array(assumptions(&f, &base));
     out["hasCashAccounts"] = json!(!base.liquid.is_empty());
     Ok(out)
 }
@@ -247,4 +310,64 @@ pub fn what_if(db: &Db, days: i64, changes: &[Value], today: &str) -> DbResult<V
     let income_item_ids: Vec<String> =
         base.items.iter().filter(|i| i["kind"] == "income").map(|i| st(i, "id").to_owned()).collect();
     Ok(run_scenario(&Base { forecast: base.input, income_item_ids, goals, loans }, changes))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::accounts::create_account;
+    use crate::db::planning::create_recurring;
+    use crate::db::test_db;
+    use crate::db::transactions::create_transaction;
+
+    fn account(db: &Db, input: Value) -> String {
+        create_account(db, &input).unwrap()["account"]["id"].as_str().unwrap().to_owned()
+    }
+
+    #[test]
+    fn card_bills_come_from_statements_unless_a_recurring_payment_covers_them() {
+        let db = test_db();
+        let bank = account(
+            &db,
+            json!({ "name": "Bank", "type": "bank", "openingDate": "2026-08-01", "openingBalanceMinor": 10_000_000 }),
+        );
+        let card = account(
+            &db,
+            json!({ "name": "Card", "type": "credit_card", "openingDate": "2026-08-01", "statementDay": 25, "dueDaysAfter": 20 }),
+        );
+        for (date, amount) in [("2026-09-10", -100_000), ("2026-10-05", -40_000)] {
+            create_transaction(
+                &db,
+                &json!({ "accountId": card, "postedDate": date, "amountMinor": amount, "payee": "x" }),
+            )
+            .unwrap();
+        }
+
+        let f = forecast(&db, 60, "2026-10-08").unwrap();
+        let cards: Vec<&Value> = f["assumptions"].as_array().unwrap().iter().filter(|a| a["kind"] == "card").collect();
+        assert_eq!(cards.len(), 2);
+        assert_eq!(cards[0]["label"], "Card bill (estimated from statement)");
+        assert_eq!(
+            (cards[0]["amountMinor"].clone(), cards[0]["detail"].clone()),
+            (json!(-100_000), json!("Due 15 Oct"))
+        );
+        assert_eq!(cards[1]["amountMinor"], -40_000);
+        assert_eq!(cards[1]["detail"], "Due 14 Nov");
+
+        // A 30-day forecast ends before the next bill is due.
+        let short = forecast(&db, 30, "2026-10-08").unwrap();
+        assert_eq!(short["assumptions"].as_array().unwrap().iter().filter(|a| a["kind"] == "card").count(), 1);
+
+        create_recurring(
+            &db,
+            &json!({ "name": "Card payment", "kind": "transfer", "accountId": bank, "toAccountId": card,
+                     "amountMinor": 100_000, "frequency": "monthly", "anchorDate": "2026-08-15" }),
+            "2026-10-08",
+        )
+        .unwrap();
+        let f = forecast(&db, 60, "2026-10-08").unwrap();
+        let rows = f["assumptions"].as_array().unwrap();
+        assert!(rows.iter().all(|a| a["kind"] != "card"));
+        assert!(rows.iter().any(|a| a["label"] == "Card bill: counted from your recurring payment"));
+    }
 }

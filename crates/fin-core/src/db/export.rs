@@ -1,5 +1,5 @@
-//! JSON and CSV export (`src/db/export.ts`, contracts/export-json.md). Output is byte-for-byte
-//! what Fin 1.x writes for the same data.
+//! JSON and CSV export (contracts/export-json.md). Fields that existed in Fin 1.x are written exactly
+//! as 1.x wrote them; 2.1 adds card cycle fields on accounts and `savedViews` (additive, format v1).
 
 use std::collections::HashMap;
 
@@ -76,6 +76,16 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
         })
         .collect();
 
+    let saved_views: Vec<Value> = db
+        .all_json("SELECT id, name, query, pinned FROM saved_views ORDER BY sort_order, created_at", [])?
+        .into_iter()
+        .map(|mut v| {
+            let pinned = v["pinned"] == 1;
+            v.insert("pinned".into(), json!(pinned));
+            Value::Object(v)
+        })
+        .collect();
+
     Ok(json!({
         "format": "fin-export",
         "version": 1,
@@ -83,7 +93,8 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
         "appSchemaVersion": current_schema_version(db)?,
         "settings": settings,
         "accounts": all("SELECT id, name, type, currency, opening_balance_minor AS openingBalanceMinor, opening_date AS openingDate,
-              notes, archived_at AS archivedAt FROM accounts ORDER BY sort_order, name")?,
+              notes, archived_at AS archivedAt, statement_day AS statementDay, due_days_after AS dueDaysAfter
+       FROM accounts ORDER BY sort_order, name")?,
         "categories": all("SELECT id, name, parent_id AS parentId, grp AS \"group\", archived_at AS archivedAt FROM categories ORDER BY sort_order, name")?,
         "tags": all("SELECT id, name FROM tags ORDER BY name")?,
         "merchants": all("SELECT id, display_name AS name, default_category_id AS defaultCategoryId FROM merchants ORDER BY display_name")?,
@@ -101,6 +112,7 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
        FROM goal_contributions c JOIN goals g ON g.id = c.goal_id WHERE g.archived_at IS NULL ORDER BY c.date, c.id")?,
         "valuations": all("SELECT id, account_id AS accountId, date, value_minor AS valueMinor, note FROM valuations ORDER BY account_id, date")?,
         "dismissedInsights": all("SELECT key, dismissed_at AS dismissedAt FROM dismissed_insights ORDER BY dismissed_at, key")?,
+        "savedViews": saved_views,
         "importBatches": all("SELECT id, account_id AS accountId, file_name AS fileName, imported_at AS importedAt, rows_total AS rowsTotal,
               rows_imported AS rowsImported, rows_duplicate AS rowsDuplicate, rows_failed AS rowsFailed
        FROM import_batches WHERE undone_at IS NULL ORDER BY imported_at")?,

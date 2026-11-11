@@ -1,12 +1,18 @@
 //! The Tauri shell: one window, one command. All logic lives in `fin-core`.
 
+mod background;
+
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use std::sync::atomic::Ordering;
+use std::time::Duration;
+
+use background::{Background, apply_settings, open_route, show_reminder, throwaway_data};
 
 use fin_core::app::{App, AppPaths, Dialogs};
 use fin_core::log;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
@@ -92,12 +98,56 @@ impl Dialogs for NativeDialogs {
 /// The only bridge between the interface and the backend, mirroring the Electron preload's
 /// `fin:invoke` channel: validation and every error shape are handled by `fin_core::dispatch`.
 #[tauri::command]
-async fn fin_invoke(backend: State<'_, Backend>, channel: String, input: Option<Value>) -> Result<Value, ()> {
-    let mut guard = backend.0.lock().unwrap_or_else(|p| p.into_inner());
-    Ok(match guard.as_mut() {
-        Some(app) => fin_core::dispatch::dispatch(app, &channel, input),
-        None => json!({ "ok": false, "error": { "code": "IO", "message": "Fin could not open your data folder." } }),
-    })
+async fn fin_invoke(
+    handle: AppHandle,
+    backend: State<'_, Backend>,
+    channel: String,
+    input: Option<Value>,
+) -> Result<Value, ()> {
+    let (result, settings) = {
+        let mut guard = backend.0.lock().unwrap_or_else(|p| p.into_inner());
+        match guard.as_mut() {
+            Some(app) => {
+                let result = fin_core::dispatch::dispatch(app, &channel, input);
+                // Settings that live outside the window follow every change of settings or data.
+                let changed = result["ok"] == true && matches!(channel.as_str(), "settings.update" | "backup.restore");
+                let settings = changed.then(|| fin_core::dispatch::dispatch(app, "settings.get", None)["data"].clone());
+                (result, settings)
+            }
+            None => (
+                json!({ "ok": false, "error": { "code": "IO", "message": "Fin could not open your data folder." } }),
+                None,
+            ),
+        }
+    };
+    if let Some(s) = settings {
+        apply_settings(&handle, &s);
+    }
+    if channel == "reminders.test" && result["ok"] == true {
+        show_reminder(&handle, &result["data"]);
+    }
+    Ok(result)
+}
+
+/// Reminders shortly after start, then every hour while Fin runs (US11). The app is held only
+/// to work out what is due; notifications are shown after it is released.
+fn remind_hourly(handle: AppHandle) {
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs(2));
+        loop {
+            let due = handle
+                .state::<Backend>()
+                .0
+                .lock()
+                .ok()
+                .and_then(|g| g.as_ref().map(App::take_due_reminders))
+                .unwrap_or_default();
+            for r in &due {
+                show_reminder(&handle, r);
+            }
+            std::thread::sleep(Duration::from_secs(60 * 60));
+        }
+    });
 }
 
 /// WebView2 answers browser shortcuts itself (Ctrl+N new window, Ctrl+P print, F5 reload, the
@@ -140,10 +190,21 @@ fn app_data_dir() -> PathBuf {
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+    // Opening Fin again (Start menu, sign-in) brings back the running window, which may be in the
+    // tray. Throwaway data folders (tests) may run side by side, so they skip this.
+    if !throwaway_data() {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| open_route(app, None)));
+    }
+    builder
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--background"]),
+        ))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(Backend(Mutex::new(None)))
+        .manage(Background::default())
         .invoke_handler(tauri::generate_handler![fin_invoke])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -162,6 +223,11 @@ pub fn run() {
                     None
                 }
             };
+            let settings = opened
+                .as_ref()
+                .and_then(|a| fin_core::db::settings::get_settings(a.db()).ok())
+                .map(Value::Object)
+                .unwrap_or(Value::Null);
             *app.state::<Backend>().0.lock().unwrap_or_else(|p| p.into_inner()) = opened;
             // Warm the database while WebView2 starts (creating the window takes about a second),
             // so the Overview's first requests find their data in memory.
@@ -172,13 +238,29 @@ pub fn run() {
                 }
             });
             // Constitution I: the window can only ever show Fin's own pages.
-            WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
+            // Started at sign-in with the tray option on: stay in the tray until opened.
+            let in_background = std::env::args().any(|a| a == "--background") && settings["keepInTray"] == true;
+            let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("Fin")
                 .inner_size(1320.0, 860.0)
                 .min_inner_size(960.0, 640.0)
+                .visible(!in_background)
                 .on_navigation(is_app_url)
-                .build()?
-                .with_webview(disable_browser_shortcuts)?;
+                .build()?;
+            window.with_webview(disable_browser_shortcuts)?;
+            let closing = handle.clone();
+            window.on_window_event(move |event| {
+                if let WindowEvent::CloseRequested { api, .. } = event
+                    && closing.state::<Background>().keep_in_tray.load(Ordering::Relaxed)
+                {
+                    api.prevent_close();
+                    if let Some(w) = closing.get_webview_window("main") {
+                        let _ = w.hide();
+                    }
+                }
+            });
+            apply_settings(&handle, &settings);
+            remind_hourly(handle.clone());
             // The daily backup never delays startup: the app is held only to read where to write
             // it; the copy itself runs on its own connection while requests carry on.
             std::thread::spawn(move || {

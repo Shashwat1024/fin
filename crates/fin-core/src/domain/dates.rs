@@ -83,6 +83,15 @@ pub fn today_in_at(time_zone: &str, now: chrono::DateTime<Utc>) -> String {
     format!("{:04}-{:02}-{:02}", local.year(), local.month(), local.day())
 }
 
+/// The local time of day in an IANA time zone, "HH:MM" (UTC for an unknown zone).
+pub fn time_in(time_zone: &str) -> String {
+    let now = crate::clock::now();
+    match time_zone.parse::<chrono_tz::Tz>() {
+        Ok(tz) => now.with_timezone(&tz).format("%H:%M").to_string(),
+        Err(_) => now.format("%H:%M").to_string(),
+    }
+}
+
 /// Whether `zone` is a time zone the app accepts (IANA name).
 pub fn is_time_zone(zone: &str) -> bool {
     zone.parse::<chrono_tz::Tz>().is_ok()

@@ -20,6 +20,8 @@ function isTimeZone(tz: string): boolean {
 }
 
 export const empty = z.object({}).optional()
+/** 24-hour local time, HH:MM. */
+const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)
 
 export const settingsPatch = z.object({
   currency: z
@@ -34,6 +36,16 @@ export const settingsPatch = z.object({
   bufferMinor: minor.min(0).optional(),
   onboarded: z.boolean().optional(),
   backupDir: z.string().max(1000).nullable().optional(),
+  notifyEnabled: z.boolean().optional(),
+  notifyRecurring: z.boolean().optional(),
+  notifyCardDue: z.boolean().optional(),
+  notifyLowCash: z.boolean().optional(),
+  cardDueNoticeDays: z.number().int().min(1).max(10).optional(),
+  quietHoursStart: timeOfDay.optional(),
+  quietHoursEnd: timeOfDay.optional(),
+  notifyShowAmounts: z.boolean().optional(),
+  keepInTray: z.boolean().optional(),
+  startAtLogin: z.boolean().optional(),
 })
 
 export const accountsListInput = z.object({ includeArchived: z.boolean().optional() }).optional()
@@ -49,6 +61,10 @@ export const accountInput = z.object({
     .string()
     .regex(/^[A-Z]{3}$/)
     .optional(),
+  /** Credit cards: the day the statement is made (past the month's end means its last day). */
+  statementDay: z.number().int().min(1).max(31).nullable().optional(),
+  /** Credit cards: days from the statement to the payment due date. */
+  dueDaysAfter: z.number().int().min(1).max(60).nullable().optional(),
 })
 
 export const accountUpdate = z.object({ id, patch: accountInput.partial() })
@@ -381,3 +397,13 @@ export const scenarioInput = z.object({
   days: z.union([z.literal(30), z.literal(60), z.literal(90)]),
   changes: z.array(scenarioChange).max(20),
 })
+
+// ---- Daily use (US9-US12) ------------------------------------------------------------------------
+
+const viewQuery = z.string().max(2000)
+export const viewInput = z.object({ name, query: viewQuery, pinned: z.boolean().optional() })
+export const viewUpdate = z.object({
+  id,
+  patch: z.object({ name: name.optional(), query: viewQuery.optional(), pinned: z.boolean().optional() }),
+})
+export const calendarInput = z.object({ month: monthKey })

@@ -8,6 +8,7 @@ import { Switch } from '@renderer/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useInsights } from '@renderer/lib/queries'
 import { InsightCard } from './InsightCard'
+import { SpendingCalendar } from './SpendingCalendar'
 import { WhatIf } from './WhatIf'
 
 function Feed() {
@@ -52,15 +53,17 @@ function Feed() {
   )
 }
 
-/** Behaviour insights and the what-if simulator (US8). Neither changes any stored data except dismissals. */
+/** Behaviour insights, the what-if simulator (US8) and the spending calendar (US12). None of them
+ * changes stored data except dismissals. */
 export function InsightsPage() {
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') === 'what-if' ? 'what-if' : 'insights'
+  const asked = params.get('tab')
+  const tab = asked === 'what-if' || asked === 'calendar' ? asked : 'insights'
   return (
     <Page>
       <PageHeader
         title="Insights"
-        description="Patterns in your spending, and what would happen if something changed."
+        description="Patterns in your spending, a month at a glance, and what would happen if something changed."
       />
       <Tabs
         value={tab}
@@ -68,10 +71,14 @@ export function InsightsPage() {
       >
         <TabsList className="mb-4">
           <TabsTrigger value="insights">Insights</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="what-if">What if</TabsTrigger>
         </TabsList>
         <TabsContent value="insights">
           <Feed />
+        </TabsContent>
+        <TabsContent value="calendar">
+          <SpendingCalendar />
         </TabsContent>
         <TabsContent value="what-if">
           <WhatIf />

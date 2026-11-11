@@ -1,9 +1,11 @@
-//! Storage: one SQLite file, opened and used exactly like the TypeScript backend
-//! (`src/db/connection.ts`), so either backend can open the other's data.
+//! Storage: one SQLite file, opened and used exactly as Fin 1.x did, so a 1.x data folder opens as
+//! it is.
 
 pub mod accounts;
 pub mod audit;
 pub mod backup;
+pub mod calendar;
+pub mod cards;
 pub mod categories;
 pub mod categorization;
 pub mod dashboard;
@@ -15,9 +17,11 @@ pub mod migrate;
 pub mod networth;
 pub mod patterns;
 pub mod planning;
+pub mod reminders;
 pub mod seed_perf;
 pub mod settings;
 pub mod transactions;
+pub mod views;
 
 use std::cell::Cell;
 use std::path::Path;
@@ -217,4 +221,13 @@ pub fn is_unique_violation(e: &AppError, table: &str) -> bool {
 /// `?, ?, ?` for `n` parameters.
 pub fn placeholders(n: usize) -> String {
     vec!["?"; n].join(", ")
+}
+
+/// A fresh, migrated in-memory database with the default categories, for tests.
+#[cfg(test)]
+pub fn test_db() -> Db {
+    let db = Db::open_in_memory().expect("in-memory database");
+    migrate::migrate(&db, None).expect("migrations");
+    categories::seed_default_categories(&db).expect("categories");
+    db
 }

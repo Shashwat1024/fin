@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { SearchIcon, XIcon } from 'lucide-react'
 import { financialYear, formatDate, isCalendarDate, presetRange, type RangePreset } from '@domain/dates'
 import { AccountSelect, ALL_ACCOUNTS, CategoryPicker } from '@renderer/components/pickers'
@@ -52,6 +52,24 @@ export function toTxnFilter(f: FilterState, today: string, fyStartMonth: number)
   }
 }
 
+/**
+ * The filters as URL search parameters, the same ones the page reads (saved views store this).
+ * The hidden import-batch filter is left out: it belongs to one visit from import history.
+ */
+export function filtersToQuery(f: FilterState): string {
+  const p = new URLSearchParams()
+  if (f.text.trim()) p.set('q', f.text.trim())
+  if (f.customRange) {
+    p.set('from', f.customRange.from)
+    p.set('to', f.customRange.to)
+  } else if (f.range !== 'all') p.set('range', f.range)
+  if (f.accountId !== ALL_ACCOUNTS) p.set('account', f.accountId)
+  if (f.categoryId) p.set('category', f.categoryId)
+  if (f.direction !== 'all') p.set('direction', f.direction)
+  if (f.kind) p.set('kind', f.kind)
+  return p.toString()
+}
+
 export const isFiltered = (f: FilterState) =>
   f.text.trim() !== '' ||
   f.range !== 'all' ||
@@ -62,9 +80,16 @@ export const isFiltered = (f: FilterState) =>
   Boolean(f.customRange) ||
   Boolean(f.kind)
 
-type Props = { value: FilterState; onChange: (f: FilterState) => void; today: string; fyStartMonth: number }
+type Props = {
+  value: FilterState
+  onChange: (f: FilterState) => void
+  today: string
+  fyStartMonth: number
+  /** Extra controls at the end of the bar (saving a view). */
+  extra?: ReactNode
+}
 
-export function TransactionFilters({ value, onChange, today, fyStartMonth }: Props) {
+export function TransactionFilters({ value, onChange, today, fyStartMonth, extra }: Props) {
   // Debounce typing so each keystroke doesn't re-query.
   const [text, setText] = useState(value.text)
   // When filters are reset from outside, take the new text (adjusting state during render).
@@ -168,6 +193,7 @@ export function TransactionFilters({ value, onChange, today, fyStartMonth }: Pro
           <XIcon /> Clear
         </Button>
       )}
+      {extra}
     </div>
   )
 }

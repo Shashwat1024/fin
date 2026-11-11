@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
+  BookmarkIcon,
   FileUpIcon,
   KeyboardIcon,
   LandmarkIcon,
@@ -25,9 +26,11 @@ import { ShortcutHint } from '@renderer/components/layout'
 import { Button } from '@renderer/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@renderer/components/ui/toggle-group'
 import { DemoBanner } from '@renderer/features/demo/DemoBanner'
+import { viewHref } from '@renderer/features/transactions/SavedViews'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { showShortcuts, useHotkey } from '@renderer/lib/hotkeys'
-import { useFinMutation } from '@renderer/lib/queries'
+import { useFinMutation, useViews } from '@renderer/lib/queries'
+import { useNavigateEvents } from '@renderer/lib/navigate-events'
 import { useTheme } from '@renderer/lib/theme'
 import { cn } from '@renderer/lib/utils'
 import type { Theme } from '@shared/types'
@@ -76,16 +79,7 @@ function ThemeSwitch() {
 
 function NavItem({ to, label, icon: Icon, combo }: (typeof NAV)[number]) {
   return (
-    <NavLink
-      to={to}
-      end={to === '/'}
-      className={({ isActive }) =>
-        cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-3 focus-visible:ring-sidebar-ring/50',
-          isActive && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
-        )
-      }
-    >
+    <NavLink to={to} end={to === '/'} className={({ isActive }) => navItemClass(isActive)}>
       <Icon className="size-4" aria-hidden />
       <span className="flex-1">{label}</span>
       {combo && (
@@ -95,9 +89,43 @@ function NavItem({ to, label, icon: Icon, combo }: (typeof NAV)[number]) {
   )
 }
 
+const navItemClass = (active: boolean) =>
+  cn(
+    'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 outline-none hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-3 focus-visible:ring-sidebar-ring/50',
+    active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
+  )
+
+/** Saved Transactions views the user pinned (US9), under the main navigation. */
+function SavedViewsNav() {
+  const { data: views = [] } = useViews()
+  const { pathname, search } = useLocation()
+  const pinned = views.filter((v) => v.pinned)
+  if (pinned.length === 0) return null
+  const openId = pathname === '/transactions' ? new URLSearchParams(search).get('view') : null
+  return (
+    <nav aria-labelledby="saved-views-heading" className="flex flex-col gap-1">
+      <h2 id="saved-views-heading" className="px-3 pb-1 text-xs font-medium text-muted-foreground">
+        Saved views
+      </h2>
+      {pinned.map((v) => (
+        <Link
+          key={v.id}
+          to={viewHref(v)}
+          className={navItemClass(openId === v.id)}
+          aria-current={openId === v.id ? 'page' : undefined}
+        >
+          <BookmarkIcon className="size-4" aria-hidden />
+          <span className="flex-1 truncate">{v.name}</span>
+        </Link>
+      ))}
+    </nav>
+  )
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const txn = useTransactionDialog()
+  useNavigateEvents()
   useHotkey('mod+1', () => navigate('/'))
   useHotkey('mod+2', () => navigate('/transactions'))
   useHotkey('mod+3', () => navigate('/accounts'))
@@ -135,6 +163,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <NavItem key={item.to} {...item} />
           ))}
         </nav>
+        <SavedViewsNav />
         <div className="mt-auto flex flex-col gap-3 border-t pt-4">
           <nav aria-label="App">
             <NavItem {...SETTINGS} />

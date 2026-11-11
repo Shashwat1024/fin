@@ -310,6 +310,30 @@ impl App {
         log::debug("db.warmed", &[("ms", Ctx::Num(started.elapsed().as_millis() as i64))]);
     }
 
+    /// Reminders to show as notifications now (US11), recorded so none repeats. None with demo
+    /// data. Only the count and kinds are logged, never the text.
+    pub fn take_due_reminders(&self) -> Vec<Value> {
+        if self.demo {
+            return Vec::new();
+        }
+        match crate::db::reminders::take_due(&self.db) {
+            Ok(list) => {
+                if !list.is_empty() {
+                    let kinds: Vec<&str> = list.iter().filter_map(|r| r["kind"].as_str()).collect();
+                    log::info(
+                        "notify.due",
+                        &[("count", Ctx::Num(list.len() as i64)), ("kinds", Ctx::Text(&kinds.join(",")))],
+                    );
+                }
+                list
+            }
+            Err(_) => {
+                log::warn("notify.check_failed", &[]);
+                Vec::new()
+            }
+        }
+    }
+
     /// Once per day on launch, on this thread (tests and tools).
     pub fn daily_backup(&self) -> Option<Value> {
         self.daily_backup_plan()?.run()

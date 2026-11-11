@@ -4,6 +4,8 @@ import {
   ArrowDownLeftIcon,
   ArrowLeftRightIcon,
   ArrowUpRightIcon,
+  BookmarkIcon,
+  CalendarDaysIcon,
   FileUpIcon,
   FlaskConicalIcon,
   LandmarkIcon,
@@ -35,9 +37,10 @@ import {
   CommandShortcut,
 } from '@renderer/components/ui/command'
 import { useAccountDialog } from '@renderer/features/accounts/AccountDialog'
+import { viewHref } from '@renderer/features/transactions/SavedViews'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { showShortcuts, useHotkey } from '@renderer/lib/hotkeys'
-import { useAccounts, useFinMutation } from '@renderer/lib/queries'
+import { useAccounts, useFinMutation, useViews } from '@renderer/lib/queries'
 import { useTheme } from '@renderer/lib/theme'
 
 /** Ctrl+K: jump anywhere or start any action without the mouse. */
@@ -47,6 +50,7 @@ export function CommandPalette() {
   const txn = useTransactionDialog()
   const accountDialog = useAccountDialog()
   const { data: accounts = [] } = useAccounts()
+  const { data: views = [] } = useViews()
   const { resolved } = useTheme()
   const settings = useFinMutation('settings.update')
   useHotkey('mod+k', () => setOpen((o) => !o))
@@ -128,6 +132,12 @@ export function CommandPalette() {
               <LightbulbIcon /> Insights
             </CommandItem>
             <CommandItem
+              value="spending calendar heatmap"
+              onSelect={run(() => navigate('/insights?tab=calendar'))}
+            >
+              <CalendarDaysIcon /> Spending calendar
+            </CommandItem>
+            <CommandItem
               value="what if simulator scenario"
               onSelect={run(() => navigate('/insights?tab=what-if'))}
             >
@@ -137,6 +147,19 @@ export function CommandPalette() {
               <SettingsIcon /> Settings
             </CommandItem>
           </CommandGroup>
+          {views.length > 0 && (
+            <CommandGroup heading="Saved views">
+              {views.map((v) => (
+                <CommandItem
+                  key={v.id}
+                  value={`view ${v.name} ${v.id}`}
+                  onSelect={run(() => navigate(viewHref(v)))}
+                >
+                  <BookmarkIcon /> {v.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
           {accounts.length > 0 && (
             <>
               <CommandGroup heading="Accounts">
