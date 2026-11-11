@@ -11,10 +11,10 @@
 - [x] F104 `us16-loans.spec.ts`; a11y
 
 ## F2: Deposits (US17)
-- [ ] F201 `domain/deposits.rs` with tests first
-- [ ] F202 `deposits.summary`; net worth computed values; forecast maturities
-- [ ] F203 AccountForm deposit fields; `DepositPanel`
-- [ ] F204 `us17-deposits.spec.ts`; a11y
+- [x] F201 `domain/deposits.rs` with tests first
+- [x] F202 `deposits.summary`; net worth computed values; forecast maturities
+- [x] F203 AccountForm deposit fields; `DepositPanel`
+- [x] F204 `us17-deposits.spec.ts`; a11y
 
 ## F3: Annual bills set aside (US18)
 - [ ] F301 `domain/set_aside.rs`; budget suggestion; recurring `setAside`

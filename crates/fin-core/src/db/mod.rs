@@ -10,6 +10,7 @@ pub mod categories;
 pub mod categorization;
 pub mod dashboard;
 pub mod demo;
+pub mod deposits;
 pub mod export;
 pub mod forecast;
 pub mod health;

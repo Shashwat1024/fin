@@ -482,7 +482,7 @@ export type { NetWorthPoint }
 
 /** One input the forecast used, listed so every number on the line can be explained (FR-027). */
 export type ForecastAssumption = {
-  kind: 'start' | 'recurring' | 'card' | 'baseline' | 'note'
+  kind: 'start' | 'recurring' | 'card' | 'deposit' | 'baseline' | 'note'
   label: string
   detail: string | null
   amountMinor: number | null
@@ -505,7 +505,8 @@ export type NetWorthAccountRow = {
   nature: 'asset' | 'liability'
   /** Value used for net worth today: positive worth, or positive amount owed. */
   valueMinor: number
-  source: 'ledger' | 'valuation'
+  /** 'deposit': worked out from the deposit's rate (US17). */
+  source: 'ledger' | 'valuation' | 'deposit'
   valuationDate: string | null
   /** Balance from transactions, for comparison when a valuation is used. */
   ledgerMinor: number

@@ -18,7 +18,7 @@ fn s(v: &Value, k: &str) -> String {
     v[k].as_str().unwrap_or_default().to_owned()
 }
 
-fn net_worth_accounts(db: &Db, accounts: &[Value]) -> DbResult<Vec<NetWorthAccount>> {
+fn net_worth_accounts(db: &Db, accounts: &[Value], today: &str) -> DbResult<Vec<NetWorthAccount>> {
     let mut daily: HashMap<String, Vec<(String, i64)>> = HashMap::new();
     for (acc, d, total) in db.query_map(
         "SELECT account_id, posted_date AS d, SUM(amount_minor) AS total FROM transactions
@@ -49,7 +49,12 @@ fn net_worth_accounts(db: &Db, accounts: &[Value]) -> DbResult<Vec<NetWorthAccou
                 opening_minor: stored.get(&id).copied().unwrap_or(0),
                 opening_date: s(a, "openingDate"),
                 daily: daily.remove(&id).unwrap_or_default(),
-                valuations: vals.remove(&id).unwrap_or_default(),
+                // A deposit with no value recorded by hand is valued from its terms (US17).
+                valuations: match (vals.remove(&id), super::deposits::deposit_of(a)) {
+                    (Some(v), _) => v,
+                    (None, Some(d)) => super::deposits::computed_values(&d, today),
+                    (None, None) => Vec::new(),
+                },
             }
         })
         .collect())
@@ -87,9 +92,11 @@ pub fn net_worth_now(db: &Db, today: &str, accounts: &[Value]) -> DbResult<NetWo
         .iter()
         .map(|a| {
             let v = if can_be_valued(&s(a, "type")) { latest.get(&s(a, "id")) } else { None };
-            let (value, source, date) = match v {
-                Some((d, m)) => (*m, "valuation", Some(d.clone())),
-                None => (a["balanceMinor"].as_i64().unwrap_or(0), "ledger", None),
+            let deposit = super::deposits::deposit_of(a);
+            let (value, source, date) = match (v, deposit) {
+                (Some((d, m)), _) => (*m, "valuation", Some(d.clone())),
+                (None, Some(d)) => (d.value_at(today), "deposit", Some(today.to_owned())),
+                (None, None) => (a["balanceMinor"].as_i64().unwrap_or(0), "ledger", None),
             };
             if a["nature"] == "asset" {
                 assets += value;
@@ -111,7 +118,7 @@ pub fn net_worth_now(db: &Db, today: &str, accounts: &[Value]) -> DbResult<NetWo
 /// Month-end net worth from `from` (default: 11 months ago, or the first opening) to today.
 pub fn net_worth_history_for(db: &Db, today: &str, from: Option<&str>, to: Option<&str>) -> DbResult<Value> {
     let accounts = list_accounts(db, false)?;
-    let nw = net_worth_accounts(db, &accounts)?;
+    let nw = net_worth_accounts(db, &accounts, today)?;
     let earliest = accounts.iter().map(|a| s(a, "openingDate")).min().unwrap_or_else(|| today.to_owned());
     let default_from = add_months(&start_of_month(today), -11, None).map_err(|_| AppError::internal())?;
     let mut start = from
