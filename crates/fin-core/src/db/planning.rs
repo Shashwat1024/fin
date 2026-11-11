@@ -80,6 +80,7 @@ fn item_dto(r: &Row, today: &str) -> Value {
         "count": r["occurrences"],
         "notes": r["notes"],
         "active": ri(r, "active") == 1,
+        "setAside": ri(r, "set_aside") == 1,
         "scheduleText": describe_schedule(&sch),
         "nextDue": next_occurrence(&sch, today),
     })
@@ -116,6 +117,16 @@ fn item_fields(db: &Db, input: &Value) -> DbResult<Row> {
         assert_category_usable(db, c)?;
     }
     let amount = input["amountMinor"].as_i64().unwrap_or(0);
+    // Setting aside monthly (US18) suits money-out bills that come round every three months or more
+    // and have a budget category.
+    let frequency = s(input, "frequency").unwrap_or_default();
+    let interval = input.get("interval").and_then(Value::as_i64).unwrap_or(1);
+    let long_cycle = frequency == "yearly" || (frequency == "monthly" && interval >= 3);
+    let set_aside = input.get("setAside") == Some(&Value::Bool(true))
+        && long_cycle
+        && kind != "income"
+        && !is_transfer
+        && category.is_some();
     Ok(row! {
         "name" => s(input, "name"),
         "kind" => kind,
@@ -131,6 +142,7 @@ fn item_fields(db: &Db, input: &Value) -> DbResult<Row> {
         "occurrences" => input.get("count").and_then(Value::as_i64),
         "notes" => input.get("notes").cloned().unwrap_or(Value::Null),
         "active" => if input.get("active") == Some(&Value::Bool(false)) { 0 } else { 1 },
+        "set_aside" => i64::from(set_aside),
     })
 }
 

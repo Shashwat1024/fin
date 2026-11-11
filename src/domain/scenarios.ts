@@ -52,7 +52,20 @@ export type GoalEffect = {
   after: GoalProjection
   extraMonthlyMinor: number
 }
-export type LoanEffect = { id: string; name: string; beforeMinor: number; afterMinor: number }
+export type LoanEffect = {
+  id: string
+  name: string
+  beforeMinor: number
+  afterMinor: number
+  /** With the loan's terms (Fin 2.3): interest and months saved either way. Not set by this module. */
+  prepayment?: {
+    currentEmiMinor: number
+    tenureMonthsSaved: number
+    tenureInterestSavedMinor: number
+    newEmiMinor: number
+    emiInterestSavedMinor: number
+  } | null
+}
 
 export type ScenarioResult = {
   before: Forecast

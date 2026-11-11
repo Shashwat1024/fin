@@ -93,6 +93,8 @@ type AccountSelectProps = {
   placeholder?: string
   /** Accessible name when there is no visible <label> (e.g. in a filter bar). */
   label?: string
+  /** Only offer some accounts (e.g. cash and bank). */
+  filter?: (a: AccountDto) => boolean
 }
 
 export const ALL_ACCOUNTS = 'all'
@@ -107,9 +109,10 @@ export function AccountSelect({
   className,
   placeholder = 'Choose account',
   label,
+  filter,
 }: AccountSelectProps) {
   const { data = [] } = useAccounts()
-  const accounts = data.filter((a) => a.id !== exclude)
+  const accounts = data.filter((a) => a.id !== exclude && (!filter || filter(a)))
   return (
     <Select value={value ?? undefined} onValueChange={onChange}>
       <SelectTrigger

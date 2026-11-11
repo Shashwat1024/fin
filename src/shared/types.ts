@@ -86,6 +86,15 @@ export type AccountDto = {
   /** Credit cards with a billing cycle (US10); null otherwise. */
   statementDay: number | null
   dueDaysAfter: number | null
+  /** Loans and deposits (US16, US17): annual rate in basis points. */
+  rateBp: number | null
+  loanPrincipalMinor: number | null
+  tenureMonths: number | null
+  firstEmiDate: string | null
+  depositKind: 'fd' | 'rd' | null
+  maturityDate: string | null
+  installmentMinor: number | null
+  payoutAccountId: string | null
 }
 
 export type CategoryGroup = 'needs' | 'wants' | 'goals' | 'buffer' | 'income' | 'transfer'
@@ -329,6 +338,8 @@ export type RecurringItemDto = {
   count: number | null
   notes: string | null
   active: boolean
+  /** A yearly or quarterly bill whose amount is suggested monthly in the budget (US18). */
+  setAside: boolean
   /** "Every month on the 1st" */
   scheduleText: string
   /** Next occurrence on or after today, null once the schedule has ended. */
@@ -678,4 +689,64 @@ export type YearReviewDto = {
   netWorth: { startMinor: number; endMinor: number }
   /** Years with data, newest first, for the picker. */
   years: number[]
+}
+
+// ---- Loans and deposits (US16-US18) --------------------------------------------------------------
+
+export type LoanRow = {
+  n: number
+  date: string
+  emiMinor: number
+  interestMinor: number
+  principalMinor: number
+  /** Outstanding after this instalment. */
+  balanceMinor: number
+}
+
+export type LoanDto = {
+  accountId: string
+  accountName: string
+  principalMinor: number
+  rateBp: number
+  months: number
+  firstDate: string
+  emiMinor: number
+  totalInterestMinor: number
+  /** Instalments dated before today. */
+  paidCount: number
+  interestPaidMinor: number
+  principalPaidMinor: number
+  /** Per the schedule. */
+  outstandingMinor: number
+  interestRemainingMinor: number
+  next: LoanRow | null
+  endDate: string | null
+  /** What the ledger says is owed, to compare with the schedule. */
+  ledgerOwedMinor: number
+}
+
+export type DepositDto = {
+  accountId: string
+  accountName: string
+  kind: 'fd' | 'rd'
+  rateBp: number
+  startDate: string
+  maturityDate: string
+  /** Money put in so far. */
+  depositedMinor: number
+  valueTodayMinor: number
+  maturityMinor: number
+  matured: boolean
+  payoutAccountId: string | null
+  payoutAccountName: string | null
+  /** A value recorded by hand is used for net worth instead. */
+  hasRecordedValue: boolean
+}
+
+export type LoanPrepaymentDto = {
+  currentEmiMinor: number
+  tenureMonthsSaved: number
+  tenureInterestSavedMinor: number
+  newEmiMinor: number
+  emiInterestSavedMinor: number
 }

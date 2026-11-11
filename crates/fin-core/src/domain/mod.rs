@@ -1,8 +1,10 @@
 //! Pure logic with no storage or I/O (Constitution V).
 
+pub mod amortization;
 pub mod budget;
 pub mod card_cycle;
 pub mod dates;
+pub mod deposits;
 pub mod forecast;
 pub mod goals;
 pub mod health;

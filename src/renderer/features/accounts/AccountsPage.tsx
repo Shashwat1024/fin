@@ -42,9 +42,10 @@ import {
 } from '@renderer/components/ui/dropdown-menu'
 import { Label } from '@renderer/components/ui/label'
 import { Switch } from '@renderer/components/ui/switch'
-import { useAccounts, useCardCycles, useFinMutation, useToday } from '@renderer/lib/queries'
+import { useAccounts, useCardCycles, useFinMutation, useLoans, useToday } from '@renderer/lib/queries'
 import { summarizeAccounts } from '@renderer/lib/summary'
-import type { AccountDto, CardCycleDto } from '@shared/types'
+import type { AccountDto, CardCycleDto, LoanDto } from '@shared/types'
+import { LoanPanel } from './LoanPanel'
 import { AddCycleHint, CardCyclePanel } from './CardCyclePanel'
 import { useAccountDialog } from './AccountDialog'
 import { useReconcileDialog } from './ReconcileDialog'
@@ -59,6 +60,7 @@ export function AccountsPage() {
   const [showArchived, setShowArchived] = useState(false)
   const accounts = useAccounts(showArchived)
   const cycles = useCardCycles()
+  const loans = useLoans()
   const today = useToday()
   const dialog = useAccountDialog()
   const active = (accounts.data ?? []).filter((a) => !a.archived)
@@ -146,6 +148,7 @@ export function AccountsPage() {
                       key={a.id}
                       account={a}
                       cycle={cycles.data?.find((c) => c.accountId === a.id)}
+                      loan={loans.data?.find((l) => l.accountId === a.id)}
                       today={today}
                     />
                   ))}
@@ -162,10 +165,12 @@ export function AccountsPage() {
 function AccountCard({
   account,
   cycle,
+  loan,
   today,
 }: {
   account: AccountDto
   cycle: CardCycleDto | undefined
+  loan?: LoanDto | undefined
   today: string
 }) {
   const navigate = useNavigate()
@@ -235,6 +240,14 @@ function AccountCard({
         {cycle && <CardCyclePanel account={account} cycle={cycle} today={today} />}
         {!cycle && account.type === 'credit_card' && !account.archived && (
           <AddCycleHint onAdd={() => dialog.open(account)} />
+        )}
+        {loan && <LoanPanel loan={loan} />}
+        {!loan && account.type === 'loan' && !account.archived && (
+          <AddCycleHint
+            text="Add the loan’s terms to see each EMI’s principal and interest."
+            action="Add loan terms"
+            onAdd={() => dialog.open(account)}
+          />
         )}
       </CardContent>
     </Card>

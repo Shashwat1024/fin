@@ -92,6 +92,14 @@ fn account_input() -> Schema {
         ("currency", currency().optional()),
         ("statementDay", int().min(1).max(31).nullable().optional()),
         ("dueDaysAfter", int().min(1).max(60).nullable().optional()),
+        ("rateBp", int().min(0).max(10000).nullable().optional()),
+        ("loanPrincipalMinor", minor().min(1).nullable().optional()),
+        ("tenureMonths", int().min(1).max(600).nullable().optional()),
+        ("firstEmiDate", calendar_date().nullable().optional()),
+        ("depositKind", enumeration(&["fd", "rd"]).nullable().optional()),
+        ("maturityDate", calendar_date().nullable().optional()),
+        ("installmentMinor", minor().min(1).nullable().optional()),
+        ("payoutAccountId", id().nullable().optional()),
     ])
 }
 
@@ -250,6 +258,7 @@ fn recurring_input() -> Schema {
         ("count", int().min(1).max(1000).nullable().optional()),
         ("notes", notes().optional()),
         ("active", boolean().optional()),
+        ("setAside", boolean().optional()),
     ])
     .refine_at(
         |v| match v["endDate"].as_str() {
@@ -585,6 +594,9 @@ fn build() -> HashMap<&'static str, Schema> {
             object(vec![("month", month_key()), ("state", enumeration(&["reviewed", "dismissed"]).nullable())]),
         ),
         ("review.prompt", empty()),
+        ("loans.summary", empty()),
+        ("loans.schedule", id_input()),
+        ("deposits.summary", empty()),
         ("budget.copyMonth", object(vec![("from", month_key()), ("to", month_key())])),
         (
             "review.year",

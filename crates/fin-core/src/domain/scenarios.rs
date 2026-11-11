@@ -26,6 +26,8 @@ pub struct LoanBase {
     pub id: String,
     pub name: String,
     pub owed_minor: i64,
+    /// The loan's terms, when set (US16): a prepayment then shows interest and months saved.
+    pub terms: Option<crate::domain::amortization::Terms>,
 }
 
 pub struct Base {
@@ -93,7 +95,8 @@ pub fn run_scenario(base: &Base, changes: &[Value]) -> Value {
     let mut added: Vec<Event> = Vec::new();
     let mut notes: Vec<String> = Vec::new();
     let mut extra_for_goal: Vec<(Option<String>, i64)> = Vec::new();
-    let mut loan_paid: Vec<(String, i64)> = Vec::new();
+    // Per loan: total prepaid and the first prepayment date.
+    let mut loan_paid: Vec<(String, i64, String)> = Vec::new();
     let text = |c: &Value, k: &str| c.get(k).and_then(Value::as_str).unwrap_or_default().to_owned();
 
     for (n, c) in changes.iter().enumerate() {
@@ -128,13 +131,22 @@ pub fn run_scenario(base: &Base, changes: &[Value]) -> Value {
                 if date.as_str() <= end {
                     added.push(event(&name, not_before(&date, today), -amount, n));
                 }
-                match loan_paid.iter_mut().find(|(id, _)| *id == loan_id) {
-                    Some(slot) => slot.1 += amount,
-                    None => loan_paid.push((loan_id, amount)),
+                match loan_paid.iter_mut().find(|(id, ..)| *id == loan_id) {
+                    Some(slot) => {
+                        slot.1 += amount;
+                        if date < slot.2 {
+                            slot.2 = date.clone();
+                        }
+                    }
+                    None => loan_paid.push((loan_id, amount, date.clone())),
                 }
-                notes.push(format!(
-                    "{name}: your EMIs stay as they are here, so the loan ends sooner rather than costing less each month."
-                ));
+                notes.push(if loan.is_some_and(|l| l.terms.is_some()) {
+                    format!("{name}: worked out from the loan’s terms; your cash forecast keeps the EMIs as they are.")
+                } else {
+                    format!(
+                        "{name}: your EMIs stay as they are here, so the loan ends sooner rather than costing less each month. Add the loan’s terms on the Accounts page to see the interest saved."
+                    )
+                });
             }
             "income_change" => {
                 let from_date = text(c, "fromDate");
@@ -239,8 +251,18 @@ pub fn run_scenario(base: &Base, changes: &[Value]) -> Value {
         .loans
         .iter()
         .filter_map(|l| {
-            let paid = loan_paid.iter().find(|(id, _)| *id == l.id)?.1;
-            Some(json!({ "id": l.id, "name": l.name, "beforeMinor": l.owed_minor, "afterMinor": (l.owed_minor - paid).max(0) }))
+            let (_, paid, date) = loan_paid.iter().find(|(id, ..)| *id == l.id)?;
+            let prepayment = l.terms.as_ref().map_or(Value::Null, |t| {
+                let p = crate::domain::amortization::prepay(t, date, *paid);
+                json!({
+                    "currentEmiMinor": p.current_emi_minor,
+                    "tenureMonthsSaved": p.tenure_months_saved,
+                    "tenureInterestSavedMinor": p.tenure_interest_saved_minor,
+                    "newEmiMinor": p.new_emi_minor,
+                    "emiInterestSavedMinor": p.emi_interest_saved_minor,
+                })
+            });
+            Some(json!({ "id": l.id, "name": l.name, "beforeMinor": l.owed_minor, "afterMinor": (l.owed_minor - paid).max(0), "prepayment": prepayment }))
         })
         .collect();
 

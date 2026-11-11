@@ -278,6 +278,7 @@ pub fn what_if(db: &Db, days: i64, changes: &[Value], today: &str) -> DbResult<V
             id: st(a, "id").to_owned(),
             name: st(a, "name").to_owned(),
             owed_minor: *value,
+            terms: super::loans::terms_of(a),
         })
         .collect();
     for c in changes {

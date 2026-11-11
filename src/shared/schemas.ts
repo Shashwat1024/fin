@@ -65,6 +65,18 @@ export const accountInput = z.object({
   statementDay: z.number().int().min(1).max(31).nullable().optional(),
   /** Credit cards: days from the statement to the payment due date. */
   dueDaysAfter: z.number().int().min(1).max(60).nullable().optional(),
+  /** Loans and deposits: annual interest rate in basis points (8.75% = 875). */
+  rateBp: z.number().int().min(0).max(10000).nullable().optional(),
+  /** Loans: amount borrowed, tenure and the first EMI date. */
+  loanPrincipalMinor: minor.min(1).nullable().optional(),
+  tenureMonths: z.number().int().min(1).max(600).nullable().optional(),
+  firstEmiDate: calendarDate.nullable().optional(),
+  /** Investment accounts that are bank deposits. */
+  depositKind: z.enum(['fd', 'rd']).nullable().optional(),
+  maturityDate: calendarDate.nullable().optional(),
+  /** Recurring deposits: the monthly instalment. */
+  installmentMinor: minor.min(1).nullable().optional(),
+  payoutAccountId: id.nullable().optional(),
 })
 
 export const accountUpdate = z.object({ id, patch: accountInput.partial() })
@@ -252,6 +264,8 @@ export const recurringInput = z
     count: z.number().int().min(1).max(1000).nullable().optional(),
     notes: notes.optional(),
     active: z.boolean().optional(),
+    /** Yearly or quarterly bills: suggest a monthly amount to set aside in the budget. */
+    setAside: z.boolean().optional(),
   })
   .refine((v) => !v.endDate || v.endDate >= v.anchorDate, {
     message: 'The end date is before the first date',

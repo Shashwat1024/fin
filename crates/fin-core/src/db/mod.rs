@@ -14,6 +14,7 @@ pub mod export;
 pub mod forecast;
 pub mod health;
 pub mod imports;
+pub mod loans;
 pub mod migrate;
 pub mod networth;
 pub mod patterns;
