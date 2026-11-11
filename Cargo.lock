@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "fin"
-version = "2.4.0"
+version = "2.4.1"
 dependencies = [
  "fin-core",
  "serde_json",
@@ -1180,7 +1180,7 @@ dependencies = [
 
 [[package]]
 name = "fin-core"
-version = "2.4.0"
+version = "2.4.1"
 dependencies = [
  "aes-gcm",
  "chrono",

@@ -173,6 +173,16 @@ under them); export stays format v1 with additive fields.
 - **Performance, 50,000 transactions** (release): cold start median **1.28 s**; filtering 66–115 ms;
   Tax page 10 ms with a busy category counted.
 
+## Release 2.4.1 (fix)
+
+The Budget page's month switcher no longer jumps when moving away from the current month (its "This
+month" button always keeps its space), and page headers wrap their description before their
+buttons, so header actions stay on the right everywhere.
+
+**Build**: `target\release\bundle\nsis\Fin_2.4.1_x64-setup.exe` (3.33 MB, unsigned) · SHA-256
+`5e38230d773355c9109e719909d13fa160a33176b8ba4ca721d5a69c3466efe6`. End to end on the release
+`fin.exe`: **39 passed, 1 skipped** (screenshots); cold start median 1.33 s.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
