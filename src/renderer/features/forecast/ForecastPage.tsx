@@ -148,6 +148,17 @@ function Assumptions({ f }: { f: ForecastDto }) {
               .
             </p>
           )}
+          {group('deposit').length > 0 && (
+            <>
+              <h3
+                id="fa-deposit"
+                className="mt-4 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+              >
+                Deposits maturing
+              </h3>
+              <AssumptionRows rows={group('deposit')} />
+            </>
+          )}
           {group('card').length > 0 && (
             <>
               <h3

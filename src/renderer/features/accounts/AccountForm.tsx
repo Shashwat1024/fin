@@ -10,6 +10,7 @@ import { Textarea } from '@renderer/components/ui/textarea'
 import { fieldIssues } from '@renderer/lib/ipc'
 import { useFinMutation, useSettings } from '@renderer/lib/queries'
 import type { AccountDto } from '@shared/types'
+import { DepositFields, LoanTermsFields, useAccountTerms } from './AccountTerms'
 
 type Values = {
   name: string
@@ -47,6 +48,7 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
     statementDay: account?.statementDay?.toString() ?? '',
     dueDaysAfter: account?.dueDaysAfter?.toString() ?? '',
   }))
+  const terms = useAccountTerms(account)
   const [submitted, setSubmitted] = useState(false)
   const [server, setServer] = useState<Record<string, string>>({})
   const create = useFinMutation('accounts.create', {
@@ -76,6 +78,7 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
         : undefined),
     form: server['_form'],
   }
+  const checked = terms.check(values.type, values.openingDate)
 
   const submit = async (): Promise<boolean> => {
     setSubmitted(true)
@@ -86,6 +89,7 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
       errors.openingDate ||
       errors.statementDay ||
       errors.dueDaysAfter ||
+      Object.keys(checked.errors).length > 0 ||
       !('minor' in opening)
     )
       return false
@@ -97,6 +101,7 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
       notes: values.notes.trim() || null,
       statementDay: typeof day === 'number' ? day : null,
       dueDaysAfter: typeof dueAfter === 'number' ? dueAfter : null,
+      ...checked.input,
     }
     try {
       const r = account
@@ -116,6 +121,8 @@ export function useAccountForm(account: AccountDto | undefined, onSaved: (a: Acc
   }
 
   return {
+    terms,
+    termErrors: submitted ? checked.errors : {},
     values,
     set: <K extends keyof Values>(k: K, v: Values[K]) => setValues((s) => ({ ...s, [k]: v })),
     errors: submitted
@@ -219,6 +226,8 @@ export function AccountFields({ form }: { form: ReturnType<typeof useAccountForm
           </FormField>
         </div>
       )}
+      {values.type === 'loan' && <LoanTermsFields terms={form.terms} errors={form.termErrors} />}
+      {values.type === 'investment' && <DepositFields terms={form.terms} errors={form.termErrors} />}
       <FormField label="Notes" htmlFor={`${id}-notes`}>
         <Textarea
           id={`${id}-notes`}

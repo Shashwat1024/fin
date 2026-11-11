@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `Fin_2.2.0_x64-setup.exe` (about 3 MB).
+   `Fin_2.3.0_x64-setup.exe` (about 3 MB).
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. Fin uses Microsoft Edge WebView2, which is part of Windows 10 and 11. On the rare machine
@@ -141,3 +141,8 @@ How to validate each feature by hand is in
   dues against cash; facts with links to the records, no scores); a **monthly review** in five
   skippable steps, offered on the Overview in the first week of each month; and a **year in review**
   for a financial or calendar year, printable to PDF.
+- ✅ Fin 2.3 (loans and deposits): **loan terms** give each EMI's principal and interest, the full
+  schedule and what is still owed, and What if shows a prepayment both ways (shorter tenure or
+  smaller EMI); **fixed and recurring deposits** are valued from their rate (compounded quarterly)
+  in net worth and mature into the forecast; **annual bills** can be set aside monthly, with the
+  amount suggested in the Budget.

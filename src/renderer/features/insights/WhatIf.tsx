@@ -405,8 +405,20 @@ function Results({ r }: { r: ScenarioDto }) {
                     <TableCell>
                       <MoneyText minor={l.beforeMinor} /> owed
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium whitespace-normal">
                       <MoneyText minor={l.afterMinor} /> owed
+                      {l.prepayment && (
+                        <span
+                          className="mt-1 block font-normal text-muted-foreground"
+                          data-testid="prepayment"
+                        >
+                          Same EMI: ends {l.prepayment.tenureMonthsSaved} months sooner and saves{' '}
+                          <MoneyText minor={l.prepayment.tenureInterestSavedMinor} /> interest. Or same end
+                          date: EMI <MoneyText minor={l.prepayment.newEmiMinor} /> instead of{' '}
+                          <MoneyText minor={l.prepayment.currentEmiMinor} />, saving{' '}
+                          <MoneyText minor={l.prepayment.emiInterestSavedMinor} /> interest.
+                        </span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

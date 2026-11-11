@@ -64,7 +64,8 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
         .all_json(
             "SELECT id, name, kind, account_id AS accountId, to_account_id AS toAccountId, category_id AS categoryId,
               amount_minor AS amountMinor, tolerance_bp AS toleranceBp, frequency, interval_count AS \"interval\",
-              anchor_date AS anchorDate, end_date AS endDate, occurrences AS count, notes, active
+              anchor_date AS anchorDate, end_date AS endDate, occurrences AS count, notes, active,
+              set_aside AS setAside
        FROM recurring_items ORDER BY sort_order, name",
             [],
         )?
@@ -72,6 +73,8 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
         .map(|mut r| {
             let active = r["active"] == 1;
             r.insert("active".into(), json!(active));
+            let set_aside = r["setAside"] == 1;
+            r.insert("setAside".into(), json!(set_aside));
             Value::Object(r)
         })
         .collect();
@@ -93,7 +96,10 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
         "appSchemaVersion": current_schema_version(db)?,
         "settings": settings,
         "accounts": all("SELECT id, name, type, currency, opening_balance_minor AS openingBalanceMinor, opening_date AS openingDate,
-              notes, archived_at AS archivedAt, statement_day AS statementDay, due_days_after AS dueDaysAfter
+              notes, archived_at AS archivedAt, statement_day AS statementDay, due_days_after AS dueDaysAfter,
+              rate_bp AS rateBp, loan_principal_minor AS loanPrincipalMinor, tenure_months AS tenureMonths,
+              first_emi_date AS firstEmiDate, deposit_kind AS depositKind, maturity_date AS maturityDate,
+              installment_minor AS installmentMinor, payout_account_id AS payoutAccountId
        FROM accounts ORDER BY sort_order, name")?,
         "categories": all("SELECT id, name, parent_id AS parentId, grp AS \"group\", archived_at AS archivedAt FROM categories ORDER BY sort_order, name")?,
         "tags": all("SELECT id, name FROM tags ORDER BY name")?,

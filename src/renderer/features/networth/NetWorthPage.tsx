@@ -64,6 +64,8 @@ function AccountRows({
                     </>
                   )}
                 </>
+              ) : a.source === 'deposit' ? (
+                'worked out from the deposit’s rate'
               ) : (
                 'from transactions'
               )}

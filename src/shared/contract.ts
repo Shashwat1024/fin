@@ -96,6 +96,9 @@ export const inputSchemas = {
   'review.prompt': s.empty,
   'budget.copyMonth': s.budgetCopyInput,
   'review.year': s.yearReviewInput,
+  'loans.summary': s.empty,
+  'loans.schedule': s.idInput,
+  'deposits.summary': s.empty,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -197,6 +200,9 @@ export interface Outputs {
   'review.prompt': { month: string } | null
   'budget.copyMonth': t.Mutation<{ copied: number }>
   'review.year': t.YearReviewDto
+  'loans.summary': t.LoanDto[]
+  'loans.schedule': t.LoanDto & { rows: t.LoanRow[] }
+  'deposits.summary': t.DepositDto[]
 }
 
 export type Output<C extends Channel> = Outputs[C]

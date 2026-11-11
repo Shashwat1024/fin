@@ -162,6 +162,22 @@ fn forecast_base(db: &Db, days: i64, today: &str, accounts: &[Value]) -> DbResul
     }
 
     let card_bills_from_recurring = card_bill_events(db, today, accounts, &ad(today, days), &items, &mut events)?;
+    // Deposits maturing into a cash or bank account (US17).
+    let until = ad(today, days);
+    for a in accounts {
+        let Some(d) = super::deposits::deposit_of(a) else { continue };
+        let pays_cash = a["payoutAccountId"].as_str().is_some_and(|p| liquid_ids.contains(p));
+        if pays_cash && d.maturity.as_str() > today && d.maturity <= until {
+            events.push(Event {
+                item_id: format!("deposit:{}", st(a, "id")),
+                name: format!("{} matures", st(a, "name")),
+                due_date: d.maturity.clone(),
+                date: d.maturity.clone(),
+                amount_minor: d.value_at(&d.maturity),
+                overdue: false,
+            });
+        }
+    }
 
     let buffer_minor = get_settings(db)?["bufferMinor"].as_i64().unwrap_or(0);
     let input = ForecastInput {
@@ -207,6 +223,10 @@ fn assumptions(f: &Forecast, base: &BaseParts) -> Vec<Value> {
         });
     }
     for (id, name, amount, dates) in by_item {
+        if id.starts_with("deposit:") {
+            out.push(json!({ "kind": "deposit", "label": name, "detail": format!("On {}, from the deposit’s rate", dates.join(", ")), "amountMinor": amount }));
+            continue;
+        }
         if id.starts_with("card:") {
             let detail = format!("Due {}", dates.join(", "));
             out.push(json!({ "kind": "card", "label": name, "detail": detail, "amountMinor": amount }));
@@ -278,6 +298,7 @@ pub fn what_if(db: &Db, days: i64, changes: &[Value], today: &str) -> DbResult<V
             id: st(a, "id").to_owned(),
             name: st(a, "name").to_owned(),
             owed_minor: *value,
+            terms: super::loans::terms_of(a),
         })
         .collect();
     for c in changes {

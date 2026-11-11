@@ -38,7 +38,41 @@ fn to_dto(r: &Map<String, Value>) -> Value {
         "sortOrder": int("sort_order"),
         "statementDay": r["statement_day"],
         "dueDaysAfter": r["due_days_after"],
+        "rateBp": r["rate_bp"],
+        "loanPrincipalMinor": r["loan_principal_minor"],
+        "tenureMonths": r["tenure_months"],
+        "firstEmiDate": r["first_emi_date"],
+        "depositKind": r["deposit_kind"],
+        "maturityDate": r["maturity_date"],
+        "installmentMinor": r["installment_minor"],
+        "payoutAccountId": r["payout_account_id"],
     })
+}
+
+/// Loan terms are kept on loans and deposit terms on investment accounts (US16, US17); the rate is
+/// shared. Other types clear them. In a patch a missing field keeps its value and `null` clears it.
+fn terms_fields(account_type: &str, input: &Value, current: Option<&Value>) -> Map<String, Value> {
+    let keep = |key: &str| match input.get(key) {
+        Some(v) => v.clone(),
+        None => current.and_then(|c| c.get(key)).cloned().unwrap_or(Value::Null),
+    };
+    let loan = account_type == "loan";
+    let deposit = account_type == "investment" && !keep("depositKind").is_null();
+    let pick = |on: bool, key: &str| if on { keep(key) } else { Value::Null };
+    let mut m = Map::new();
+    for (column, key, on) in [
+        ("rate_bp", "rateBp", loan || deposit),
+        ("loan_principal_minor", "loanPrincipalMinor", loan),
+        ("tenure_months", "tenureMonths", loan),
+        ("first_emi_date", "firstEmiDate", loan),
+        ("deposit_kind", "depositKind", deposit),
+        ("maturity_date", "maturityDate", deposit),
+        ("installment_minor", "installmentMinor", deposit && keep("depositKind") == "rd"),
+        ("payout_account_id", "payoutAccountId", deposit),
+    ] {
+        m.insert(column.into(), pick(on, key));
+    }
+    m
 }
 
 /// A billing-cycle field (US10): kept only on credit cards. In a patch, a missing field keeps the
@@ -110,9 +144,7 @@ pub fn create_account(db: &Db, input: &Value) -> DbResult<Value> {
             .flatten()
             .unwrap_or(-1);
         let opening = input.get("openingBalanceMinor").and_then(Value::as_i64).unwrap_or(0);
-        a.insert(
-            "accounts",
-            row! {
+        let mut fields = row! {
                 "id" => id,
                 "name" => name,
                 "type" => t,
@@ -125,8 +157,9 @@ pub fn create_account(db: &Db, input: &Value) -> DbResult<Value> {
                 "sort_order" => order + 1,
                 "created_at" => now,
                 "updated_at" => now,
-            },
-        )?;
+        };
+        fields.extend(terms_fields(t, input, None));
+        a.insert("accounts", fields)?;
         Ok(id)
     }))?;
     Ok(json!({ "account": get_account(db, &audited.result)?, "auditGroupId": audited.audit_group_id }))
@@ -152,6 +185,8 @@ pub fn update_account(db: &Db, id: &str, patch: &Value) -> DbResult<Value> {
         "statement_day" => cycle_field(&t, patch, "statementDay", Some(&current)),
         "due_days_after" => cycle_field(&t, patch, "dueDaysAfter", Some(&current)),
     };
+    let mut fields = fields;
+    fields.extend(terms_fields(&t, patch, Some(&current)));
     let audited = unique_name(with_audit(db, &format!("Edit account {name}"), None, |a| {
         let mut f = fields.clone();
         f.insert("updated_at".into(), json!(now_iso()));

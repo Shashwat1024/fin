@@ -106,13 +106,21 @@ export function CardCyclePanel({
   )
 }
 
-/** For a card without a cycle: a quiet prompt to add one. */
-export function AddCycleHint({ onAdd }: { onAdd: () => void }) {
+/** For a card without a cycle (or a loan without terms): a quiet prompt to add them. */
+export function AddCycleHint({
+  onAdd,
+  text = 'Add the statement day to track bills.',
+  action = 'Set billing cycle',
+}: {
+  onAdd: () => void
+  text?: string
+  action?: string
+}) {
   return (
     <div className="mt-4 flex items-center justify-between gap-2 border-t pt-3 text-sm text-muted-foreground">
-      <span>Add the statement day to track bills.</span>
+      <span>{text}</span>
       <Button variant="outline" size="sm" onClick={onAdd}>
-        Set billing cycle
+        {action}
       </Button>
     </div>
   )

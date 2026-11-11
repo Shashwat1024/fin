@@ -91,6 +91,16 @@ Automated: `us13-health`, `us14-month-review`, `us15-year`. By hand, with demo d
 - **Year in review**: Insights › Year in review; switch financial/calendar year; open a top category;
   Print or save as PDF (choose Microsoft Print to PDF).
 
+### 5e. Loans and deposits (US16–US18, v2.3)
+Automated: `us16-loans`, `us17-deposits`, `us18-set-aside`. By hand, with demo data:
+- **Loans**: Accounts › Home loan shows the EMI, the next instalment's principal and interest and
+  what is still owed; Full schedule lists every EMI. Insights › What if › Loan prepayment on the home
+  loan shows months and interest saved, or the smaller EMI.
+- **Deposits**: Accounts › SBI fixed deposit shows deposited, worth today and at maturity; Net worth
+  says it is "worked out from the deposit's rate"; the Forecast lists it under Deposits maturing when
+  it falls in the period.
+- **Set aside**: Budget › Bills › Insurance suggests a monthly amount for Car insurance; Assign.
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
 request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check

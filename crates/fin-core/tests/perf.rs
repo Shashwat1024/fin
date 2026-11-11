@@ -84,6 +84,9 @@ fn fifty_thousand_transactions_stay_fast() {
     check(&mut app, "health summary", "health.summary", json!({}), 300);
     check(&mut app, "month review", "review.month", json!({ "month": "2026-10" }), 300);
     check(&mut app, "year in review", "review.year", json!({ "basis": "fy" }), 500);
+    // Loans and deposits (specs/005-loans-deposits SC-019).
+    check(&mut app, "loans", "loans.summary", json!({}), 100);
+    check(&mut app, "deposits", "deposits.summary", json!({}), 100);
     check(&mut app, "looks recurring", "recurring.detectCandidates", json!({}), 500);
     check(
         &mut app,

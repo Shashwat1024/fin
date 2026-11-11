@@ -132,6 +132,26 @@ stays format v1 with the additive `monthReviews`.
   The account list is now kept until data changes, so the Overview's requests take 170–210 ms in
   all (was about 280 ms). Health summary 20–31 ms, month review 147 ms, year in review 158 ms.
 
+## Release 2.3.0 (loans and deposits)
+
+Loan terms with the EMI breakdown and schedule, fixed and recurring deposits, and annual bills set
+aside monthly ([005-loans-deposits](../../005-loans-deposits/spec.md)). Schema v9 (loan and deposit
+terms on accounts, set-aside on recurring items); export stays format v1 with additive fields.
+
+**Build**: `target\release\bundle\nsis\Fin_2.3.0_x64-setup.exe` (2.87 MB, unsigned) · SHA-256
+`5a241f997ac217ff70d7ea0a3e7c3a9860c392fab390506b9cf49c4006efa10b`.
+
+- **End to end** on the release `fin.exe`: **37 passed, 1 skipped** (screenshots), including the new
+  `us16-loans`, `us17-deposits` and `us18-set-aside`. The demo's new loan and deposit showed the
+  stale-data badge, whose light-theme warning colour failed axe contrast: the warning token is now
+  darker (oklch 0.52), passing in both themes.
+- **Rust**: clippy clean; 67 unit and database tests, including EMIs against published values
+  (10 lakh at 9% for 5 years: 20,758; 50 lakh at 8.5% for 20 years: 43,391), a schedule that clears
+  exactly, prepayment both ways, FDs against bank calculators (1 lakh at 7%: 1,07,185.91 in a year,
+  1,41,478 in five) and an RD within 60 rupees of the banks' formula; interface tests: 160 passed.
+- **Performance, 50,000 transactions** (release): cold start median **1.21 s**; filtering 27–59 ms;
+  the Overview's requests 140 ms in all.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
