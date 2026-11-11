@@ -17,6 +17,7 @@ pub mod migrate;
 pub mod networth;
 pub mod patterns;
 pub mod planning;
+pub mod reminders;
 pub mod seed_perf;
 pub mod settings;
 pub mod transactions;

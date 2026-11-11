@@ -586,7 +586,7 @@ export type SpendingCalendarDto = {
   today: string
 }
 
-export type ReminderKind = 'recurring_due' | 'recurring_overdue' | 'card_due' | 'low_cash'
+export type ReminderKind = 'recurring_due' | 'recurring_overdue' | 'card_due' | 'low_cash' | 'test'
 
 export type ReminderDto = {
   key: string
@@ -595,4 +595,6 @@ export type ReminderDto = {
   body: string
   /** Where clicking the notification takes the user. */
   route: string
+  /** Already shown as a notification (previews only). */
+  sent: boolean
 }

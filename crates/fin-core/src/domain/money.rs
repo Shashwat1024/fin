@@ -160,6 +160,16 @@ pub fn rupees(minor: i64) -> String {
     format!("₹{}", group_en_in((abs + 50) / 100))
 }
 
+/// An exact amount for short text such as notifications: `₹25,000`, or `₹12,400.50` when there
+/// are paise (sign dropped).
+pub fn rupees_exact(minor: i64) -> String {
+    let abs = minor.unsigned_abs();
+    match abs % 100 {
+        0 => format!("₹{}", group_en_in(abs / 100)),
+        paise => format!("₹{}.{paise:02}", group_en_in(abs / 100)),
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseResult {
     Ok(i64),

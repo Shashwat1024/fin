@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { chromium, expect, test, type Browser, type Page } from '@playwright/test'
@@ -10,6 +10,8 @@ export type FinApp = {
   dataDir: string
   /** Answer the next native open/save/folder dialogs with this path (Playwright cannot click OS dialogs). */
   answerDialogs: (path: string) => Promise<void>
+  /** Notifications this launch would have shown (the shell writes them to a file instead). */
+  notifications: () => { title: string; body: string; route: string }[]
   /** Quit the app but keep its data folder (to launch again on the same data). */
   stop: () => Promise<void>
   /** Quit the app and remove its data folder. */
@@ -48,7 +50,10 @@ test.afterEach(async ({}, info) => {
  * FIN_TAURI_EXE picks the build; the default is the debug build that `npm run test:e2e` makes
  * (use target/release/fin.exe for the release build).
  */
-export async function launchFin(prepared?: string): Promise<FinApp> {
+export async function launchFin(
+  prepared?: string,
+  opts: { realNotifications?: boolean } = {},
+): Promise<FinApp> {
   const dataDir = prepared ?? mkdtempSync(join(tmpdir(), 'fin-e2e-'))
   const exe = process.env.FIN_TAURI_EXE ?? resolve('target', 'debug', 'fin.exe')
   const port = nextPort++
@@ -58,6 +63,7 @@ export async function launchFin(prepared?: string): Promise<FinApp> {
   mkdirSync(webviewDir, { recursive: true })
   const answersDir = mkdtempSync(join(tmpdir(), 'fin-e2e-dialogs-'))
   const answersFile = join(answersDir, 'answers.json')
+  const notificationsFile = join(answersDir, 'notifications.jsonl')
   const proc: ChildProcess = spawn(exe, [], {
     env: {
       ...process.env,
@@ -67,6 +73,8 @@ export async function launchFin(prepared?: string): Promise<FinApp> {
       WEBVIEW2_USER_DATA_FOLDER: webviewDir,
       // Test-only: the shell answers file dialogs from this file instead of showing them.
       FIN_E2E_DIALOG_ANSWERS: answersFile,
+      // Test-only: notifications are written here instead of shown.
+      ...(opts.realNotifications ? {} : { FIN_E2E_NOTIFICATIONS: notificationsFile }),
     },
     stdio: 'ignore',
   })
@@ -112,6 +120,14 @@ export async function launchFin(prepared?: string): Promise<FinApp> {
     requests,
     dataDir,
     answerDialogs: async (path) => writeFileSync(answersFile, JSON.stringify({ path })),
+    notifications: () =>
+      existsSync(notificationsFile)
+        ? readFileSync(notificationsFile, 'utf8')
+            .split(String.fromCharCode(10))
+            .map((l) => l.trim())
+            .filter(Boolean)
+            .map((l) => JSON.parse(l) as { title: string; body: string; route: string })
+        : [],
     stop: async () => {
       await quit()
       remove(answersDir)

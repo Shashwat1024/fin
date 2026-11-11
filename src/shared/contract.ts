@@ -183,7 +183,8 @@ export interface Outputs {
   'cards.cycles': t.CardCycleDto[]
   'insights.calendar': t.SpendingCalendarDto
   'reminders.preview': t.ReminderDto[]
-  'reminders.test': null
+  /** A sample reminder; the app shows it as a notification. */
+  'reminders.test': t.ReminderDto
 }
 
 export type Output<C extends Channel> = Outputs[C]

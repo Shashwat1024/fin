@@ -30,6 +30,7 @@ import { viewHref } from '@renderer/features/transactions/SavedViews'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { showShortcuts, useHotkey } from '@renderer/lib/hotkeys'
 import { useFinMutation, useViews } from '@renderer/lib/queries'
+import { useNavigateEvents } from '@renderer/lib/navigate-events'
 import { useTheme } from '@renderer/lib/theme'
 import { cn } from '@renderer/lib/utils'
 import type { Theme } from '@shared/types'
@@ -124,6 +125,7 @@ function SavedViewsNav() {
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const txn = useTransactionDialog()
+  useNavigateEvents()
   useHotkey('mod+1', () => navigate('/'))
   useHotkey('mod+2', () => navigate('/transactions'))
   useHotkey('mod+3', () => navigate('/accounts'))

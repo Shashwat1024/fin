@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use crate::db::backup::{self as backups, DEFAULT_KDF};
 use crate::db::{
     DbResult, accounts, audit, calendar, cards, categories, categorization, dashboard, export, forecast, imports,
-    networth, patterns, planning, settings, transactions, views,
+    networth, patterns, planning, reminders, settings, transactions, views,
 };
 use crate::error::{AppError, ErrorCode};
 
@@ -322,6 +322,8 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         "views.create" => views::create_view(db, input),
         "views.update" => views::update_view(db, s(input, "id"), &input["patch"]),
         "views.delete" => views::delete_view(db, s(input, "id")),
+        "reminders.preview" => reminders::preview(db).map(Value::Array),
+        "reminders.test" => Ok(reminders::test_reminder()),
         "cards.cycles" => (|| cards::card_cycles(db, &today()?).map(Value::Array))(),
         "insights.calendar" => (|| calendar::spending_calendar(db, s(input, "month"), &today()?))(),
         "app.status" => status(app),

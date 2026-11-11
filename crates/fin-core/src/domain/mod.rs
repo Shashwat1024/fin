@@ -11,5 +11,6 @@ pub mod ledger;
 pub mod money;
 pub mod networth;
 pub mod recurrence;
+pub mod reminders;
 pub mod rules;
 pub mod scenarios;

@@ -27,11 +27,11 @@ unit tests, parity vectors, the phase's e2e spec).
 - [x] D305 `us10-cards.spec.ts`; a11y
 
 ## D4: Reminders, tray, start at login (US11)
-- [ ] D401 `domain/reminders.rs` with unit tests first; `App::take_due_reminders`; `reminders.preview`
-- [ ] D402 Shell: toasts with activation → navigate, hourly check, test seam, logging
-- [ ] D403 Shell: tray, close-to-tray, autostart, single instance; applied on settings change
-- [ ] D404 Settings › Notifications and Background; navigate listener
-- [ ] D405 `us11-reminders.spec.ts`; offline spec covers reminders
+- [x] D401 `domain/reminders.rs` with unit tests first; `App::take_due_reminders`; `reminders.preview`
+- [x] D402 Shell: toasts with activation → navigate, hourly check, test seam, logging
+- [x] D403 Shell: tray, close-to-tray, autostart, single instance; applied on settings change
+- [x] D404 Settings › Notifications and Background; navigate listener
+- [x] D405 `us11-reminders.spec.ts`; offline spec covers reminders
 
 ## D5: Release 2.1.0
 - [ ] D501 Perf budgets (SC-012); full e2e on the release build
