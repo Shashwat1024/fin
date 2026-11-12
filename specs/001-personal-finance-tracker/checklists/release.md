@@ -221,6 +221,27 @@ optional `unmarkedDebit`.
 - **Performance, 50,000 transactions** (release): cold start median **1.23 s**; pdf.js loads only
   when a PDF is opened.
 
+## Release 2.7.0 (app lock and encryption)
+
+Lock Fin with a PIN or Windows Hello, and encrypt the data file ([009-app-lock](../../009-app-lock/spec.md)).
+SQLite3 Multiple Ciphers 2.6.1 replaces plain SQLite (vendored, checked against the upstream release);
+no schema change.
+
+**Build**: `target\release\bundle\nsis\Fin_2.7.0_x64-setup.exe` (3.50 MB, unsigned) · SHA-256
+`a3c5403739a457375247101d461c2d463df02e0548b4e112431ad9d94eadb08a`.
+
+- **End to end** on the release `fin.exe`: **46 passed, 1 skipped** (screenshots), including
+  `us24-app-lock`; then `us4`, `us23` and `us24` three more times each (18 passed). axe passes on the
+  lock screen in both themes.
+- **Rust**: clippy clean; 95 tests, including encryption on and off without loss, keyed daily and
+  manual backups, restore across encryption states and on another computer (refused with a reason,
+  passphrase backups restore), the lock gate and PIN tries, and DPAPI sealing a real key file.
+- **Fixed on the way**: a file that is not a backup was named "encrypted for another computer" (now
+  "not a Fin backup"); the PIN form's second field is "Type the PIN again"; the PDF import test waits
+  for Accounts before returning to Import.
+- **Performance, 50,000 transactions** (release): every budget holds with encryption on; opening the
+  encrypted file 82 ms; cold start median **0.88 s**.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
@@ -234,6 +255,9 @@ optional `unmarkedDebit`.
   it. The parser is tested on synthetic text in their wording, not on real statements.
 - [ ] **A real PDF statement** (2.6): import your own HDFC and ICICI statements (account and card)
   and compare with the PDF. The layouts are tuned on synthetic files in their shape.
+- [ ] **App lock and encryption** (2.7) on your own account: encryption on, restart, Windows Hello
+  unlock over the window, tray "Lock Fin", and a passphrase backup restored in an empty data folder.
+  The automated run uses a fixed key and a Windows Hello stand-in; DPAPI itself is tested in Rust.
 - [ ] **SmartScreen.** The installer is not code-signed, so Windows shows "unknown publisher".
   Signing needs a certificate.
 - [x] **App icon.** Added in 1.1.1 (`build/icon.ico`).

@@ -127,13 +127,16 @@ pub fn preview(db: &Db) -> DbResult<Vec<Value>> {
 
 /// The reminders to show now: due, outside quiet hours and never shown before. They are recorded as
 /// shown before being returned, so a failure while showing can lose one but never repeat it.
-pub fn take_due(db: &Db) -> DbResult<Vec<Value>> {
+/// `private` leaves out amounts and names whatever the setting (the app lock is on).
+pub fn take_due(db: &Db, private: bool) -> DbResult<Vec<Value>> {
     let s = get_settings(db)?;
     if s["notifyEnabled"] != true {
         return Ok(Vec::new());
     }
     let tz = s["timezone"].as_str().unwrap_or("Asia/Kolkata").to_owned();
-    let due = compute(db, &today_in(&tz), &time_in(&tz), &settings_of(&s))?;
+    let mut prefs = settings_of(&s);
+    prefs.show_amounts &= !private;
+    let due = compute(db, &today_in(&tz), &time_in(&tz), &prefs)?;
     let mut out = Vec::new();
     db.transaction(|| {
         for r in &due {
@@ -195,7 +198,7 @@ mod tests {
         .unwrap();
 
         // Off until turned on, but Settings can still show what would come.
-        assert!(take_due(&db).unwrap().is_empty());
+        assert!(take_due(&db, false).unwrap().is_empty());
         let coming = preview(&db).unwrap();
         assert_eq!(coming.len(), 1, "income is not reminded");
         assert_eq!(coming[0]["body"], "Rent: ₹25,000 on 11 Nov");
@@ -203,15 +206,15 @@ mod tests {
         let mut on = Map::new();
         on.insert("notifyEnabled".into(), json!(true));
         update_settings(&db, &on).unwrap();
-        let first = take_due(&db).unwrap();
+        let first = take_due(&db, false).unwrap();
         assert_eq!(first.len(), 1);
         assert_eq!(first[0]["key"], format!("recurring:{rent}:2026-11-11:tomorrow"));
-        assert!(take_due(&db).unwrap().is_empty(), "never repeated");
+        assert!(take_due(&db, false).unwrap().is_empty(), "never repeated");
         assert_eq!(preview(&db).unwrap()[0]["sent"], true);
 
         at("2026-11-10T17:00:00Z"); // 22:30 in Kolkata
         db.exec("DELETE FROM notification_log").unwrap();
-        assert!(take_due(&db).unwrap().is_empty(), "quiet hours");
+        assert!(take_due(&db, false).unwrap().is_empty(), "quiet hours");
         crate::clock::set_now(None);
     }
 }

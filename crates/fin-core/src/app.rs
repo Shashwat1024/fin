@@ -8,8 +8,9 @@ use std::path::{Path, PathBuf};
 use serde_json::{Value, json};
 
 use crate::db::backup::{
-    DEFAULT_KDF, auto_backup_if_due, count_data, create_backup, prepare_backup, swap_database_file,
+    DEFAULT_KDF, auto_backup_if_due, count_data, create_backup, list_backups, prepare_backup, swap_database_file,
 };
+use crate::db::key::{self, DbKey};
 use crate::db::{Db, DbResult, categories, migrate, settings};
 use crate::error::{AppError, ErrorCode};
 use crate::log::{self, Ctx};
@@ -83,6 +84,20 @@ fn io(message: &str) -> AppError {
     AppError::new(ErrorCode::Io, message)
 }
 
+/// Encrypt a plain backup file in place with the data key. Best effort: false when it can't be.
+fn encrypt_in_place(file: &Path, key: &DbKey) -> bool {
+    let tmp = PathBuf::from(format!("{}.encrypting", file.display()));
+    let done = (|| -> DbResult<()> {
+        let conn = rusqlite::Connection::open_with_flags(file, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        key::copy_to(&conn, &tmp, Some(key))?;
+        drop(conn);
+        fs::rename(&tmp, file).map_err(|_| io("Fin could not encrypt a backup."))?;
+        Ok(())
+    })();
+    let _ = fs::remove_file(&tmp);
+    done.is_ok()
+}
+
 /// A consistent copy of the live database before a schema upgrade, named like other backups.
 fn snapshot(db: &Db, dir: &Path, reason: &str) -> DbResult<PathBuf> {
     fs::create_dir_all(dir).map_err(|_| io("Fin cannot write a backup"))?;
@@ -98,12 +113,13 @@ fn snapshot(db: &Db, dir: &Path, reason: &str) -> DbResult<PathBuf> {
 pub struct DailyBackup {
     db_file: PathBuf,
     dirs: Vec<PathBuf>,
+    key: Option<DbKey>,
 }
 
 impl DailyBackup {
     /// Make the backup if none exists today; falls back to the default folder if the chosen one fails.
     pub fn run(self) -> Option<Value> {
-        let db = Db::open_read_only(&self.db_file).ok()?;
+        let db = Db::open_read_only(&self.db_file, self.key.as_ref()).ok()?;
         for dir in &self.dirs {
             match auto_backup_if_due(&db, dir) {
                 Ok(made) => {
@@ -125,24 +141,34 @@ pub struct App {
     pub dialogs: Box<dyn Dialogs>,
     db: Db,
     demo: bool,
+    /// This computer's data key (Fin 2.7), given by the shell; used when the data file is encrypted.
+    key: Option<DbKey>,
+    pub(crate) lock: crate::lock::LockState,
 }
 
 impl App {
     /// Open (creating if needed) the data folder's database, upgrading it after a safety copy.
     /// Scratch files left by a crash are removed first.
     pub fn open(paths: AppPaths, dialogs: Box<dyn Dialogs>) -> DbResult<App> {
+        Self::open_with_key(paths, dialogs, None)
+    }
+
+    /// Open with this computer's data key, needed when the data file is encrypted (Fin 2.7). Fin
+    /// starts locked when the app lock is on.
+    pub fn open_with_key(paths: AppPaths, dialogs: Box<dyn Dialogs>, key: Option<DbKey>) -> DbResult<App> {
         fs::create_dir_all(&paths.data_dir).map_err(|_| io("Fin cannot create its data folder"))?;
         let work_dir = paths.data_dir.join("tmp");
         // A demo left open by a crash is thrown away, like scratch files.
         remove_db_files(&paths.data_dir.join("demo.db"));
         let _ = fs::remove_dir_all(&work_dir);
         let _ = fs::create_dir_all(&work_dir);
-        let db = Self::open_real(&paths)?;
-        Ok(App { paths, work_dir, dialogs, db, demo: false })
+        let db = Self::open_real(&paths, key.as_ref())?;
+        let lock = crate::lock::LockState::on_open(&db);
+        Ok(App { paths, work_dir, dialogs, db, demo: false, key, lock })
     }
 
-    fn open_real(paths: &AppPaths) -> DbResult<Db> {
-        let db = Db::open(&paths.db_file)?;
+    fn open_real(paths: &AppPaths, key: Option<&DbKey>) -> DbResult<Db> {
+        let db = Db::open_with_key(&paths.db_file, key)?;
         let backup_dir = paths.backup_dir.clone();
         let hook = move |d: &Db, from: i64| {
             snapshot(d, &backup_dir, &format!("pre-upgrade-v{from}"))?;
@@ -174,6 +200,83 @@ impl App {
         self.demo
     }
 
+    /// Whether the data file is encrypted (Fin 2.7). Demo data never is.
+    pub fn is_encrypted(&self) -> bool {
+        !key::is_plain_file(&self.paths.db_file)
+    }
+
+    /// Whether this computer has a data key (it is kept once made, so older backups stay readable).
+    pub fn has_key(&self) -> bool {
+        self.key.is_some()
+    }
+
+    pub fn key(&self) -> Option<&DbKey> {
+        self.key.as_ref()
+    }
+
+    pub fn is_locked(&self) -> bool {
+        self.lock.locked
+    }
+
+    /// Give the app this computer's data key (the shell makes one when encryption is first turned on).
+    pub fn set_key(&mut self, key: DbKey) {
+        self.key = Some(key);
+    }
+
+    /// Encrypt the data file with this computer's key, or decrypt it (Fin 2.7). A converted copy is
+    /// written and checked first (it opens, passes `quick_check` and holds the same records), then
+    /// put in place like a restore. Turning encryption on also encrypts plain backups in the backup
+    /// folders.
+    pub fn set_encryption(&mut self, on: bool) -> DbResult<()> {
+        if self.demo {
+            return Err(AppError::invariant("Encryption can't be changed with demo data. Exit the demo first."));
+        }
+        if on == self.is_encrypted() {
+            return Ok(());
+        }
+        let key = self.key.clone().ok_or_else(|| AppError::invariant("This computer has no data key yet."))?;
+        let target = self.work_dir.join(if on { "encrypting.db" } else { "decrypting.db" });
+        let before = count_data(&self.db)?;
+        key::copy_to(&self.db.conn, &target, on.then_some(&key))?;
+        let checked = (|| -> DbResult<bool> {
+            let copy = Db::open_with_key(&target, Some(&key))?;
+            let check: String = copy.conn.query_row("PRAGMA quick_check", [], |r| r.get(0))?;
+            Ok(check == "ok" && count_data(&copy)? == before && key::is_plain_file(&target) != on)
+        })();
+        if !matches!(checked, Ok(true)) {
+            remove_db_files(&target);
+            return Err(AppError::invariant("Fin could not check the converted data, so nothing was changed."));
+        }
+        self.close_db()?;
+        if swap_database_file(&self.paths.db_file, &target).is_err() {
+            remove_db_files(&target);
+            self.db = Self::open_real(&self.paths, Some(&key))?;
+            return Err(io("Fin could not replace your data file. Nothing was changed."));
+        }
+        self.db = Self::open_real(&self.paths, Some(&key))?;
+        if on {
+            let mut done = 0;
+            let mut dirs = vec![self.paths.backup_dir.clone()];
+            if let Ok(dir) = self.backup_dir()
+                && dir != dirs[0]
+            {
+                dirs.push(dir);
+            }
+            for dir in dirs {
+                for b in list_backups(&dir) {
+                    let file = PathBuf::from(b["path"].as_str().unwrap_or_default());
+                    if b["encrypted"] == false && b["keyed"] == false && encrypt_in_place(&file, &key) {
+                        done += 1;
+                    }
+                }
+            }
+            log::info("encryption.on", &[("backups", Ctx::Num(done))]);
+        } else {
+            log::info("encryption.off", &[]);
+        }
+        Ok(())
+    }
+
     pub fn default_backup_dir(&self) -> String {
         self.paths.backup_dir.to_string_lossy().into_owned()
     }
@@ -197,7 +300,7 @@ impl App {
 
     /// Replace the live database with a checked backup, after backing up the current data.
     pub fn restore(&mut self, path: &Path, passphrase: Option<&str>) -> DbResult<Value> {
-        let prepared = prepare_backup(path, passphrase, &self.work_dir);
+        let prepared = prepare_backup(path, passphrase, &self.work_dir, self.key.as_ref());
         let valid = prepared.inspection["valid"] == true;
         let Some(candidate) = prepared.file.clone().filter(|_| valid) else {
             let message = if valid {
@@ -207,14 +310,20 @@ impl App {
             };
             return Err(AppError::new(ErrorCode::Validation, message));
         };
+        // The restored file is encrypted exactly like the live one: a backup made with encryption
+        // off is encrypted on restore, and the other way round.
+        if let Err(e) = self.match_encryption(&candidate) {
+            remove_db_files(&candidate);
+            return Err(e);
+        }
         let pre_restore = create_backup(&self.db, &self.backup_dir()?, "pre-restore", None, DEFAULT_KDF)?;
         self.close_db()?;
         if swap_database_file(&self.paths.db_file, &candidate).is_err() {
             let _ = fs::remove_file(&candidate);
-            self.db = Self::open_real(&self.paths)?;
+            self.db = Self::open_real(&self.paths, self.key.as_ref())?;
             return Err(io("Fin could not replace your data file. Nothing was changed."));
         }
-        match Self::open_real(&self.paths) {
+        match Self::open_real(&self.paths, self.key.as_ref()) {
             // An older backup is upgraded to the current schema on open.
             Ok(db) => self.db = db,
             Err(_) => {
@@ -222,12 +331,29 @@ impl App {
                 let back = self.work_dir.join("put-back.db");
                 let _ = fs::copy(pre_restore["path"].as_str().unwrap_or_default(), &back);
                 let _ = swap_database_file(&self.paths.db_file, &back);
-                self.db = Self::open_real(&self.paths)?;
+                self.db = Self::open_real(&self.paths, self.key.as_ref())?;
                 return Err(AppError::invariant("That backup could not be opened, so your data was left as it was."));
             }
         }
         log::info("backup.restored", &[]);
         Ok(json!({ "preRestoreBackup": pre_restore, "counts": count_data(&self.db)? }))
+    }
+
+    /// Re-encrypt a checked restore candidate so it matches the live file.
+    fn match_encryption(&self, candidate: &Path) -> DbResult<()> {
+        let want = self.is_encrypted();
+        if key::is_plain_file(candidate) != want {
+            return Ok(());
+        }
+        let key = self.key.as_ref().ok_or_else(key::wrong_key)?;
+        let converted = PathBuf::from(format!("{}.converted", candidate.display()));
+        {
+            let from = Db::open_with_key(candidate, Some(key))?;
+            key::copy_to(&from.conn, &converted, want.then_some(key))?;
+        }
+        remove_db_files(candidate);
+        fs::rename(&converted, candidate).map_err(|_| io("Fin could not prepare the backup."))?;
+        Ok(())
     }
 
     fn demo_file(&self) -> PathBuf {
@@ -258,7 +384,7 @@ impl App {
                 Ok(())
             }
             Err(e) => {
-                self.db = Self::open_real(&self.paths)?;
+                self.db = Self::open_real(&self.paths, self.key.as_ref())?;
                 Err(e)
             }
         }
@@ -273,7 +399,7 @@ impl App {
         remove_db_files(&self.demo_file());
         self.demo = false;
         log::info("demo.exited", &[]);
-        self.db = Self::open_real(&self.paths)?;
+        self.db = Self::open_real(&self.paths, self.key.as_ref())?;
         Ok(())
     }
 
@@ -287,7 +413,7 @@ impl App {
         if dirs[0] != self.paths.backup_dir {
             dirs.push(self.paths.backup_dir.clone());
         }
-        Some(DailyBackup { db_file: self.paths.db_file.clone(), dirs })
+        Some(DailyBackup { db_file: self.paths.db_file.clone(), dirs, key: self.key.clone() })
     }
 
     /// Read what the Overview needs once, so the database pages are in memory before the
@@ -321,7 +447,7 @@ impl App {
         if self.demo {
             return Vec::new();
         }
-        match crate::db::reminders::take_due(&self.db) {
+        match crate::db::reminders::take_due(&self.db, crate::lock::private_notifications(self)) {
             Ok(list) => {
                 if !list.is_empty() {
                     let kinds: Vec<&str> = list.iter().filter_map(|r| r["kind"].as_str()).collect();

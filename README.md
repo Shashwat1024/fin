@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `Fin_2.6.0_x64-setup.exe` (about 3 MB).
+   `Fin_2.7.0_x64-setup.exe` (about 3 MB).
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. Fin uses Microsoft Edge WebView2, which is part of Windows 10 and 11. On the rare machine
@@ -25,9 +25,15 @@ Press `?` at any time to see every keyboard shortcut, or `Ctrl+K` for the comman
 
 | What | Where |
 |---|---|
-| Your ledger | `%APPDATA%\Fin\fin.db` (a SQLite file) |
+| Your ledger | `%APPDATA%\Fin\fin.db` (a SQLite file, encrypted if you turn that on) |
+| Data key | `%APPDATA%\Fin\fin.key`, only once you turn on encryption: protected by Windows for your account |
 | Automatic backups | `%APPDATA%\Fin\backups\`, or the folder you choose in Settings › Data |
 | Logs | `%APPDATA%\Fin\logs\fin.log`. These record what happened, never amounts, payees or account names. |
+
+**Lock and encryption.** Settings › Privacy can lock Fin with a PIN (and Windows Hello) and
+encrypt its data file. The key is random and Windows keeps it for your account, so Fin still opens
+without a password and a forgotten PIN never loses data; but encrypted backups restore only on
+this Windows account. To move Fin to another computer, make a backup with a passphrase.
 
 **Privacy.** Fin makes no network requests at all and blocks any attempt to make one. The test
 suite checks this across every flow, and checks the log file for financial details. Reminders
@@ -161,3 +167,6 @@ How to validate each feature by hand is in
   CSV. HDFC and ICICI account and credit-card statements are recognised; other banks' PDFs go through
   column mapping. Protected PDFs ask for their password, which is never kept; scanned PDFs can't be
   read.
+- ✅ Fin 2.7 (app lock and encryption): **lock Fin with a PIN**, with Windows Hello, an idle time
+  and Ctrl+L (the backend refuses every request while locked), and **encrypt the data file** and its
+  backups with a key Windows keeps for your account (SQLite3 Multiple Ciphers, ChaCha20-Poly1305).

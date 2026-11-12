@@ -291,6 +291,8 @@ export type BackupInfo = {
   createdAt: string
   kind: BackupKind
   encrypted: boolean
+  /** Encrypted with this computer's data key (Fin 2.7): restores only on this Windows account. */
+  keyed: boolean
   sizeBytes: number
 }
 
@@ -302,10 +304,17 @@ export type DataCounts = {
 }
 
 export type BackupProblem =
-  'NOT_FOUND' | 'NEEDS_PASSPHRASE' | 'WRONG_PASSPHRASE' | 'NOT_FIN' | 'DAMAGED' | 'TOO_NEW'
+  'NOT_FOUND' | 'NEEDS_PASSPHRASE' | 'WRONG_PASSPHRASE' | 'NOT_FIN' | 'DAMAGED' | 'TOO_NEW' | 'OTHER_COMPUTER'
 
 export type BackupInspection =
-  | { valid: true; encrypted: boolean; schemaVersion: number; needsUpgrade: boolean; counts: DataCounts }
+  | {
+      valid: true
+      encrypted: boolean
+      keyed: boolean
+      schemaVersion: number
+      needsUpgrade: boolean
+      counts: DataCounts
+    }
   | { valid: false; reason: BackupProblem; message: string }
 
 export type AppStatus = {
@@ -314,6 +323,24 @@ export type AppStatus = {
   backupDir: string
   defaultBackupDir: string
   counts: DataCounts
+}
+
+/** The app lock and data encryption (US24). */
+export type LockStatus = {
+  locked: boolean
+  /** A PIN is set: Fin locks on opening, after the idle time and on Lock now. */
+  enabled: boolean
+  /** Windows Hello unlocks Fin too. */
+  hello: boolean
+  /** This computer has Windows Hello set up. */
+  helloAvailable: boolean
+  /** Idle minutes before locking; 0 means never. */
+  afterMinutes: 0 | 5 | 15 | 30
+  /** Seconds before another PIN can be tried (after five wrong ones). */
+  waitSeconds: number
+  /** The data file is encrypted with this computer's key. */
+  encrypted: boolean
+  demo: boolean
 }
 
 // ---- Planning: recurring items, budgets, goals (US5) ------------------------------------------

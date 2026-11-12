@@ -57,6 +57,7 @@ export const SHORTCUTS = [
   { combo: 'mod+9', label: 'Go to Forecast' },
   { combo: 'mod+0', label: 'Go to Net worth' },
   { combo: 'mod+,', label: 'Go to Settings' },
+  { combo: 'mod+l', label: 'Lock Fin (when a PIN is set)' },
 ] as const
 
 export type ShortcutGroup = { title: string; items: { combos: string[]; label: string }[] }

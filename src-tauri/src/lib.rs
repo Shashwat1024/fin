@@ -1,6 +1,7 @@
 //! The Tauri shell: one window, one command. All logic lives in `fin-core`.
 
 mod background;
+mod lock;
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -12,7 +13,7 @@ use background::{Background, apply_settings, open_route, show_reminder, throwawa
 use fin_core::app::{App, AppPaths, Dialogs};
 use fin_core::log;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
@@ -100,6 +101,51 @@ impl Dialogs for NativeDialogs {
     }
 }
 
+/// Lock or unlock answers carry whether this computer has Windows Hello, which only the shell knows.
+fn with_hello(mut result: Value) -> Value {
+    if result["ok"] == true && result["data"].get("locked").is_some() {
+        result["data"]["helloAvailable"] = json!(lock::hello_available());
+    }
+    result
+}
+
+fn failed(message: &str) -> Value {
+    json!({ "ok": false, "error": { "code": "VALIDATION", "message": message } })
+}
+
+/// Unlock with Windows Hello (Fin 2.7). The prompt is shown without holding the app, so nothing
+/// else waits on it; the app is unlocked only when Windows confirms the person.
+fn unlock_with_hello(handle: &AppHandle, backend: &Backend) -> Value {
+    if !lock::hello_available() {
+        return failed("Windows Hello isn't set up on this computer.");
+    }
+    if !lock::verify_with_hello(handle) {
+        return failed("Windows Hello didn't confirm it's you.");
+    }
+    let mut guard = backend.0.lock().unwrap_or_else(|p| p.into_inner());
+    match guard.as_mut() {
+        Some(app) => {
+            fin_core::lock::unlock(app);
+            with_hello(fin_core::dispatch::dispatch(app, "lock.status", None))
+        }
+        None => failed("Fin could not open your data folder."),
+    }
+}
+
+/// Lock now (the tray menu); the window shows the lock screen.
+pub(crate) fn lock_now(handle: &AppHandle) {
+    let locked = handle
+        .state::<Backend>()
+        .0
+        .lock()
+        .ok()
+        .and_then(|mut g| g.as_mut().map(|app| fin_core::dispatch::dispatch(app, "lock.now", None)))
+        .is_some_and(|r| r["data"]["locked"] == true);
+    if locked && let Some(w) = handle.get_webview_window("main") {
+        let _ = w.emit("fin://locked", ());
+    }
+}
+
 /// The only bridge between the interface and the backend, mirroring the Electron preload's
 /// `fin:invoke` channel: validation and every error shape are handled by `fin_core::dispatch`.
 #[tauri::command]
@@ -109,11 +155,25 @@ async fn fin_invoke(
     channel: String,
     input: Option<Value>,
 ) -> Result<Value, ()> {
+    if channel == "lock.unlock" && input.as_ref().is_some_and(|i| i["method"] == "hello") {
+        return Ok(unlock_with_hello(&handle, &backend));
+    }
     let (result, settings) = {
         let mut guard = backend.0.lock().unwrap_or_else(|p| p.into_inner());
         match guard.as_mut() {
             Some(app) => {
-                let result = fin_core::dispatch::dispatch(app, &channel, input);
+                // Encryption needs this computer's key: made (and kept) the first time it is turned on.
+                if channel == "encryption.set"
+                    && input.as_ref().is_some_and(|i| i["on"] == true)
+                    && !app.has_key()
+                    && !app.is_locked()
+                {
+                    match lock::create_key(&app.paths.data_dir) {
+                        Some(key) => app.set_key(key),
+                        None => return Ok(failed("Windows could not protect a key for Fin's data.")),
+                    }
+                }
+                let result = with_hello(fin_core::dispatch::dispatch(app, &channel, input));
                 // Settings that live outside the window follow every change of settings or data.
                 let changed = result["ok"] == true && matches!(channel.as_str(), "settings.update" | "backup.restore");
                 let settings = changed.then(|| fin_core::dispatch::dispatch(app, "settings.get", None)["data"].clone());
@@ -218,7 +278,9 @@ pub fn run() {
             let debug = cfg!(debug_assertions) || std::env::var("FIN_LOG").is_ok_and(|v| v == "debug");
             let level = if debug { log::Level::Debug } else { log::Level::Info };
             log::init(paths.log_file.clone(), level);
-            let opened = match App::open(paths, Box::new(NativeDialogs(handle.clone()))) {
+            // This computer's data key, when encryption was turned on (Fin 2.7).
+            let key = lock::load_key(&paths.data_dir);
+            let opened = match App::open_with_key(paths, Box::new(NativeDialogs(handle.clone())), key) {
                 Ok(app) => {
                     log::info("app.ready", &[("version", log::Ctx::Text(env!("CARGO_PKG_VERSION")))]);
                     Some(app)

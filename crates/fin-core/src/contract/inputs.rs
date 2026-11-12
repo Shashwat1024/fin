@@ -20,6 +20,7 @@ const CATEGORY_GROUPS: &[&str] = &["needs", "wants", "goals", "buffer", "income"
 static CURRENCY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Z]{3}$").unwrap());
 static MONTH_KEY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{4}-(0[1-9]|1[0-2])$").unwrap());
 static TIME_OF_DAY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^([01]\d|2[0-3]):[0-5]\d$").unwrap());
+static PIN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{4,8}$").unwrap());
 
 fn str_of(v: &Value) -> &str {
     v.as_str().unwrap_or_default()
@@ -636,6 +637,28 @@ fn build() -> HashMap<&'static str, Schema> {
         ("attachments.save", id_input()),
         ("attachments.usage", empty()),
         ("warranties.list", empty()),
+        ("lock.status", empty()),
+        (
+            "lock.configure",
+            object(vec![
+                ("pin", string().pattern(&PIN, r"/^\d{4,8}$/").nullable().optional()),
+                ("hello", boolean().optional()),
+                (
+                    "afterMinutes",
+                    union(vec![literal(json!(0)), literal(json!(5)), literal(json!(15)), literal(json!(30))])
+                        .optional(),
+                ),
+            ]),
+        ),
+        (
+            "lock.unlock",
+            object(vec![
+                ("pin", string().max_len(8).optional()),
+                ("method", enumeration(&["pin", "hello"]).optional()),
+            ]),
+        ),
+        ("lock.now", empty()),
+        ("encryption.set", object(vec![("on", boolean())])),
         ("people.list", empty()),
         ("people.create", object(vec![("name", name())])),
         ("people.update", object(vec![("id", id()), ("name", name().optional()), ("archived", boolean().optional())])),

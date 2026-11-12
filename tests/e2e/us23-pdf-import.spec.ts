@@ -137,6 +137,7 @@ function iciciStatement(password: string): Buffer {
 /** Opens Import afresh (leaving the page first resets the wizard) and picks the file. */
 async function choose(file: string) {
   await page.keyboard.press('Control+3')
+  await expect(page.getByRole('heading', { name: 'Accounts' })).toBeVisible()
   await page.keyboard.press('Control+4')
   await expect(page.getByRole('heading', { name: 'Import' })).toBeVisible()
   await page.getByLabel('Statement file').setInputFiles(file)

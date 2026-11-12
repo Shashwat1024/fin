@@ -1,7 +1,7 @@
 {
   "name": "fin",
   "productName": "Fin",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Private, local-first personal finance tracker",
   "private": true,
   "type": "module",

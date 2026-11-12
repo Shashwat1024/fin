@@ -14,4 +14,5 @@ pub mod dispatch;
 pub mod domain;
 pub mod error;
 pub mod handlers;
+pub mod lock;
 pub mod log;

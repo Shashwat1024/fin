@@ -13,6 +13,8 @@ pub enum ErrorCode {
     Invariant,
     Io,
     Internal,
+    /// The app lock is on (Fin 2.7): only unlocking is answered.
+    Locked,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]

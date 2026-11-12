@@ -1,10 +1,12 @@
 //! JSON-lines front end to the dispatcher, used by the parity harness (tests/parity).
 //! Opens the data folder in `FIN_DATA_DIR`, then reads one `{"channel": "...", "input": ...}` per
-//! line on stdin and writes one result per line.
+//! line on stdin and writes one result per line. `FIN_DB_KEY` (64 hex digits) opens an encrypted
+//! data folder (Fin 2.7).
 
 use std::io::{self, BufRead, Write};
 
 use fin_core::app::{App, AppPaths, PresetDialogs};
+use fin_core::db::key::DbKey;
 use serde_json::{Value, json};
 
 fn main() {
@@ -12,6 +14,7 @@ fn main() {
         eprintln!("Set FIN_DATA_DIR to the data folder to use");
         std::process::exit(2);
     };
+    let key = || std::env::var("FIN_DB_KEY").ok().and_then(|h| DbKey::from_hex(&h));
     // `fin-cli --seed-perf`: write the 50,000-transaction performance profile into FIN_DATA_DIR.
     if std::env::args().any(|a| a == "--seed-perf") {
         let paths = AppPaths::in_dir(std::path::Path::new(&dir));
@@ -20,7 +23,7 @@ fn main() {
             std::process::exit(1);
         }
         let started = std::time::Instant::now();
-        let app = App::open(paths, Box::new(PresetDialogs::default())).unwrap_or_else(|e| {
+        let app = App::open_with_key(paths, Box::new(PresetDialogs::default()), key()).unwrap_or_else(|e| {
             eprintln!("Cannot open the data folder: {e}");
             std::process::exit(1)
         });
@@ -38,7 +41,8 @@ fn main() {
         app.close();
         return;
     }
-    let mut app = match App::open(AppPaths::in_dir(std::path::Path::new(&dir)), Box::new(PresetDialogs::default())) {
+    let paths = AppPaths::in_dir(std::path::Path::new(&dir));
+    let mut app = match App::open_with_key(paths, Box::new(PresetDialogs::default()), key()) {
         Ok(app) => app,
         Err(e) => {
             eprintln!("Cannot open the data folder: {e}");

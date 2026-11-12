@@ -510,3 +510,21 @@ export const attachmentAddInput = z.object({
   warrantyUntil: calendarDate.nullable().optional(),
 })
 export const attachmentUpdateInput = z.object({ id, warrantyUntil: calendarDate.nullable() })
+
+// ---- App lock and encryption (US24) --------------------------------------------------------------
+
+export const lockConfigureInput = z.object({
+  /** A new PIN turns the lock on or changes it; null turns the lock off. */
+  pin: z
+    .string()
+    .regex(/^\d{4,8}$/)
+    .nullable()
+    .optional(),
+  hello: z.boolean().optional(),
+  afterMinutes: z.union([z.literal(0), z.literal(5), z.literal(15), z.literal(30)]).optional(),
+})
+export const lockUnlockInput = z.object({
+  pin: z.string().max(8).optional(),
+  method: z.enum(['pin', 'hello']).optional(),
+})
+export const encryptionSetInput = z.object({ on: z.boolean() })

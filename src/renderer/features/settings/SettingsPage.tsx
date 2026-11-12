@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { HistoryIcon, KeyboardIcon, LockIcon, Undo2Icon } from 'lucide-react'
+import { HistoryIcon, KeyboardIcon, Undo2Icon } from 'lucide-react'
 import { ErrorState, LoadingState, Page, PageHeader } from '@renderer/components/layout'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
@@ -10,6 +10,7 @@ import { DataSettings } from './DataSettings'
 import { BufferField } from '@renderer/features/forecast/BufferField'
 import { BackgroundSettings, NotificationSettings } from './NotificationSettings'
 import { PreferenceFields } from './PreferenceFields'
+import { PrivacySettings } from './PrivacySettings'
 
 function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000
@@ -48,6 +49,8 @@ export function SettingsPage() {
 
         <NotificationSettings value={settings.data} onChange={(patch) => update.mutate(patch)} />
         <BackgroundSettings value={settings.data} onChange={(patch) => update.mutate(patch)} />
+
+        <PrivacySettings />
 
         <DataSettings />
 
@@ -95,19 +98,6 @@ export function SettingsPage() {
           <CardContent>
             <ShortcutGroups />
           </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LockIcon className="size-4" /> Privacy
-            </CardTitle>
-            <CardDescription>
-              Fin works fully offline. Your data is stored only on this computer and is never sent anywhere.
-              For protection if this computer is lost, turn on your operating system's disk encryption
-              (BitLocker on Windows) and keep passphrase-protected backups.
-            </CardDescription>
-          </CardHeader>
         </Card>
       </div>
     </Page>

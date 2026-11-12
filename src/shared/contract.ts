@@ -123,6 +123,11 @@ export const inputSchemas = {
   'attachments.save': s.idInput,
   'attachments.usage': s.empty,
   'warranties.list': s.empty,
+  'lock.status': s.empty,
+  'lock.configure': s.lockConfigureInput,
+  'lock.unlock': s.lockUnlockInput,
+  'lock.now': s.empty,
+  'encryption.set': s.encryptionSetInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -251,6 +256,11 @@ export interface Outputs {
   'attachments.save': { path: string } | null
   'attachments.usage': { count: number; bytes: number }
   'warranties.list': t.WarrantyDto[]
+  'lock.status': t.LockStatus
+  'lock.configure': t.LockStatus
+  'lock.unlock': t.LockStatus
+  'lock.now': t.LockStatus
+  'encryption.set': t.LockStatus
 }
 
 export type Output<C extends Channel> = Outputs[C]

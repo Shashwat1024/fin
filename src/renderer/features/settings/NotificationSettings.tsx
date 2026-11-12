@@ -16,7 +16,7 @@ import type { Settings } from '@shared/types'
 type Props = { value: Settings; onChange: (patch: SettingsPatch) => void }
 
 /** A labelled switch with an optional explanation underneath. */
-function SwitchRow({
+export function SwitchRow({
   label,
   description,
   checked,

@@ -130,6 +130,7 @@ fn handle_files(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<
             &PathBuf::from(s(input, "path")),
             passphrase("passphrase").as_deref(),
             &app.work_dir,
+            app.key(),
         )),
         "backup.restore" => (|| {
             no_demo(app, "Restoring")?;
@@ -197,6 +198,15 @@ fn handle_files(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<
                 .map_err(|_| io("Fin could not write the export file."))?;
             Ok(json!({ "path": path_str(&path) }))
         })(),
+        "lock.status" => crate::lock::status(app),
+        "lock.configure" => crate::lock::configure(app, input),
+        "lock.unlock" => match input.get("method").and_then(Value::as_str) {
+            // Windows Hello is checked by the app window (the shell), which unlocks directly.
+            Some("hello") => Err(AppError::new(ErrorCode::Validation, "Windows Hello isn't available here.")),
+            _ => crate::lock::unlock_with_pin(app, s(input, "pin")),
+        },
+        "lock.now" => crate::lock::lock_now(app),
+        "encryption.set" => app.set_encryption(input["on"] == true).and_then(|_| crate::lock::status(app)),
         "demo.enter" => app.enter_demo().and_then(|_| status(app)),
         "demo.exit" => app.exit_demo().and_then(|_| status(app)),
         _ => return None,

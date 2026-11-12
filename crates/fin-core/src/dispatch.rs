@@ -106,6 +106,8 @@ pub fn dispatch(app: &mut App, channel: &str, input: Option<Value>) -> Value {
             crate::log::warn(event, &[("channel", crate::log::Ctx::Text(channel))]);
             err(e)
         }
+        // The app lock (Fin 2.7) is enforced here, so no interface can skip it.
+        Ok(_) if app.lock.locked && !crate::lock::allowed_while_locked(channel) => err(crate::lock::locked_error()),
         Ok(cleaned) => {
             let input = cleaned.unwrap_or(Value::Null);
             let started = std::time::Instant::now();
