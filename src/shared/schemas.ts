@@ -40,6 +40,7 @@ export const settingsPatch = z.object({
   notifyRecurring: z.boolean().optional(),
   notifyCardDue: z.boolean().optional(),
   notifyLowCash: z.boolean().optional(),
+  notifyWarranty: z.boolean().optional(),
   cardDueNoticeDays: z.number().int().min(1).max(10).optional(),
   quietHoursStart: timeOfDay.optional(),
   quietHoursEnd: timeOfDay.optional(),
@@ -471,3 +472,40 @@ export const casCommitInput = z.object({
     .min(1)
     .max(200),
 })
+
+// ---- Shared life (US21) --------------------------------------------------------------------------
+
+export const personInput = z.object({ name })
+export const personUpdate = z.object({ id, name: name.optional(), archived: z.boolean().optional() })
+const entryNote = z.string().trim().max(300).nullable().optional()
+export const peopleEntryInput = z.object({
+  /** An existing person, or a name (a new person is added unless the name is already listed). */
+  personId: id.optional(),
+  personName: name.optional(),
+  /** A share of this expense; without it, a manual entry. */
+  transactionId: id.optional(),
+  /** Positive: they owe you more; negative: you owe them. */
+  amountMinor: minor.refine((v) => v !== 0, 'Enter an amount'),
+  date: calendarDate.optional(),
+  note: entryNote,
+})
+export const settleInput = z.object({
+  personId: id,
+  transactionId: id.optional(),
+  amountMinor: minor.min(1).optional(),
+  date: calendarDate.optional(),
+  note: entryNote,
+})
+
+// ---- Receipts and warranties (US22) --------------------------------------------------------------
+
+export const attachmentsListInput = z.object({ transactionId: id })
+export const attachmentAddInput = z.object({
+  transactionId: id,
+  fileName: z.string().trim().min(1).max(255),
+  mime: z.string().max(100),
+  /** Up to 10 MB of file, as base64. */
+  dataBase64: z.string().min(1).max(14_000_000),
+  warrantyUntil: calendarDate.nullable().optional(),
+})
+export const attachmentUpdateInput = z.object({ id, warrantyUntil: calendarDate.nullable() })

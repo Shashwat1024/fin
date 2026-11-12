@@ -10,6 +10,8 @@ pub struct ReminderSettings {
     pub recurring: bool,
     pub card_due: bool,
     pub low_cash: bool,
+    /// Warranties ending within `WARRANTY_DAYS` (US22).
+    pub warranty: bool,
     /// Days before a card bill is due to remind (1–10).
     pub card_notice_days: i64,
     /// "HH:MM"; equal start and end mean no quiet hours.
@@ -37,6 +39,18 @@ pub struct CardBill {
     pub remaining_minor: i64,
 }
 
+/// A receipt with a warranty end date (US22).
+#[derive(Debug, Clone)]
+pub struct Warranty {
+    pub attachment_id: String,
+    /// What it was bought from (the transaction's payee), or the file's name.
+    pub name: String,
+    pub until: String,
+}
+
+/// Warranties are reminded this many days before they end.
+pub const WARRANTY_DAYS: i64 = 30;
+
 #[derive(Debug, Clone)]
 pub struct LowCash {
     /// First day below the buffer.
@@ -54,6 +68,7 @@ pub struct ReminderInput<'a> {
     pub payments: &'a [Payment],
     pub cards: &'a [CardBill],
     pub low_cash: Option<&'a LowCash>,
+    pub warranties: &'a [Warranty],
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -143,6 +158,24 @@ pub fn due_reminders(input: &ReminderInput) -> Vec<Reminder> {
         }
     }
 
+    if s.warranty {
+        let until = ad(WARRANTY_DAYS);
+        for w in input.warranties.iter().filter(|w| w.until.as_str() >= input.today && w.until <= until) {
+            let body = if s.show_amounts {
+                format!("{}: the warranty ends on {}", w.name, day(&w.until))
+            } else {
+                format!("A warranty ends on {}", day(&w.until))
+            };
+            out.push(Reminder {
+                key: format!("warranty:{}:{}", w.attachment_id, w.until),
+                kind: "warranty",
+                title: "Warranty ending soon".to_owned(),
+                body,
+                route: "/warranties",
+            });
+        }
+    }
+
     if s.low_cash
         && let Some(l) = input.low_cash
         && l.from.as_str() <= ad(LOW_CASH_DAYS).as_str()
@@ -177,6 +210,7 @@ mod tests {
             recurring: true,
             card_due: true,
             low_cash: true,
+            warranty: true,
             card_notice_days: 3,
             quiet_start: "22:00".into(),
             quiet_end: "08:00".into(),
@@ -202,7 +236,15 @@ mod tests {
         cards: &[CardBill],
         low: Option<&LowCash>,
     ) -> Vec<Reminder> {
-        due_reminders(&ReminderInput { today: "2026-11-10", time, settings: s, payments, cards, low_cash: low })
+        due_reminders(&ReminderInput {
+            today: "2026-11-10",
+            time,
+            settings: s,
+            payments,
+            cards,
+            low_cash: low,
+            warranties: &[],
+        })
     }
 
     #[test]
@@ -280,8 +322,30 @@ mod tests {
     }
 
     #[test]
+    fn warranties_ending_within_thirty_days() {
+        let w =
+            |id: &str, until: &str| Warranty { attachment_id: id.into(), name: "Croma".into(), until: until.into() };
+        let list = [w("a", "2026-12-01"), w("b", "2026-12-20"), w("c", "2026-11-01")];
+        let r = due_reminders(&ReminderInput {
+            today: "2026-11-10",
+            time: "09:00",
+            settings: &settings(),
+            payments: &[],
+            cards: &[],
+            low_cash: None,
+            warranties: &list,
+        });
+        assert_eq!(r.len(), 1, "within 30 days and not already over");
+        assert_eq!(
+            (r[0].key.as_str(), r[0].body.as_str()),
+            ("warranty:a:2026-12-01", "Croma: the warranty ends on 1 Dec")
+        );
+    }
+
+    #[test]
     fn switched_off_kinds_are_not_reminded() {
-        let off = ReminderSettings { recurring: false, card_due: false, low_cash: false, ..settings() };
+        let off =
+            ReminderSettings { recurring: false, card_due: false, low_cash: false, warranty: false, ..settings() };
         let low =
             LowCash { from: "2026-11-11".into(), lowest_minor: 0, lowest_date: "2026-11-11".into(), buffer_minor: 1 };
         assert!(run(&off, "09:00", &[pay("r1", "2026-11-11", false)], &[card("2026-11-11", 5)], Some(&low)).is_empty());

@@ -162,6 +162,12 @@ export function NotificationSettings({ value, onChange }: Props) {
             onChange={(v) => onChange({ notifyLowCash: v })}
           />
           <SwitchRow
+            label="Warranties ending within 30 days"
+            checked={value.notifyWarranty}
+            disabled={!value.notifyEnabled}
+            onChange={(v) => onChange({ notifyWarranty: v })}
+          />
+          <SwitchRow
             label="Include amounts and names"
             description="Turn off to keep notifications general, for example on a shared screen."
             checked={value.notifyShowAmounts}

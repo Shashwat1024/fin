@@ -11,6 +11,7 @@ pub mod goals;
 pub mod health;
 pub mod import;
 pub mod insights;
+pub mod ious;
 pub mod ledger;
 pub mod money;
 pub mod networth;

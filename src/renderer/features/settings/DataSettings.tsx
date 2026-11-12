@@ -1,3 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
+import { call } from '@renderer/lib/ipc'
+import { fileSize } from '@renderer/features/attachments/Receipts'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import {
@@ -41,6 +44,10 @@ function size(bytes: number) {
 
 /** Settings › Data: backups, restore, export and demo mode (US4). */
 export function DataSettings() {
+  const usage = useQuery({
+    queryKey: ['attachments', 'usage'],
+    queryFn: () => call('attachments.usage', undefined),
+  })
   const status = useAppStatus()
   const backups = useBackups()
   const demo = useDemoMode()
@@ -173,6 +180,12 @@ export function DataSettings() {
           ) : (
             <p className="text-sm text-muted-foreground">
               No backups yet. The first daily backup is made the next time Fin opens.
+            </p>
+          )}
+          {usage.data && usage.data.count > 0 && (
+            <p className="text-sm text-muted-foreground" data-testid="attachments-usage">
+              Receipts: {usage.data.count} file{usage.data.count === 1 ? '' : 's'},{' '}
+              {fileSize(usage.data.bytes)}. They are part of every backup.
             </p>
           )}
         </CardContent>

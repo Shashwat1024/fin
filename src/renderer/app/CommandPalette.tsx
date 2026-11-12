@@ -23,9 +23,11 @@ import {
   RepeatIcon,
   ScaleIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   TagsIcon,
   TargetIcon,
   WandSparklesIcon,
+  UsersIcon,
   WalletIcon,
 } from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
@@ -151,6 +153,12 @@ export function CommandPalette() {
             </CommandItem>
             <CommandItem value="tax deductions 80c" onSelect={run(() => navigate('/tax'))}>
               <FileTextIcon /> Tax deductions
+            </CommandItem>
+            <CommandItem value="people who owes whom split" onSelect={run(() => navigate('/people'))}>
+              <UsersIcon /> People (who owes whom)
+            </CommandItem>
+            <CommandItem value="warranties receipts" onSelect={run(() => navigate('/warranties'))}>
+              <ShieldCheckIcon /> Warranties
             </CommandItem>
             <CommandItem
               value="spending calendar heatmap"

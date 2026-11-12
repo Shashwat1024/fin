@@ -603,6 +603,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "const-oid"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be95d4a884358a21a199689323c29e9256b4a1b315e22f183d155422041d3a9a"
+
+[[package]]
 name = "cookie"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -873,6 +879,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2"
 dependencies = [
  "block-buffer 0.12.1",
+ "const-oid",
  "crypto-common 0.2.2",
  "ctutils",
 ]
@@ -1163,7 +1170,7 @@ dependencies = [
 
 [[package]]
 name = "fin"
-version = "2.4.1"
+version = "2.5.0"
 dependencies = [
  "fin-core",
  "serde_json",
@@ -1180,9 +1187,10 @@ dependencies = [
 
 [[package]]
 name = "fin-core"
-version = "2.4.1"
+version = "2.5.0"
 dependencies = [
  "aes-gcm",
+ "base64 0.23.1",
  "chrono",
  "chrono-tz",
  "fancy-regex",
@@ -1192,6 +1200,7 @@ dependencies = [
  "scrypt",
  "serde",
  "serde_json",
+ "sha2 0.11.1",
  "tempfile",
  "thiserror 2.0.21",
  "ulid",

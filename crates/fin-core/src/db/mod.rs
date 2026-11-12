@@ -2,6 +2,7 @@
 //! it is.
 
 pub mod accounts;
+pub mod attachments;
 pub mod audit;
 pub mod backup;
 pub mod calendar;
@@ -20,6 +21,7 @@ pub mod loans;
 pub mod migrate;
 pub mod networth;
 pub mod patterns;
+pub mod people;
 pub mod planning;
 pub mod reminders;
 pub mod review;

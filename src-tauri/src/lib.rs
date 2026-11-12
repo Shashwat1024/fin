@@ -65,7 +65,12 @@ impl Dialogs for NativeDialogs {
         if let Some(answer) = scripted_answer() {
             return answer;
         }
-        let label = if ext == "json" { "JSON" } else { "CSV (spreadsheets)" };
+        let label = match ext {
+            "json" => "JSON",
+            "csv" => "CSV (spreadsheets)",
+            "pdf" => "PDF",
+            _ => "Image",
+        };
         let mut d = self.0.dialog().file().set_title(title).set_file_name(default_name).add_filter(label, &[ext]);
         if let Ok(docs) = self.0.path().document_dir() {
             d = d.set_directory(docs);

@@ -29,6 +29,8 @@ export type Settings = {
   notifyRecurring: boolean
   notifyCardDue: boolean
   notifyLowCash: boolean
+  /** Warranties ending within 30 days (US22). */
+  notifyWarranty: boolean
   /** Remind about a card bill this many days before it is due (1–10). */
   cardDueNoticeDays: number
   /** HH:MM, local time; reminders wait until quiet hours end. */
@@ -56,6 +58,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifyRecurring: true,
   notifyCardDue: true,
   notifyLowCash: true,
+  notifyWarranty: true,
   cardDueNoticeDays: 3,
   quietHoursStart: '22:00',
   quietHoursEnd: '08:00',
@@ -600,7 +603,8 @@ export type SpendingCalendarDto = {
   today: string
 }
 
-export type ReminderKind = 'recurring_due' | 'recurring_overdue' | 'card_due' | 'low_cash' | 'test'
+export type ReminderKind =
+  'recurring_due' | 'recurring_overdue' | 'card_due' | 'low_cash' | 'warranty' | 'test'
 
 export type ReminderDto = {
   key: string
@@ -820,3 +824,67 @@ export type CasFolioDto = {
 }
 
 export type CasPreviewDto = { statementDate: string; totalMinor: number; folios: CasFolioDto[] }
+
+// ---- Shared life (US21) --------------------------------------------------------------------------
+
+export type PersonDto = {
+  id: string
+  name: string
+  archived: boolean
+  /** Positive: they owe you; negative: you owe them. */
+  balanceMinor: number
+  /** "Rahul owes you ₹1,200", "You owe Priya ₹300" or "Settled up". */
+  text: string
+  lastDate: string | null
+}
+
+export type PersonEntryDto = {
+  id: string
+  date: string
+  amountMinor: number
+  kind: 'share' | 'repayment' | 'manual'
+  note: string | null
+  transactionId: string | null
+  payee: string | null
+  transactionMinor: number | null
+}
+
+export type TxnShareDto = {
+  id: string
+  personId: string
+  personName: string
+  amountMinor: number
+  kind: 'share' | 'repayment' | 'manual'
+}
+
+export type RepaymentCandidateDto = {
+  transactionId: string
+  date: string
+  payee: string
+  amountMinor: number
+}
+
+// ---- Receipts and warranties (US22) --------------------------------------------------------------
+
+export type AttachmentDto = {
+  id: string
+  transactionId: string
+  fileName: string
+  mime: string
+  /** Bytes. */
+  size: number
+  warrantyUntil: string | null
+  createdAt: string
+}
+
+export type WarrantyDto = {
+  attachmentId: string
+  fileName: string
+  warrantyUntil: string
+  /** Negative once it has ended. */
+  daysLeft: number
+  transactionId: string
+  payee: string
+  date: string
+  amountMinor: number
+}

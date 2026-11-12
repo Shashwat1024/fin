@@ -185,6 +185,12 @@
   }
 }
 
+/* Toasts stay clickable while a dialog is open (a dialog turns off pointer events on the rest of
+   the page), so "Undo" works after removing something from inside a dialog; the click closes it. */
+[data-sonner-toast] {
+  pointer-events: auto;
+}
+
 /* Printing (the year in review's "Print or save as PDF"): the page only, without the app's frame. */
 @media print {
   aside,

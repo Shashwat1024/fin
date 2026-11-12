@@ -36,6 +36,9 @@ const AUDITED: &[&str] = &[
     "month_reviews",
     "tax_sections",
     "tax_mappings",
+    "people",
+    "shares",
+    "attachments",
 ];
 
 pub type Row = Map<String, Value>;

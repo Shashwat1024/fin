@@ -47,6 +47,8 @@ const SCREENS: {
   { name: 'Settings', key: 'Control+,', ready: (p) => p.getByRole('heading', { name: 'Settings' }) },
   { name: 'Insights', hash: '/insights', ready: (p) => p.getByRole('article').first() },
   { name: 'Calendar', hash: '/insights?tab=calendar', ready: (p) => p.getByTestId('calendar-summary') },
+  { name: 'Warranties', hash: '/warranties', ready: (p) => p.getByText('No warranties yet') },
+  { name: 'People', hash: '/people', ready: (p) => p.getByTestId('person-balance') },
   { name: 'Tax', hash: '/tax', ready: (p) => p.getByRole('region', { name: 'Section 80C', exact: true }) },
   { name: 'Mutual fund import', hash: '/import?tab=cas', ready: (p) => p.getByLabel('Statement (PDF)') },
   { name: 'Year in review', hash: '/year?basis=calendar', ready: (p) => p.getByTestId('year-totals') },
