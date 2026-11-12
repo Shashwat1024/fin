@@ -23,6 +23,7 @@ import { TransactionsPage } from '@renderer/features/transactions/TransactionsPa
 import { MonthReviewPage } from '@renderer/features/review/MonthReviewPage'
 import { YearReviewPage } from '@renderer/features/review/YearReviewPage'
 import { TaxPage } from '@renderer/features/tax/TaxPage'
+import { PeoplePage } from '@renderer/features/people/PeoplePage'
 import { useSettings } from '@renderer/lib/queries'
 
 /** Route content is isolated so a crash in one page can be retried, and clears on navigation. */
@@ -45,6 +46,7 @@ function Routed() {
         <Route path="/review/:month" element={<MonthReviewPage />} />
         <Route path="/year" element={<YearReviewPage />} />
         <Route path="/tax" element={<TaxPage />} />
+        <Route path="/people" element={<PeoplePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<DashboardPage />} />
       </Routes>

@@ -471,3 +471,27 @@ export const casCommitInput = z.object({
     .min(1)
     .max(200),
 })
+
+// ---- Shared life (US21) --------------------------------------------------------------------------
+
+export const personInput = z.object({ name })
+export const personUpdate = z.object({ id, name: name.optional(), archived: z.boolean().optional() })
+const entryNote = z.string().trim().max(300).nullable().optional()
+export const peopleEntryInput = z.object({
+  /** An existing person, or a name (a new person is added unless the name is already listed). */
+  personId: id.optional(),
+  personName: name.optional(),
+  /** A share of this expense; without it, a manual entry. */
+  transactionId: id.optional(),
+  /** Positive: they owe you more; negative: you owe them. */
+  amountMinor: minor.refine((v) => v !== 0, 'Enter an amount'),
+  date: calendarDate.optional(),
+  note: entryNote,
+})
+export const settleInput = z.object({
+  personId: id,
+  transactionId: id.optional(),
+  amountMinor: minor.min(1).optional(),
+  date: calendarDate.optional(),
+  note: entryNote,
+})

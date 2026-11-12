@@ -820,3 +820,42 @@ export type CasFolioDto = {
 }
 
 export type CasPreviewDto = { statementDate: string; totalMinor: number; folios: CasFolioDto[] }
+
+// ---- Shared life (US21) --------------------------------------------------------------------------
+
+export type PersonDto = {
+  id: string
+  name: string
+  archived: boolean
+  /** Positive: they owe you; negative: you owe them. */
+  balanceMinor: number
+  /** "Rahul owes you ₹1,200", "You owe Priya ₹300" or "Settled up". */
+  text: string
+  lastDate: string | null
+}
+
+export type PersonEntryDto = {
+  id: string
+  date: string
+  amountMinor: number
+  kind: 'share' | 'repayment' | 'manual'
+  note: string | null
+  transactionId: string | null
+  payee: string | null
+  transactionMinor: number | null
+}
+
+export type TxnShareDto = {
+  id: string
+  personId: string
+  personName: string
+  amountMinor: number
+  kind: 'share' | 'repayment' | 'manual'
+}
+
+export type RepaymentCandidateDto = {
+  transactionId: string
+  date: string
+  payee: string
+  amountMinor: number
+}

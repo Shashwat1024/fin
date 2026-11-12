@@ -106,6 +106,15 @@ export const inputSchemas = {
   'tax.exportCsv': s.taxExportInput,
   'cas.preview': s.casPreviewInput,
   'cas.commit': s.casCommitInput,
+  'people.list': s.empty,
+  'people.create': s.personInput,
+  'people.update': s.personUpdate,
+  'people.entries': s.idInput,
+  'people.addEntry': s.peopleEntryInput,
+  'people.deleteEntry': s.idInput,
+  'people.forTransaction': s.idInput,
+  'people.repaymentCandidates': s.idInput,
+  'people.settle': s.settleInput,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -217,6 +226,15 @@ export interface Outputs {
   'tax.exportCsv': { path: string } | null
   'cas.preview': t.CasPreviewDto
   'cas.commit': t.Mutation<{ created: number; valued: number }>
+  'people.list': t.PersonDto[]
+  'people.create': t.Mutation<{ person: t.PersonDto }>
+  'people.update': t.Mutation<{ person: t.PersonDto }>
+  'people.entries': t.PersonDto & { entries: t.PersonEntryDto[] }
+  'people.addEntry': t.Mutation<{ person: t.PersonDto }>
+  'people.deleteEntry': t.Mutation<object>
+  'people.forTransaction': t.TxnShareDto[]
+  'people.repaymentCandidates': t.RepaymentCandidateDto[]
+  'people.settle': t.Mutation<{ person: t.PersonDto }>
 }
 
 export type Output<C extends Channel> = Outputs[C]

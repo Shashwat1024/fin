@@ -18,6 +18,7 @@ import { Button } from '@renderer/components/ui/button'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { HealthSummary } from '@renderer/features/insights/HealthSummary'
 import { ReviewPrompt } from '@renderer/features/review/MonthReviewPage'
+import { PeopleBalances } from '@renderer/features/people/PeoplePage'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { TxnDescription } from '@renderer/features/transactions/TxnDescription'
 import { drillHref } from '@renderer/lib/drill'
@@ -156,6 +157,7 @@ export function DashboardPage() {
       </div>
 
       <PlanningCards />
+      <PeopleBalances />
       <div className="mt-6">
         <HealthSummary />
       </div>

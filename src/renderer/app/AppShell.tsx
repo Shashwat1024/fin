@@ -21,6 +21,7 @@ import {
   SunIcon,
   TagsIcon,
   TargetIcon,
+  UsersIcon,
   type LucideIcon,
 } from 'lucide-react'
 import { ShortcutHint } from '@renderer/components/layout'
@@ -49,6 +50,7 @@ const NAV: { to: string; label: string; icon: LucideIcon; combo?: string }[] = [
   { to: '/net-worth', label: 'Net worth', icon: ScaleIcon, combo: 'mod+0' },
   { to: '/insights', label: 'Insights', icon: LightbulbIcon },
   { to: '/tax', label: 'Tax', icon: FileTextIcon },
+  { to: '/people', label: 'People', icon: UsersIcon },
 ]
 const SETTINGS = { to: '/settings', label: 'Settings', icon: SettingsIcon, combo: 'mod+,' }
 

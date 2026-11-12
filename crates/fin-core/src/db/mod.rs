@@ -20,6 +20,7 @@ pub mod loans;
 pub mod migrate;
 pub mod networth;
 pub mod patterns;
+pub mod people;
 pub mod planning;
 pub mod reminders;
 pub mod review;

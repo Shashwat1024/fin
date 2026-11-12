@@ -9,7 +9,8 @@ use std::path::{Path, PathBuf};
 use crate::db::backup::{self as backups, DEFAULT_KDF};
 use crate::db::{
     DbResult, accounts, audit, calendar, cards, cas, categories, categorization, dashboard, deposits, export, forecast,
-    health, imports, loans, networth, patterns, planning, reminders, review, settings, tax, transactions, views, year,
+    health, imports, loans, networth, patterns, people, planning, reminders, review, settings, tax, transactions,
+    views, year,
 };
 use crate::error::{AppError, ErrorCode};
 
@@ -344,6 +345,17 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         "review.year" => {
             (|| year::year_review(db, s(input, "basis"), input.get("year").and_then(Value::as_i64), &today()?))()
         }
+        "people.list" => people::list_people(db).map(Value::Array),
+        "people.create" => people::create_person(db, input),
+        "people.update" => people::update_person(db, input),
+        "people.entries" => people::person_entries(db, s(input, "id")),
+        "people.addEntry" => (|| people::add_entry(db, input, &today()?))(),
+        "people.deleteEntry" => people::delete_entry(db, s(input, "id")),
+        "people.forTransaction" => people::shares_for_transaction(db, s(input, "id")).map(Value::Array),
+        "people.repaymentCandidates" => {
+            (|| people::repayment_candidates(db, s(input, "id"), &today()?).map(Value::Array))()
+        }
+        "people.settle" => (|| people::settle(db, input, &today()?))(),
         "cas.preview" => cas::preview(db, s(input, "text")),
         "cas.commit" => (|| cas::commit(db, input, &today()?))(),
         "tax.year" => (|| tax::tax_year(db, input.get("year").and_then(Value::as_i64), &today()?))(),

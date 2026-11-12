@@ -188,6 +188,19 @@ pub fn seed_demo_data(db: &Db, today: &str) -> DbResult<()> {
                  "amountMinor": 2_100_000, "frequency": "yearly", "anchorDate": d(add_months(&start, 7, None))?, "setAside": true }),
         today,
     )?;
+    // Who owes whom (US21): Rahul's half of a dinner, and the user owing Priya for tickets.
+    if let Some(dinner) = db.query_row(
+        "SELECT id, -amount_minor FROM transactions WHERE payee = 'Toit Brewpub' AND deleted_at IS NULL ORDER BY posted_date DESC LIMIT 1",
+        [],
+        |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)),
+    )? {
+        super::people::add_entry(db, &json!({ "transactionId": dinner.0, "personName": "Rahul", "amountMinor": dinner.1 / 2 }), today)?;
+    }
+    super::people::add_entry(
+        db,
+        &json!({ "personName": "Priya", "amountMinor": -60_000, "note": "Movie tickets" }),
+        today,
+    )?;
     // A saved view (US9) on the sidebar.
     super::views::create_view(db, &json!({ "name": "Food delivery", "query": "q=swiggy&range=last-90-days" }))?;
     let mut patch = serde_json::Map::new();
