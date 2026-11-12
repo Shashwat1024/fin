@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `Fin_2.4.1_x64-setup.exe` (about 3 MB).
+   `Fin_2.5.0_x64-setup.exe` (about 3 MB).
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. Fin uses Microsoft Edge WebView2, which is part of Windows 10 and 11. On the rare machine
@@ -151,3 +151,8 @@ How to validate each feature by hand is in
   count under each and how much counts within its limit, an export for your CA and a printable page
   (no tax is worked out); and **mutual fund statement (CAS) import**, which reads a CAMS or KFintech
   PDF on this computer (its password is never kept) and records each folio's value.
+- ✅ Fin 2.5 (shared life): **who owes whom**, with a People page, "Shared with" on any expense,
+  repayments matched to the money that came in, and open balances on the Overview (your spending
+  still shows what left your accounts); and **receipts and warranties**: photos or PDFs attached to
+  transactions, kept inside your data file so backups include them, with a Warranties list and
+  reminders before a warranty ends.

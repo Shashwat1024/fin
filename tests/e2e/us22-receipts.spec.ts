@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { addDays, todayIn } from '../../src/domain/dates'
@@ -56,8 +56,9 @@ test('US22: attach a receipt, view it, give it a warranty, save a copy, remove w
   const copy = join(fin.dataDir, 'copy.png')
   await fin.answerDialogs(copy)
   await receipts.getByRole('button', { name: 'Save a copy of bill.png' }).click()
-  await expect(toast(page, 'Saved')).toBeVisible()
-  expect(readFileSync(copy).equals(PNG)).toBe(true)
+  // ("Saved" alone would also match the earlier "Warranty date saved" toast.)
+  await expect(toast(page, `Saved ${copy}`)).toBeVisible()
+  await expect.poll(() => existsSync(copy) && readFileSync(copy).equals(PNG)).toBe(true)
   await page.keyboard.press('Escape')
 
   await page.keyboard.press('Control+k')

@@ -15,5 +15,5 @@
 - [x] H203 `us22-receipts.spec.ts`; a11y; backup round trip with an attachment
 
 ## H3: Release 2.5.0
-- [ ] H301 Perf; full e2e on the release build
-- [ ] H302 Docs, version 2.5.0, installer, PR
+- [x] H301 Perf; full e2e on the release build
+- [x] H302 Docs, version 2.5.0, installer, PR

@@ -109,6 +109,14 @@ By hand, with demo data:
 - **CAS**: Import › Mutual funds (CAS) with your own statement PDF: enter its password, choose the
   accounts, Record values; Net worth shows them. Undo from the toast.
 
+### 5g. Shared life (US21–US22, v2.5)
+Automated: `us21-people`, `us22-receipts`. By hand, with demo data:
+- **People**: Ctrl+K › People shows Rahul (half of a dinner) and Priya (money you owe). Open an
+  expense and share it under "Shared with"; on a person's page, link a repayment Fin suggests or
+  record one in cash.
+- **Receipts**: open a transaction, attach a photo or PDF, give it a warranty date; Ctrl+K ›
+  Warranties lists it. Settings › Data shows the space used; back up and restore keeps the file.
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
 request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check

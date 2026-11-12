@@ -183,6 +183,26 @@ buttons, so header actions stay on the right everywhere.
 `5e38230d773355c9109e719909d13fa160a33176b8ba4ca721d5a69c3466efe6`. End to end on the release
 `fin.exe`: **39 passed, 1 skipped** (screenshots); cold start median 1.33 s.
 
+## Release 2.5.0 (shared life)
+
+Who owes whom and receipts with warranties ([007-shared-life](../../007-shared-life/spec.md)).
+Schema v12 (people, shares, attachments); export stays format v1 with additive fields (attachment
+details; the files themselves are in backups).
+
+**Build**: `target\release\bundle\nsis\Fin_2.5.0_x64-setup.exe` (3.36 MB, unsigned) · SHA-256
+`6766bdb8b64b9baa74eb1064958edcda5928ebea69a47123dc5dd83294fd16ff`.
+
+- **End to end** on the release `fin.exe`: **41 passed, 1 skipped** (screenshots), including
+  `us21-people` and `us22-receipts` (run six times in a row on the release build after fixing a test
+  that matched the wrong toast). axe passes on People and Warranties in both themes.
+- **Rust**: clippy clean; 78 unit and database tests, including balances and repayment ranking,
+  shares never exceeding their expense, undo, attachment limits, removal and undo, clearing removed
+  contents, warranty reminders, and a plain and a passphrase-protected backup carrying an attachment.
+- **Fixed on the way**: toasts are clickable while a dialog is open (so Undo works after removing
+  something inside one); a warranty date saves when it is complete, not when focus leaves the field.
+- **Performance, 50,000 transactions** (release): cold start median **1.12 s**; filtering 60–100 ms;
+  Overview requests 140 ms in all.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
