@@ -7,7 +7,7 @@ account to create, no bank login and nothing in the cloud.
 ## Install
 
 1. Build the installer (see [Development](#development)) or use one you were given:
-   `Fin_2.5.0_x64-setup.exe` (about 3 MB).
+   `Fin_2.6.0_x64-setup.exe` (about 3 MB).
 2. Run it. Fin installs for your Windows user only, so no administrator rights are needed, and you
    can choose the folder.
 3. Fin uses Microsoft Edge WebView2, which is part of Windows 10 and 11. On the rare machine
@@ -156,3 +156,8 @@ How to validate each feature by hand is in
   still shows what left your accounts); and **receipts and warranties**: photos or PDFs attached to
   transactions, kept inside your data file so backups include them, with a Warranties list and
   reminders before a warranty ends.
+- ✅ Fin 2.6 (PDF statements): **import PDF statements** as well as CSV. Fin rebuilds the
+  statement's table on this computer, so layouts, duplicates, the balance check and undo work as for
+  CSV. HDFC and ICICI account and credit-card statements are recognised; other banks' PDFs go through
+  column mapping. Protected PDFs ask for their password, which is never kept; scanned PDFs can't be
+  read.

@@ -117,6 +117,12 @@ Automated: `us21-people`, `us22-receipts`. By hand, with demo data:
 - **Receipts**: open a transaction, attach a photo or PDF, give it a warranty date; Ctrl+K ›
   Warranties lists it. Settings › Data shows the space used; back up and restore keeps the file.
 
+### 5h. PDF statements (US23, v2.6)
+Automated: `us23-pdf-import` (HDFC- and ICICI-shaped PDFs made at test time; the ICICI one is
+password protected). By hand: Import › choose your own HDFC or ICICI statement PDF (account or credit
+card). Check that the layout is recognised, the transactions and balance check match the statement,
+and wrapped narrations read as one line. A scanned PDF is explained, not imported.
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
 request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check
