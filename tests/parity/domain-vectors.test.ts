@@ -2,7 +2,7 @@
  * Parity vectors for the Rust port (specs/002-rust-tauri-port): the TypeScript domain is the
  * oracle. This test computes answers for thousands of inputs and checks they match the committed
  * file that `crates/fin-core/tests/domain_vectors.rs` replays against the Rust code.
- * Regenerate with FIN_UPDATE_VECTORS=1 npm test -- tests/parity.
+ * Regenerate with FIN_UPDATE_VECTORS=1 npm run test:parity.
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
