@@ -149,3 +149,19 @@ test('keyboard focus is always visible', async () => {
   }
   expect(missing).toEqual([])
 })
+
+test('the lock screen passes axe in both themes (US24)', async () => {
+  await page.evaluate(`window.fin.invoke('lock.configure', { pin: '4821' })`)
+  for (const theme of ['light', 'dark'] as const) {
+    await page.evaluate(`document.documentElement.classList.toggle('dark', ${theme === 'dark'})`)
+    await page.keyboard.press('Control+l')
+    await expect(page.getByRole('heading', { name: 'Fin is locked' })).toBeVisible()
+    await expect(page.getByLabel('PIN', { exact: true })).toBeFocused()
+    await audit(`Lock screen (${theme})`)
+    await page.getByLabel('PIN', { exact: true }).fill('4821')
+    await page.getByRole('button', { name: 'Unlock' }).click()
+    await expect(page.getByRole('heading', { name: 'Fin is locked' })).toHaveCount(0)
+  }
+  await page.evaluate(`window.fin.invoke('lock.configure', { pin: null })`)
+  await page.evaluate(`document.documentElement.classList.remove('dark')`)
+})

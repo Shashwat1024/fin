@@ -89,14 +89,16 @@ fn ensure_tray(app: &AppHandle) -> tauri::Result<()> {
         return Ok(());
     }
     let open = MenuItem::with_id(app, "open", "Open Fin", true, None::<&str>)?;
+    let lock = MenuItem::with_id(app, "lock", "Lock Fin", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit Fin", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&open, &quit])?;
+    let menu = Menu::with_items(app, &[&open, &lock, &quit])?;
     let mut tray = TrayIconBuilder::with_id(TRAY_ID)
         .tooltip("Fin")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => open_route(app, None),
+            "lock" => crate::lock_now(app),
             "quit" => app.exit(0),
             _ => {}
         })

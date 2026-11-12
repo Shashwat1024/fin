@@ -3,7 +3,7 @@ members = ["crates/fin-core", "src-tauri"]
 resolver = "3"
 
 [workspace.package]
-version = "2.6.0"
+version = "2.7.0"
 edition = "2024"
 rust-version = "1.99"
 publish = false
@@ -24,6 +24,10 @@ getrandom = "0.4.3"
 unicode-normalization = "0.1.26"
 base64 = "0.23.1"
 sha2 = "0.11.1"
+
+# SQLite3 Multiple Ciphers (SQLite with built-in encryption) in place of plain SQLite: vendor/README.md.
+[patch.crates-io]
+libsqlite3-sys = { path = "vendor/libsqlite3-sys" }
 
 # Third-party crates are compiled with optimisation even in debug builds: scrypt (encrypted
 # backups) and SQLite are otherwise far too slow for the end-to-end and performance tests.

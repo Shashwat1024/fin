@@ -1,4 +1,12 @@
-export type ErrorCode = 'VALIDATION' | 'NOT_FOUND' | 'CONFLICT' | 'INVARIANT' | 'IO' | 'INTERNAL'
+export type ErrorCode =
+  | 'VALIDATION'
+  | 'NOT_FOUND'
+  | 'CONFLICT'
+  | 'INVARIANT'
+  | 'IO'
+  | 'INTERNAL'
+  /** The app lock is on (Fin 2.7): only unlocking is answered. */
+  | 'LOCKED'
 
 /** Error with a stable code that crosses the IPC boundary. Messages must not contain financial data. */
 export class AppError extends Error {

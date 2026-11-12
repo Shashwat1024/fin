@@ -123,6 +123,16 @@ password protected). By hand: Import › choose your own HDFC or ICICI statement
 card). Check that the layout is recognised, the transactions and balance check match the statement,
 and wrapped narrations read as one line. A scanned PDF is explained, not imported.
 
+### 5i. App lock and encryption (US24, v2.7)
+Automated: `us24-app-lock` (a fixed test key and Windows Hello stand-in), the lock screen in
+`a11y`, `crates/fin-core/tests/lock_encryption.rs`, and the encrypted performance budgets. By hand,
+on your own Windows account:
+- Settings › Privacy › **Encrypt my data**; quit and reopen Fin (it opens without a password).
+  `%APPDATA%\Fin\fin.db` no longer starts with "SQLite format 3"; `fin.key` is next to it.
+- Set a PIN, turn on **Ask with Windows Hello first**, press Ctrl+L: Windows asks for your face,
+  fingerprint or Windows PIN over Fin's window. The tray menu's **Lock Fin** works too.
+- Make a backup with a passphrase and restore it with `FIN_DATA_DIR` set to an empty folder.
+
 ### 6. Privacy check (Constitution I)
 Run `npm run test:e2e -- --grep offline`: the window's content security policy blocks every
 request that is not Fin's own, the suite asserts zero outbound requests across the core flows, and reads the log file to check

@@ -17,6 +17,7 @@ pub mod export;
 pub mod forecast;
 pub mod health;
 pub mod imports;
+pub mod key;
 pub mod loans;
 pub mod migrate;
 pub mod networth;
@@ -66,19 +67,34 @@ pub struct Db {
 }
 
 impl Db {
+    /// Open (creating if needed) a plain database.
     pub fn open(path: &Path) -> DbResult<Db> {
+        Self::open_with_key(path, None)
+    }
+
+    /// Open a database that may be encrypted (Fin 2.7): `key` unlocks it when it is. A new file
+    /// starts plain.
+    pub fn open_with_key(path: &Path, key: Option<&key::DbKey>) -> DbResult<Db> {
+        let encrypted = !key::is_plain_file(path);
         let conn = Connection::open_with_flags(
             path,
             OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )?;
+        if encrypted {
+            key::apply_key(&conn, key.ok_or_else(key::wrong_key)?)?;
+        }
         conn.pragma_update(None, "journal_mode", "WAL")?;
         Self::configure(conn)
     }
 
     /// A second, read-only connection to a live database (backups while the app keeps working).
-    pub fn open_read_only(path: &Path) -> DbResult<Db> {
+    pub fn open_read_only(path: &Path, key: Option<&key::DbKey>) -> DbResult<Db> {
+        let encrypted = !key::is_plain_file(path);
         let conn =
             Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX)?;
+        if encrypted {
+            key::apply_key(&conn, key.ok_or_else(key::wrong_key)?)?;
+        }
         conn.execute_batch("PRAGMA busy_timeout = 5000;")?;
         Ok(Db { conn, depth: Cell::new(0), accounts_cache: RefCell::new(None) })
     }

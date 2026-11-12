@@ -156,6 +156,11 @@ export function DataSettings() {
                               aria-label="Protected with a passphrase"
                             />
                           )}
+                          {b.keyed && (
+                            <Badge variant="outline" title="Encrypted with this computer's key">
+                              This computer only
+                            </Badge>
+                          )}
                         </span>
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground tabular-nums">

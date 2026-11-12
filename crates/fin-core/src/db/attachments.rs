@@ -219,7 +219,7 @@ mod tests {
             };
             let copy = dir.path().join("check.db");
             std::fs::write(&copy, plain).unwrap();
-            let restored = Db::open_read_only(&copy).unwrap();
+            let restored = Db::open_read_only(&copy, None).unwrap();
             let data: Vec<u8> = restored
                 .query_row("SELECT data FROM attachment_data WHERE id = ?", [&id], |r| r.get(0))
                 .unwrap()

@@ -27,3 +27,12 @@ tauri-winrt-notification = "0.8.1"
 # The same versions wry uses, to reach WebView2 settings Tauri does not expose.
 webview2-com = "0.39.1"
 windows-core = "0.62.2"
+windows-future = "0.3.2"
+# DPAPI for the data key and Windows Hello for the app lock (Fin 2.7).
+windows = { version = "0.62.2", features = [
+  "Foundation",
+  "Security_Credentials_UI",
+  "Win32_Foundation",
+  "Win32_Security_Cryptography",
+  "Win32_System_WinRT",
+] }

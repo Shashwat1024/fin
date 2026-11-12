@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowDownLeftIcon,
@@ -16,6 +17,7 @@ import {
   LayoutDashboardIcon,
   LightbulbIcon,
   LineChartIcon,
+  LockIcon,
   MoonIcon,
   PieChartIcon,
   PlusIcon,
@@ -42,6 +44,7 @@ import {
   CommandShortcut,
 } from '@renderer/components/ui/command'
 import { useAccountDialog } from '@renderer/features/accounts/AccountDialog'
+import { lockNow, useLockStatus } from '@renderer/features/lock/lock'
 import { viewHref } from '@renderer/features/transactions/SavedViews'
 import { useTransactionDialog } from '@renderer/features/transactions/TransactionDialog'
 import { showShortcuts, useHotkey } from '@renderer/lib/hotkeys'
@@ -58,6 +61,8 @@ export function CommandPalette() {
   const { data: views = [] } = useViews()
   const { resolved } = useTheme()
   const settings = useFinMutation('settings.update')
+  const qc = useQueryClient()
+  const lock = useLockStatus()
   useHotkey('mod+k', () => setOpen((o) => !o))
 
   const run = (fn: () => void) => () => {
@@ -175,6 +180,14 @@ export function CommandPalette() {
             <CommandItem onSelect={run(() => navigate('/settings'))}>
               <SettingsIcon /> Settings
             </CommandItem>
+            {lock.data?.enabled && (
+              <CommandItem value="lock fin now" onSelect={run(() => void lockNow(qc).catch(() => undefined))}>
+                <LockIcon /> Lock Fin
+                <CommandShortcut>
+                  <ShortcutHint combo="mod+l" />
+                </CommandShortcut>
+              </CommandItem>
+            )}
           </CommandGroup>
           {views.length > 0 && (
             <CommandGroup heading="Saved views">

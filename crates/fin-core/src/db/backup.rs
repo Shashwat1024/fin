@@ -15,6 +15,7 @@ use rusqlite::{Connection, OpenFlags};
 use serde_json::{Value, json};
 use unicode_normalization::UnicodeNormalization;
 
+use super::key::{self, DbKey};
 use super::migrate::LATEST_SCHEMA_VERSION;
 use super::{APP_ID, Db, DbResult};
 use crate::error::{AppError, ErrorCode};
@@ -173,6 +174,8 @@ fn info(path: &Path) -> Option<Value> {
         "createdAt": created,
         "kind": kind,
         "encrypted": encrypted,
+        // Encrypted with this computer's data key (Fin 2.7): restores only on this Windows account.
+        "keyed": !encrypted && key::may_be_encrypted(path),
     }))
 }
 
@@ -206,8 +209,10 @@ fn io_err(message: &str) -> AppError {
     AppError::new(ErrorCode::Io, message)
 }
 
-/// A consistent copy of the live database (VACUUM INTO), optionally encrypted. Written under a
-/// temporary name and renamed, so a half-written file never looks like a backup.
+/// A consistent copy of the live database (VACUUM INTO), optionally sealed with a passphrase. Written
+/// under a temporary name and renamed, so a half-written file never looks like a backup. Without a
+/// passphrase the copy is encrypted exactly like the live database (with this computer's key, or
+/// not at all); with one it is made from a plain copy, so it restores on any computer.
 pub fn create_backup(db: &Db, dir: &Path, kind: &str, passphrase: Option<&str>, kdf: Kdf) -> DbResult<Value> {
     fs::create_dir_all(dir).map_err(|_| io_err("Fin cannot write to that folder. Choose another one."))?;
     let final_path = free_name(dir, &local_stamp(), kind, if passphrase.is_some() { "finbackup" } else { "db" });
@@ -216,7 +221,7 @@ pub fn create_backup(db: &Db, dir: &Path, kind: &str, passphrase: Option<&str>, 
         match passphrase {
             Some(pass) => {
                 let plain = PathBuf::from(format!("{}.plain.tmp", final_path.display()));
-                db.run("VACUUM INTO ?", [plain.to_string_lossy().as_ref()])?;
+                key::copy_to(&db.conn, &plain, None)?;
                 let bytes = fs::read(&plain);
                 let _ = fs::remove_file(&plain);
                 let bytes = bytes.map_err(|_| io_err("Fin could not read the backup it just made."))?;
@@ -275,8 +280,9 @@ pub fn count_data(db: &Db) -> DbResult<Value> {
 }
 
 /// Copy (or decrypt) a backup into `work_dir` and check it is a healthy Fin database this app
-/// can open. The returned file is what a restore puts in place; callers delete it when done.
-pub fn prepare_backup(path: &Path, passphrase: Option<&str>, work_dir: &Path) -> Prepared {
+/// can open (with `key` when it is encrypted for this computer). The returned file is what a
+/// restore puts in place; callers delete it when done.
+pub fn prepare_backup(path: &Path, passphrase: Option<&str>, work_dir: &Path, key: Option<&DbKey>) -> Prepared {
     if !path.is_file() {
         return fail("NOT_FOUND", "The backup file could not be found.");
     }
@@ -306,16 +312,23 @@ pub fn prepare_backup(path: &Path, passphrase: Option<&str>, work_dir: &Path) ->
     } else if fs::write(&file, &raw).is_err() {
         return fail("DAMAGED", "The backup file is damaged.");
     }
-    let result = check_candidate(&file, encrypted);
+    let result = check_candidate(&file, encrypted, key);
     if result.file.is_none() {
         let _ = fs::remove_file(&file);
     }
     result
 }
 
-fn check_candidate(file: &Path, encrypted: bool) -> Prepared {
+fn check_candidate(file: &Path, encrypted: bool, key: Option<&DbKey>) -> Prepared {
+    let keyed = key::may_be_encrypted(file);
     let checked = (|| -> Result<Prepared, rusqlite::Error> {
         let probe = Connection::open_with_flags(file, OpenFlags::SQLITE_OPEN_READ_WRITE)?;
+        if keyed && key.is_none_or(|k| key::apply_key(&probe, k).is_err()) {
+            return Ok(fail(
+                "OTHER_COMPUTER",
+                "This backup is encrypted for Fin on another computer or Windows account. Restore a passphrase backup instead.",
+            ));
+        }
         let app_id: i64 = probe.query_row("PRAGMA application_id", [], |r| r.get(0))?;
         if app_id != APP_ID {
             return Ok(fail("NOT_FIN", "This file is not a Fin backup."));
@@ -339,6 +352,7 @@ fn check_candidate(file: &Path, encrypted: bool) -> Prepared {
             inspection: json!({
                 "valid": true,
                 "encrypted": encrypted,
+                "keyed": keyed,
                 "schemaVersion": schema_version,
                 "needsUpgrade": schema_version < LATEST_SCHEMA_VERSION,
                 "counts": counts,
@@ -350,8 +364,8 @@ fn check_candidate(file: &Path, encrypted: bool) -> Prepared {
 }
 
 /// Check a backup without changing anything.
-pub fn inspect_backup(path: &Path, passphrase: Option<&str>, work_dir: &Path) -> Value {
-    let p = prepare_backup(path, passphrase, work_dir);
+pub fn inspect_backup(path: &Path, passphrase: Option<&str>, work_dir: &Path, key: Option<&DbKey>) -> Value {
+    let p = prepare_backup(path, passphrase, work_dir, key);
     if let Some(f) = &p.file {
         let _ = fs::remove_file(f);
     }

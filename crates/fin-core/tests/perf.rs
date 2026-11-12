@@ -6,6 +6,7 @@
 use std::time::Instant;
 
 use fin_core::app::{App, AppPaths, PresetDialogs};
+use fin_core::db::key::DbKey;
 use fin_core::dispatch::dispatch;
 use serde_json::{Value, json};
 
@@ -28,13 +29,37 @@ fn median_ms(app: &mut App, channel: &str, input: Value, runs: usize) -> u128 {
 #[test]
 #[ignore = "timing: run with npm run test:perf (release build)"]
 fn fifty_thousand_transactions_stay_fast() {
-    // SAFETY: set before anything reads the clock; this test runs alone in its own process.
+    budgets(false);
+}
+
+/// The same budgets with the data file encrypted (Fin 2.7, SC-025), reopened with its key.
+#[test]
+#[ignore = "timing: run with npm run test:perf (release build)"]
+fn fifty_thousand_encrypted_transactions_stay_fast() {
+    budgets(true);
+}
+
+fn budgets(encrypted: bool) {
+    // SAFETY: set before anything reads the clock; each test sets the same value.
     unsafe { std::env::set_var("FIN_FAKE_NOW", format!("{TODAY}T06:30:00Z")) };
     let dir = tempfile::tempdir().unwrap();
-    let mut app = App::open(AppPaths::in_dir(dir.path()), Box::new(PresetDialogs::default())).unwrap();
+    let key = DbKey::generate();
+    let open = || {
+        App::open_with_key(AppPaths::in_dir(dir.path()), Box::new(PresetDialogs::default()), Some(key.clone())).unwrap()
+    };
+    let mut app = open();
     let n = fin_core::db::seed_perf::seed_perf_data(app.db(), TODAY, 50_000).unwrap();
     assert!(n >= 50_000);
     app.db().exec("PRAGMA optimize").unwrap();
+    if encrypted {
+        app.set_encryption(true).unwrap();
+        app.close();
+        let started = Instant::now();
+        app = open();
+        println!("open encrypted: {} ms", started.elapsed().as_millis());
+        assert!(app.is_encrypted());
+    }
+    println!("{}", if encrypted { "-- encrypted --" } else { "-- plain --" });
     let cats = dispatch(&mut app, "categories.list", None);
     let food = cats["data"].as_array().unwrap().iter().find(|c| c["path"] == "Food").unwrap()["id"].clone();
     let accounts = dispatch(&mut app, "accounts.list", None);
