@@ -1,9 +1,10 @@
 import { useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FileTextIcon, LockIcon } from 'lucide-react'
+import { FileTextIcon } from 'lucide-react'
 import { formatDate } from '@domain/dates'
 import { FormField } from '@renderer/components/layout'
 import { MoneyText } from '@renderer/components/MoneyText'
+import { PdfPasswordForm, type PasswordAsk } from '@renderer/components/PdfPasswordForm'
 import { Alert, AlertDescription, AlertTitle } from '@renderer/components/ui/alert'
 import { Button } from '@renderer/components/ui/button'
 import {
@@ -22,49 +23,6 @@ import type { CasFolioDto, CasPreviewDto } from '@shared/types'
 
 const NEW = 'new'
 const SKIP = 'skip'
-
-type Ask = { retry: boolean; resolve: (password: string | null) => void }
-
-function PasswordForm({ ask }: { ask: Ask }) {
-  const id = useId()
-  const [password, setPassword] = useState('')
-  return (
-    <form
-      className="flex flex-col gap-3 rounded-lg border p-4"
-      onSubmit={(e) => {
-        e.preventDefault()
-        ask.resolve(password)
-      }}
-    >
-      <p className="flex items-center gap-2 text-sm font-medium">
-        <LockIcon className="size-4" aria-hidden /> This statement is protected
-      </p>
-      <FormField
-        label="Statement password"
-        htmlFor={id}
-        error={ask.retry ? 'That password did not open it. Try again.' : undefined}
-        description="The password you chose when you asked for the statement. Fin uses it only to open the file and does not keep it."
-      >
-        <Input
-          id={id}
-          type="password"
-          autoFocus
-          autoComplete="off"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </FormField>
-      <div className="flex gap-2">
-        <Button type="submit" disabled={!password}>
-          Open
-        </Button>
-        <Button type="button" variant="outline" onClick={() => ask.resolve(null)}>
-          Cancel
-        </Button>
-      </div>
-    </form>
-  )
-}
 
 function FolioRow({
   f,
@@ -116,7 +74,7 @@ function FolioRow({
 /** Import › Mutual funds (US20): values from a CAS statement, read inside Fin. */
 export function CasImport() {
   const fileId = useId()
-  const [ask, setAsk] = useState<Ask | null>(null)
+  const [ask, setAsk] = useState<PasswordAsk | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<CasPreviewDto | null>(null)
@@ -184,7 +142,7 @@ export function CasImport() {
               }}
             />
           </FormField>
-          {ask && <PasswordForm key={String(ask.retry)} ask={ask} />}
+          {ask && <PdfPasswordForm key={String(ask.retry)} ask={ask} />}
           {busy && !ask && (
             <p role="status" className="text-sm text-muted-foreground">
               Reading the statement…

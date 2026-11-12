@@ -23,6 +23,9 @@ export type Mapping = {
   }
   /** Flip signs, e.g. card exports where purchases are positive. */
   signInverted?: boolean | undefined
+  /** For a single amount column: an amount without "Cr" or "Dr" is money out (card statements that
+   *  mark only credits, like HDFC's). */
+  unmarkedDebit?: boolean | undefined
 }
 
 export type ParsedValues = {
@@ -99,7 +102,10 @@ export function applyMapping(
     let amount: number | null | 'invalid'
     let error: { code: RowErrorCode; message: string } | null = null
     if (m.amountMode === 'single') {
-      amount = cellAmount(cell(raw, idx.amount))
+      const text = cell(raw, idx.amount)
+      amount = cellAmount(text)
+      if (m.unmarkedDebit && typeof amount === 'number' && !/\b(cr|dr)\.?\s*$/i.test(text.trim()))
+        amount = -Math.abs(amount)
     } else if (m.amountMode === 'debit_credit') {
       const debit = cellAmount(cell(raw, idx.debit))
       const credit = cellAmount(cell(raw, idx.credit))

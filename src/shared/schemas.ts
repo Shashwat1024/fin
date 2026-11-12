@@ -172,6 +172,7 @@ export const mappingSchema = z.object({
     reference: z.string().max(200).optional(),
   }),
   signInverted: z.boolean().optional(),
+  unmarkedDebit: z.boolean().optional(),
 })
 
 const rawCells = z.array(z.string().max(2000)).max(100)

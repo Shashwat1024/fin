@@ -203,6 +203,24 @@ details; the files themselves are in backups).
 - **Performance, 50,000 transactions** (release): cold start median **1.12 s**; filtering 60–100 ms;
   Overview requests 140 ms in all.
 
+## Release 2.6.0 (PDF statements)
+
+PDF bank and card statements import through the CSV wizard
+([008-pdf-statements](../../008-pdf-statements/spec.md)). No schema change; saved layouts gain an
+optional `unmarkedDebit`.
+
+**Build**: `target\release\bundle\nsis\Fin_2.6.0_x64-setup.exe` (3.37 MB, unsigned) · SHA-256
+`6b89709fb6f00f59fd7dc102d4ae6e8f17852eb1273c0fe849684a9de20bfb4a`.
+
+- **End to end** on the release `fin.exe`: **43 passed, 1 skipped** (screenshots), including
+  `us23-pdf-import` (a two-page HDFC statement with a wrapped narration, a password-protected ICICI
+  statement, re-import duplicates, a scanned PDF and undo), run five more times in a row.
+- **Unit**: 165 tests, including the PDF table rebuild (HDFC, ICICI, card amounts, scanned) and the
+  HDFC and ICICI card layouts. **Rust**: clippy clean; 85 tests; contract vectors regenerated and
+  replayed.
+- **Performance, 50,000 transactions** (release): cold start median **1.23 s**; pdf.js loads only
+  when a PDF is opened.
+
 ## Not covered: needs a person
 
 - [ ] **Run the installer itself** on a clean Windows user. Check the install folder choice, the Start
@@ -214,6 +232,8 @@ details; the files themselves are in backups).
   starts Fin in the tray (and turning it off removes it from Windows' start-up apps).
 - [ ] **A real CAS** (2.4): import your own CAMS or KFintech statement and compare the values with
   it. The parser is tested on synthetic text in their wording, not on real statements.
+- [ ] **A real PDF statement** (2.6): import your own HDFC and ICICI statements (account and card)
+  and compare with the PDF. The layouts are tuned on synthetic files in their shape.
 - [ ] **SmartScreen.** The installer is not code-signed, so Windows shows "unknown publisher".
   Signing needs a certificate.
 - [x] **App icon.** Added in 1.1.1 (`build/icon.ico`).
