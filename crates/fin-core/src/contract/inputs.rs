@@ -173,6 +173,7 @@ fn mapping_schema() -> Schema {
             ]),
         ),
         ("signInverted", boolean().optional()),
+        ("unmarkedDebit", boolean().optional()),
     ])
 }
 

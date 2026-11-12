@@ -16,13 +16,16 @@ use crate::domain::import::fingerprint::{fingerprint_key, is_possible_duplicate,
 use crate::error::AppError;
 use crate::row;
 
-/// Built-in layouts for common Indian bank CSV exports, in the order the interface lists them.
+/// Built-in layouts for common Indian bank and card statements (CSV or PDF), in the order the
+/// interface lists them. Kept in step with `src/domain/import/presets.ts`.
 const BUILTIN_PRESETS: &str = r#"[
   {"id":"builtin:hdfc","name":"HDFC Bank — savings/current","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"debit_credit","columns":{"date":"Date","description":"Narration","debit":"Withdrawal Amt.","credit":"Deposit Amt.","balance":"Closing Balance","reference":"Chq./Ref.No."}}},
   {"id":"builtin:icici","name":"ICICI Bank — savings/current","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"debit_credit","columns":{"date":"Transaction Date","description":"Transaction Remarks","debit":"Withdrawal Amount (INR )","credit":"Deposit Amount (INR )","balance":"Balance (INR )","reference":"Cheque Number"}}},
   {"id":"builtin:sbi","name":"State Bank of India — savings","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"debit_credit","columns":{"date":"Txn Date","description":"Description","debit":"Debit","credit":"Credit","balance":"Balance","reference":"Ref No./Cheque No."}}},
   {"id":"builtin:axis","name":"Axis Bank — savings","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"debit_credit","columns":{"date":"Tran Date","description":"PARTICULARS","debit":"DR","credit":"CR","balance":"BAL","reference":"CHQNO"}}},
   {"id":"builtin:kotak","name":"Kotak Mahindra Bank — savings","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"indicator","columns":{"date":"Date","description":"Description","amount":"Amount","indicator":"Dr / Cr","balance":"Balance","reference":"Chq / Ref number"}}},
+  {"id":"builtin:hdfc-card","name":"HDFC Bank credit card — statement","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"single","unmarkedDebit":true,"columns":{"date":"Date","description":"Transaction Description","amount":"Amount (in Rs.)"}}},
+  {"id":"builtin:icici-card","name":"ICICI Bank credit card — statement","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"single","unmarkedDebit":true,"columns":{"date":"Date","description":"Transaction Details","amount":"Amount (in ₹)"}}},
   {"id":"builtin:card","name":"Credit card — purchases positive","builtin":true,"mapping":{"dateOrder":"dmy","amountMode":"single","signInverted":true,"columns":{"date":"Date","description":"Description","amount":"Amount"}}}
 ]"#;
 

@@ -94,6 +94,28 @@ export const BUILTIN_PRESETS: readonly Preset[] = [
     },
   },
   {
+    id: 'builtin:hdfc-card',
+    name: 'HDFC Bank credit card — statement',
+    builtin: true,
+    mapping: {
+      dateOrder: 'dmy',
+      amountMode: 'single',
+      unmarkedDebit: true,
+      columns: { date: 'Date', description: 'Transaction Description', amount: 'Amount (in Rs.)' },
+    },
+  },
+  {
+    id: 'builtin:icici-card',
+    name: 'ICICI Bank credit card — statement',
+    builtin: true,
+    mapping: {
+      dateOrder: 'dmy',
+      amountMode: 'single',
+      unmarkedDebit: true,
+      columns: { date: 'Date', description: 'Transaction Details', amount: 'Amount (in ₹)' },
+    },
+  },
+  {
     id: 'builtin:card',
     name: 'Credit card — purchases positive',
     builtin: true,

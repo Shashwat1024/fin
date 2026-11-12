@@ -127,6 +127,30 @@ describe('mapping with built-in presets', () => {
     expect(ok(kotak.result.rows).map((v) => v.amountMinor)).toEqual([-105_000, 2_500])
   })
 
+  it('HDFC card statements mark only credits: unmarked amounts are money out', () => {
+    const rows = [
+      ['Date', 'Transaction Description', 'Reward Points', 'Amount (in Rs.)'],
+      ['04/10/2026', 'AMAZON PAY INDIA', '12', '1,299.00'],
+      ['09/10/2026', 'NETBANKING TRANSFER', '', '5,000.00 Cr'],
+    ]
+    const preset = matchPreset(rows[0]!, BUILTIN_PRESETS)
+    expect(preset?.id).toBe('builtin:hdfc-card')
+    const r = applyMapping(rows, { ...preset!.mapping, headerRow: 0 })
+    expect(ok(r.rows).map((v) => v.amountMinor)).toEqual([-129_900, 500_000])
+  })
+
+  it('ICICI card statements carry Dr or Cr on each amount', () => {
+    const rows = [
+      ['Date', 'SerNo.', 'Transaction Details', 'Reward Points', 'Intl.# amount', 'Amount (in ₹)'],
+      ['04/10/2026', '1001', 'SWIGGY BANGALORE IN', '4', '', '640.00 Dr'],
+      ['09/10/2026', '1002', 'BBPS PAYMENT RECEIVED', '0', '', '12,000.00 Cr'],
+    ]
+    const preset = matchPreset(rows[0]!, BUILTIN_PRESETS)
+    expect(preset?.id).toBe('builtin:icici-card')
+    const r = applyMapping(rows, { ...preset!.mapping, headerRow: 0 })
+    expect(ok(r.rows).map((v) => v.amountMinor)).toEqual([-64_000, 1_200_000])
+  })
+
   it('credit card: purchases positive are inverted', () => {
     const card = importFile('card_statement.csv')
     expect(card.preset?.id).toBe('builtin:card')

@@ -1,10 +1,9 @@
 import { createHash } from 'node:crypto'
 
 /**
- * A small one-page PDF of text lines, optionally protected with a user password (PDF standard
- * security handler, revision 2: RC4 with a 40-bit key). For tests only: it lets the CAS import be
- * exercised with a password-protected file made from synthetic text, so no real statement is ever
- * committed.
+ * Small PDFs of synthetic text, optionally protected with a user password (PDF standard security
+ * handler, revision 2: RC4 with a 40-bit key). For tests only: they let the CAS and statement imports
+ * be exercised with password-protected files, so no real statement is ever committed.
  */
 const PAD = Buffer.from('28bf4e5e4e758a4164004e56fffa01082e2e00b6d0683e802f0ca9fe6453697a', 'hex')
 
@@ -28,14 +27,43 @@ const md5 = (...parts: Buffer[]) => createHash('md5').update(Buffer.concat(parts
 const padded = (password: string) => Buffer.concat([Buffer.from(password, 'latin1'), PAD]).subarray(0, 32)
 const escapePdf = (s: string) => s.replace(/[\\()]/g, (c) => `\\${c}`)
 
+/** Text placed on a page at (x, y) in points; y grows upwards from the bottom of an A4 page. */
+export type Placed = { x: number; y: number; text: string }
+
+/** Approximate width of Helvetica text at 8 points, for right-aligning amounts in tests. */
+export function textWidth(text: string): number {
+  let em = 0
+  for (const c of text)
+    em += /[0-9]/.test(c) ? 0.556 : /[.,: ]/.test(c) ? 0.278 : /[A-Z]/.test(c) ? 0.667 : 0.5
+  return em * 8
+}
+
+/** A one-page PDF of text lines from the top left. */
 export function makePdf(lines: string[], password?: string): Buffer {
-  const content = Buffer.from(
-    ['BT', '/F1 8 Tf', '30 810 Td', ...lines.flatMap((l) => [`(${escapePdf(l)}) Tj`, '0 -11 Td']), 'ET'].join(
-      '\n',
+  return makePdfPages([lines.map((text, i) => ({ x: 30, y: 810 - 11 * i, text }))], password)
+}
+
+/** A PDF with each page's text placed where given. */
+export function makePdfPages(pages: Placed[][], password?: string): Buffer {
+  const contents = pages.map((items) =>
+    Buffer.from(
+      [
+        'BT',
+        '/F1 8 Tf',
+        ...items.map((t) => `1 0 0 1 ${t.x} ${t.y} Tm (${escapePdf(t.text)}) Tj`),
+        'ET',
+      ].join('\n'),
+      'latin1',
     ),
-    'latin1',
   )
-  const id = md5(Buffer.from(lines.join('|')))
+  const id = md5(
+    Buffer.from(
+      pages
+        .flat()
+        .map((t) => t.text)
+        .join('|'),
+    ),
+  )
   const permissions = -44
   let fileKey: Buffer | null = null
   let encryptDict = ''
@@ -51,22 +79,31 @@ export function makePdf(lines: string[], password?: string): Buffer {
     const ref = Buffer.from([n & 255, (n >> 8) & 255, (n >> 16) & 255, 0, 0])
     return md5(fileKey!, ref).subarray(0, 10)
   }
-  const stream = fileKey ? rc4(objectKey(4), content) : content
 
+  // Objects: 1 catalog, 2 page tree, 3 font, then a page and its contents for each page.
+  const pageObj = (i: number) => 4 + i * 2
   const objects: Buffer[] = [
     Buffer.from('<< /Type /Catalog /Pages 2 0 R >>'),
-    Buffer.from('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'),
     Buffer.from(
-      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+      `<< /Type /Pages /Kids [${pages.map((_, i) => `${pageObj(i)} 0 R`).join(' ')}] /Count ${pages.length} >>`,
     ),
-    Buffer.concat([
-      Buffer.from(`<< /Length ${stream.length} >>\nstream\n`),
-      stream,
-      Buffer.from('\nendstream'),
-    ]),
     Buffer.from('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),
-    ...(encryptDict ? [Buffer.from(encryptDict)] : []),
   ]
+  contents.forEach((content, i) => {
+    const contentObj = pageObj(i) + 1
+    const stream = fileKey ? rc4(objectKey(contentObj), content) : content
+    objects.push(
+      Buffer.from(
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentObj} 0 R >>`,
+      ),
+      Buffer.concat([
+        Buffer.from(`<< /Length ${stream.length} >>\nstream\n`),
+        stream,
+        Buffer.from('\nendstream'),
+      ]),
+    )
+  })
+  if (encryptDict) objects.push(Buffer.from(encryptDict))
   const chunks: Buffer[] = [Buffer.from('%PDF-1.4\n')]
   const offsets: number[] = []
   let length = chunks[0]!.length
