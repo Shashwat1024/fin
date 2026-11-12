@@ -38,6 +38,7 @@ const AUDITED: &[&str] = &[
     "tax_mappings",
     "people",
     "shares",
+    "attachments",
 ];
 
 pub type Row = Map<String, Value>;

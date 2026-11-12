@@ -40,6 +40,7 @@ export const settingsPatch = z.object({
   notifyRecurring: z.boolean().optional(),
   notifyCardDue: z.boolean().optional(),
   notifyLowCash: z.boolean().optional(),
+  notifyWarranty: z.boolean().optional(),
   cardDueNoticeDays: z.number().int().min(1).max(10).optional(),
   quietHoursStart: timeOfDay.optional(),
   quietHoursEnd: timeOfDay.optional(),
@@ -495,3 +496,16 @@ export const settleInput = z.object({
   date: calendarDate.optional(),
   note: entryNote,
 })
+
+// ---- Receipts and warranties (US22) --------------------------------------------------------------
+
+export const attachmentsListInput = z.object({ transactionId: id })
+export const attachmentAddInput = z.object({
+  transactionId: id,
+  fileName: z.string().trim().min(1).max(255),
+  mime: z.string().max(100),
+  /** Up to 10 MB of file, as base64. */
+  dataBase64: z.string().min(1).max(14_000_000),
+  warrantyUntil: calendarDate.nullable().optional(),
+})
+export const attachmentUpdateInput = z.object({ id, warrantyUntil: calendarDate.nullable() })

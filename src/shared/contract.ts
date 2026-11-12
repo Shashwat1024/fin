@@ -115,6 +115,14 @@ export const inputSchemas = {
   'people.forTransaction': s.idInput,
   'people.repaymentCandidates': s.idInput,
   'people.settle': s.settleInput,
+  'attachments.list': s.attachmentsListInput,
+  'attachments.add': s.attachmentAddInput,
+  'attachments.get': s.idInput,
+  'attachments.update': s.attachmentUpdateInput,
+  'attachments.remove': s.idInput,
+  'attachments.save': s.idInput,
+  'attachments.usage': s.empty,
+  'warranties.list': s.empty,
 } as const
 
 export type Channel = keyof typeof inputSchemas
@@ -235,6 +243,14 @@ export interface Outputs {
   'people.forTransaction': t.TxnShareDto[]
   'people.repaymentCandidates': t.RepaymentCandidateDto[]
   'people.settle': t.Mutation<{ person: t.PersonDto }>
+  'attachments.list': t.AttachmentDto[]
+  'attachments.add': t.Mutation<{ attachment: t.AttachmentDto }>
+  'attachments.get': { fileName: string; mime: string; dataBase64: string }
+  'attachments.update': t.Mutation<{ attachment: t.AttachmentDto }>
+  'attachments.remove': t.Mutation<object>
+  'attachments.save': { path: string } | null
+  'attachments.usage': { count: number; bytes: number }
+  'warranties.list': t.WarrantyDto[]
 }
 
 export type Output<C extends Channel> = Outputs[C]

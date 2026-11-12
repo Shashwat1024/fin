@@ -22,6 +22,7 @@ pub fn defaults() -> Map<String, Value> {
         ("notifyRecurring", json!(true)),
         ("notifyCardDue", json!(true)),
         ("notifyLowCash", json!(true)),
+        ("notifyWarranty", json!(true)),
         ("cardDueNoticeDays", json!(3)),
         ("quietHoursStart", json!("22:00")),
         ("quietHoursEnd", json!("08:00")),

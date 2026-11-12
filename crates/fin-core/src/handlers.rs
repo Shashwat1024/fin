@@ -8,9 +8,9 @@ use std::path::{Path, PathBuf};
 
 use crate::db::backup::{self as backups, DEFAULT_KDF};
 use crate::db::{
-    DbResult, accounts, audit, calendar, cards, cas, categories, categorization, dashboard, deposits, export, forecast,
-    health, imports, loans, networth, patterns, people, planning, reminders, review, settings, tax, transactions,
-    views, year,
+    DbResult, accounts, attachments, audit, calendar, cards, cas, categories, categorization, dashboard, deposits,
+    export, forecast, health, imports, loans, networth, patterns, people, planning, reminders, review, settings, tax,
+    transactions, views, year,
 };
 use crate::error::{AppError, ErrorCode};
 
@@ -171,6 +171,21 @@ fn handle_files(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<
             let today = settings::today(app.db())?;
             std::fs::write(&path, crate::db::tax::tax_csv(app.db(), year, &today)?)
                 .map_err(|_| io("Fin could not write the export file."))?;
+            Ok(json!({ "path": path_str(&path) }))
+        })(),
+        "attachments.save" => (|| {
+            let (name, mime, data) = crate::db::attachments::contents(app.db(), s(input, "id"))?;
+            let ext = match mime.as_str() {
+                "application/pdf" => "pdf",
+                "image/jpeg" => "jpg",
+                "image/webp" => "webp",
+                "image/gif" => "gif",
+                _ => "png",
+            };
+            let Some(path) = app.dialogs.choose_save_path("Save a copy", &name, ext) else {
+                return Ok(Value::Null);
+            };
+            std::fs::write(&path, data).map_err(|_| io("Fin could not write the file."))?;
             Ok(json!({ "path": path_str(&path) }))
         })(),
         "export.csv" => (|| {
@@ -345,6 +360,13 @@ pub fn handle(app: &mut App, channel: &str, input: &Value) -> Option<DbResult<Va
         "review.year" => {
             (|| year::year_review(db, s(input, "basis"), input.get("year").and_then(Value::as_i64), &today()?))()
         }
+        "attachments.list" => attachments::list(db, s(input, "transactionId")).map(Value::Array),
+        "attachments.add" => attachments::add(db, input),
+        "attachments.get" => attachments::get_data(db, s(input, "id")),
+        "attachments.update" => attachments::update(db, input),
+        "attachments.remove" => attachments::remove(db, s(input, "id")),
+        "attachments.usage" => attachments::usage(db),
+        "warranties.list" => (|| attachments::warranties(db, &today()?).map(Value::Array))(),
         "people.list" => people::list_people(db).map(Value::Array),
         "people.create" => people::create_person(db, input),
         "people.update" => people::update_person(db, input),

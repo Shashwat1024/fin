@@ -158,6 +158,11 @@ impl App {
         if learned > 0 {
             log::info("db.merchants_backfilled", &[("count", Ctx::Num(learned as i64))]);
         }
+        // Contents of attachments removed in an earlier session (US22).
+        let purged = crate::db::attachments::purge_orphans(&db)?;
+        if purged > 0 {
+            log::info("attachments.purged", &[("count", Ctx::Num(purged as i64))]);
+        }
         Ok(db)
     }
 

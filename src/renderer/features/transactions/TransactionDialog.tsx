@@ -36,6 +36,7 @@ import {
   useTransaction,
 } from '@renderer/lib/queries'
 import type { TxnDetail } from '@shared/types'
+import { Receipts } from '@renderer/features/attachments/Receipts'
 import { SharedWith } from '@renderer/features/people/SharedWith'
 import { newSplitRow, SplitEditor, splitAllocated, type SplitRow } from './SplitEditor'
 
@@ -448,6 +449,7 @@ function TransactionForm({
         {editing && detail && detail.kind === 'standard' && detail.amountMinor < 0 && (
           <SharedWith txnId={detail.id} totalMinor={-detail.amountMinor} />
         )}
+        {editing && detail && <Receipts txnId={detail.id} />}
       </FieldGroup>
 
       <DialogFooter className="mt-6 items-center sm:justify-between">

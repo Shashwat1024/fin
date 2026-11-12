@@ -23,6 +23,7 @@ import {
   RepeatIcon,
   ScaleIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   TagsIcon,
   TargetIcon,
   WandSparklesIcon,
@@ -155,6 +156,9 @@ export function CommandPalette() {
             </CommandItem>
             <CommandItem value="people who owes whom split" onSelect={run(() => navigate('/people'))}>
               <UsersIcon /> People (who owes whom)
+            </CommandItem>
+            <CommandItem value="warranties receipts" onSelect={run(() => navigate('/warranties'))}>
+              <ShieldCheckIcon /> Warranties
             </CommandItem>
             <CommandItem
               value="spending calendar heatmap"

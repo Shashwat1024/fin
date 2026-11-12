@@ -11,7 +11,7 @@ use super::settings::get_settings;
 use super::{Db, DbResult, now_iso};
 use crate::domain::dates::{add_days, time_in, today_in};
 use crate::domain::reminders::{
-    CardBill, LowCash, OVERDUE_REMIND_DAYS, Payment, Reminder, ReminderInput, ReminderSettings, due_reminders,
+    CardBill, LowCash, OVERDUE_REMIND_DAYS, Payment, Reminder, ReminderInput, ReminderSettings, Warranty, due_reminders,
 };
 
 fn st(v: &Value, k: &str) -> String {
@@ -25,6 +25,7 @@ fn settings_of(s: &Map<String, Value>) -> ReminderSettings {
         recurring: flag("notifyRecurring"),
         card_due: flag("notifyCardDue"),
         low_cash: flag("notifyLowCash"),
+        warranty: flag("notifyWarranty"),
         card_notice_days: s.get("cardDueNoticeDays").and_then(Value::as_i64).unwrap_or(3),
         quiet_start: text("quietHoursStart", "22:00"),
         quiet_end: text("quietHoursEnd", "08:00"),
@@ -78,6 +79,18 @@ fn compute(db: &Db, today: &str, time: &str, settings: &ReminderSettings) -> DbR
     } else {
         None
     };
+    let warranties: Vec<Warranty> = if settings.warranty {
+        super::attachments::warranties(db, today)?
+            .iter()
+            .map(|w| Warranty {
+                attachment_id: st(w, "attachmentId"),
+                name: w["payee"].as_str().filter(|p| !p.is_empty()).map_or_else(|| st(w, "fileName"), str::to_owned),
+                until: st(w, "warrantyUntil"),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
     Ok(due_reminders(&ReminderInput {
         today,
         time,
@@ -85,6 +98,7 @@ fn compute(db: &Db, today: &str, time: &str, settings: &ReminderSettings) -> DbR
         payments: &payments,
         cards: &cards,
         low_cash: low.as_ref(),
+        warranties: &warranties,
     }))
 }
 

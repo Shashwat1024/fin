@@ -2,6 +2,7 @@
 //! it is.
 
 pub mod accounts;
+pub mod attachments;
 pub mod audit;
 pub mod backup;
 pub mod calendar;

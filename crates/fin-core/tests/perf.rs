@@ -93,6 +93,7 @@ fn fifty_thousand_transactions_stay_fast() {
     check(&mut app, "tax year", "tax.year", json!({ "year": 2026 }), 300);
     // Shared life (specs/007-shared-life SC-023).
     check(&mut app, "people", "people.list", json!({}), 100);
+    check(&mut app, "warranties", "warranties.list", json!({}), 100);
     check(&mut app, "looks recurring", "recurring.detectCandidates", json!({}), 500);
     check(
         &mut app,

@@ -10,9 +10,9 @@
 - [x] H104 `us21-people.spec.ts`; a11y
 
 ## H2: Receipts and warranties (US22)
-- [ ] H201 Migration (attachments with blob, warranty date); requests; tests
-- [ ] H202 Attach in the transaction dialog, preview, save, remove; Warranties list; reminders
-- [ ] H203 `us22-receipts.spec.ts`; a11y; backup round trip with an attachment
+- [x] H201 Migration (attachments with blob, warranty date); requests; tests
+- [x] H202 Attach in the transaction dialog, preview, save, remove; Warranties list; reminders
+- [x] H203 `us22-receipts.spec.ts`; a11y; backup round trip with an attachment
 
 ## H3: Release 2.5.0
 - [ ] H301 Perf; full e2e on the release build

@@ -124,6 +124,8 @@ pub fn export_json(db: &Db) -> DbResult<Value> {
         "people": all("SELECT id, name, archived_at AS archivedAt FROM people ORDER BY name")?,
         "shares": all("SELECT id, person_id AS personId, date, amount_minor AS amountMinor, kind, note,
               transaction_id AS transactionId FROM shares ORDER BY date, id")?,
+        "attachments": all("SELECT id, transaction_id AS transactionId, file_name AS fileName, mime, size, sha256,
+              warranty_until AS warrantyUntil FROM attachments ORDER BY created_at, id")?,
         "taxMappings": all("SELECT id, section_id AS sectionId, category_id AS categoryId, loan_account_id AS loanAccountId,
               loan_part AS loanPart FROM tax_mappings ORDER BY created_at, id")?,
         "importBatches": all("SELECT id, account_id AS accountId, file_name AS fileName, imported_at AS importedAt, rows_total AS rowsTotal,
